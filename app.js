@@ -767,40 +767,55 @@ async function getCameraStream() {
     }
     throw new Error(lang === 'pl' ? 'Przeglądarka nie wspiera kamery' : 'Browser does not support camera API');
   }
-  const bail = e => e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError';
+  const bail = e => e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError' || e.name === 'SecurityError';
+  let lastError = null;
+
   // Attempt 1: simplest — no constraints (most compatible, especially iOS Safari)
   try {
+    log('info', 'Camera: trying { video: true }...');
     return await navigator.mediaDevices.getUserMedia({ video: true });
-  } catch (e) { if (bail(e)) throw e; }
+  } catch (e) {
+    log('warn', 'Camera attempt 1 failed: ' + e.name + ': ' + e.message);
+    lastError = e;
+    if (bail(e)) throw e;
+  }
   // Attempt 2: enumerate devices and try each by explicit deviceId
-  // (more reliable than facingMode on iOS Safari)
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
-    const cameras = devices.filter(d => d.kind === 'videoinput' && d.deviceId);
-    // Prefer back camera if available
-    const back = cameras.find(d => /back|rear|environment/i.test(d.label));
-    const chosen = back || cameras[0];
-    if (chosen) {
-      try {
-        return await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: chosen.deviceId } } });
-      } catch (e) { if (bail(e)) throw e; }
-    }
-    // Try remaining cameras
+    const cameras = devices.filter(d => d.kind === 'videoinput');
+    log('info', 'Camera: found ' + cameras.length + ' video device(s)');
     for (const dev of cameras) {
-      if (dev === chosen) continue;
       try {
-        return await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: dev.deviceId } } });
-      } catch (e) { if (bail(e)) throw e; }
+        const constraints = dev.deviceId
+          ? { video: { deviceId: { exact: dev.deviceId } } }
+          : { video: true };
+        log('info', 'Camera: trying device ' + (dev.label || dev.deviceId || 'unknown') + '...');
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (e) {
+        log('warn', 'Camera device failed: ' + e.name + ': ' + e.message);
+        lastError = e;
+        if (bail(e)) throw e;
+      }
     }
-  } catch (e) { if (bail(e)) throw e; }
-  // Attempt 3: facingMode as last resort
-  try {
-    return await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-  } catch (e) { if (bail(e)) throw e; }
-  try {
-    return await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-  } catch (e) { if (bail(e)) throw e; }
-  throw new Error(lang === 'pl' ? 'Nie znaleziono kamery' : 'No camera found');
+  } catch (e) {
+    if (bail(e)) throw e;
+    lastError = e;
+  }
+  // Attempt 3: facingMode variants
+  for (const mode of ['user', 'environment']) {
+    try {
+      log('info', 'Camera: trying facingMode=' + mode + '...');
+      return await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
+    } catch (e) {
+      log('warn', 'Camera facingMode=' + mode + ' failed: ' + e.name + ': ' + e.message);
+      lastError = e;
+      if (bail(e)) throw e;
+    }
+  }
+  const errMsg = lastError
+    ? (lastError.name + ': ' + lastError.message)
+    : (lang === 'pl' ? 'Nie znaleziono kamery' : 'No camera found');
+  throw new Error(errMsg);
 }
 
 // Helper: attach stream to video element and reliably start playback (iOS-safe)
@@ -820,9 +835,13 @@ function attachStreamToVideo(vid, stream) {
   return new Promise(resolve => {
     function tryPlay() {
       const p = vid.play();
-      if (p && p.then) p.then(resolve).catch(() => {
+      if (p && p.then) p.then(resolve).catch((e) => {
+        log('warn', 'video.play() failed: ' + e.message + ' — retrying...');
         // iOS may need a small delay before play works
-        setTimeout(() => vid.play().then(resolve).catch(resolve), 100);
+        setTimeout(() => vid.play().then(resolve).catch((e2) => {
+          log('warn', 'video.play() retry failed: ' + e2.message);
+          resolve();
+        }), 200);
       });
       else resolve();
     }
@@ -830,6 +849,13 @@ function attachStreamToVideo(vid, stream) {
       tryPlay();
     } else {
       vid.onloadedmetadata = tryPlay;
+      // Safety timeout in case loadedmetadata never fires
+      setTimeout(() => {
+        if (vid.readyState < 1) {
+          log('warn', 'video loadedmetadata timeout — forcing play');
+          tryPlay();
+        }
+      }, 3000);
     }
   });
 }
@@ -850,17 +876,24 @@ async function blockStartCamera(id) {
       vid.playsInline = true;
       vid.muted = true;
     }
+    log('info', 'Protocol: ' + location.protocol + ' Host: ' + location.hostname);
     const stream = await getCameraStream();
     cameraStreams[id] = stream;
+    const tracks = stream.getVideoTracks();
+    log('info', 'Got stream with ' + tracks.length + ' track(s): ' + tracks.map(t => t.label).join(', '));
     await attachStreamToVideo(vid, stream);
     setBlockStatus(document.getElementById(id), 'running');
     log('success', t('log_camera_start'));
   } catch (err) {
-    let msg = t('log_camera_err') + err.message;
+    let msg = t('log_camera_err') + err.name + ': ' + err.message;
     if (location.protocol === 'file:') {
       msg += lang === 'pl'
         ? ' ⚠️ Otwórz przez http://localhost:8765 (nie file://)'
         : ' ⚠️ Open via http://localhost:8765 (not file://)';
+    } else if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      msg += lang === 'pl'
+        ? ' ⚠️ Spróbuj otworzyć przez HTTPS'
+        : ' ⚠️ Try opening via HTTPS';
     }
     log('error', msg);
     setBlockStatus(document.getElementById(id), 'error');
