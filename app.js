@@ -758,25 +758,55 @@ let cameraStreams = {};
 
 async function getCameraStream() {
   const bail = e => e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError';
-  // Attempt 1: preferred resolution
+  // HTTPS check — required on iOS Safari
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1' && location.protocol !== 'file:') {
+    throw new Error(lang === 'pl' ? 'Kamera wymaga HTTPS!' : 'Camera requires HTTPS!');
+  }
+  // Attempt 1: preferred resolution with facingMode (needed for iOS)
   try {
-    return await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+    return await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+    });
   } catch (e) { if (bail(e)) throw e; }
-  // Attempt 2: any video, no resolution constraints
+  // Attempt 2: front camera
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user' }
+    });
+  } catch (e) { if (bail(e)) throw e; }
+  // Attempt 3: any video, no constraints
   try {
     return await navigator.mediaDevices.getUserMedia({ video: true });
   } catch (e) { if (bail(e)) throw e; }
-  // Attempt 3: enumerate devices and try each by explicit deviceId
-  // (works around "Requested device not found" on some hardware/drivers)
+  // Attempt 4: enumerate devices and try each by explicit deviceId
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
     for (const dev of devices.filter(d => d.kind === 'videoinput' && d.deviceId)) {
       try {
-        return await navigator.mediaDevices.getUserMedia({ video: { deviceId: dev.deviceId } });
+        return await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: dev.deviceId } } });
       } catch (e) { if (bail(e)) throw e; }
     }
   } catch (e) { if (bail(e)) throw e; }
   throw new Error(lang === 'pl' ? 'Nie znaleziono kamery' : 'No camera found');
+}
+
+// Helper: attach stream to video element and reliably start playback (iOS-safe)
+function attachStreamToVideo(vid, stream) {
+  if (!vid) return Promise.resolve();
+  vid.setAttribute('autoplay', '');
+  vid.setAttribute('playsinline', '');
+  vid.setAttribute('muted', '');
+  vid.muted = true;
+  vid.srcObject = stream;
+  return new Promise(resolve => {
+    vid.onloadedmetadata = () => {
+      vid.play().then(resolve).catch(() => resolve());
+    };
+    // Fallback if metadata already loaded
+    if (vid.readyState >= 1) {
+      vid.play().then(resolve).catch(() => resolve());
+    }
+  });
 }
 
 async function blockStartCamera(id) {
@@ -787,7 +817,7 @@ async function blockStartCamera(id) {
     const stream = await getCameraStream();
     cameraStreams[id] = stream;
     const vid = document.getElementById('vid-' + id);
-    if (vid) { vid.srcObject = stream; vid.play().catch(() => {}); }
+    await attachStreamToVideo(vid, stream);
     setBlockStatus(document.getElementById(id), 'running');
     log('success', t('log_camera_start'));
   } catch (err) {
@@ -1453,7 +1483,7 @@ async function startZeroShot(id) {
     const stream = await getCameraStream();
     zsStreams[id] = stream;
     const vid = document.getElementById('zsvid-' + id);
-    if (vid) { vid.srcObject = stream; vid.play().catch(() => {}); }
+    await attachStreamToVideo(vid, stream);
     setBlockStatus(document.getElementById(id), 'running');
     // Ensure labels are loaded
     loadImagenetLabels();
@@ -1522,8 +1552,8 @@ async function startInferCamera(id) {
     inferCameraStream = await getCameraStream();
     const vid = document.getElementById('vid-' + id);
     const showVid = document.querySelector('[id^="show-vid-"]');
-    if (vid) { vid.srcObject = inferCameraStream; vid.play().catch(() => {}); }
-    if (showVid) { showVid.srcObject = inferCameraStream; showVid.play().catch(() => {}); }
+    await attachStreamToVideo(vid, inferCameraStream);
+    await attachStreamToVideo(showVid, inferCameraStream);
     inferVideoEl = vid || showVid;
     setBlockStatus(document.getElementById(id), 'running');
     log('success', t('log_camera_start') + ' (inference)');
