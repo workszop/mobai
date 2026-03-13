@@ -103,9 +103,10 @@
 
     <!-- LOG PANEL -->
     <div id="log-panel">
-      <div id="log-header">
+      <div id="log-header" onclick="if(window.innerWidth<=900)toggleLogPanel()">
         <div id="log-header-title" data-i18n="log_title">Pipeline Log</div>
-        <button id="log-clear" onclick="clearLog()">CLR</button>
+        <button id="log-close-mobile">&#x2715;</button>
+        <button id="log-clear" onclick="event.stopPropagation();clearLog()">CLR</button>
       </div>
       <div id="log-entries"></div>
     </div>

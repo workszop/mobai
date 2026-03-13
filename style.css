@@ -575,6 +575,16 @@ canvas.bk-canvas {
   cursor: pointer;
   font-family: var(--mono)
 }
+#log-close-mobile {
+  display: none;
+  font-size: 16px;
+  color: #94A3B8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: auto;
+  padding: 4px 8px;
+}
 
 #log-entries {
   flex: 1;
@@ -926,6 +936,7 @@ canvas.chart-canvas {
 
   #sidebar-toggle { display: flex }
   #log-toggle { display: flex }
+  #log-close-mobile { display: block }
 
   /* Sidebar: off-canvas drawer */
   #sidebar {
@@ -986,25 +997,38 @@ canvas.chart-canvas {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Log panel: slide-up drawer on mobile */
+  /* Log panel: slide-up drawer on mobile, hidden by default */
   #log-panel {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 50vh;
-    z-index: 150;
+    height: 45vh;
+    z-index: 300;
     transform: translateY(100%);
     transition: transform .25s ease;
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -4px 20px rgba(0,0,0,.3);
+    pointer-events: none;
   }
   #log-panel.mobile-open {
     transform: translateY(0);
+    pointer-events: auto;
   }
   #log-header {
     padding: 14px 16px;
     border-radius: 16px 16px 0 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Dim backdrop behind log panel */
+  #log-panel.mobile-open::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    bottom: 45vh;
+    background: rgba(0,0,0,.3);
+    z-index: -1;
   }
 
   /* Trash zone: fixed bottom-center */

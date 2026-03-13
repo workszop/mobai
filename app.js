@@ -768,30 +768,37 @@ async function getCameraStream() {
     throw new Error(lang === 'pl' ? 'Przeglądarka nie wspiera kamery' : 'Browser does not support camera API');
   }
   const bail = e => e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError';
-  // Attempt 1: environment camera with preferred resolution
-  try {
-    return await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
-    });
-  } catch (e) { if (bail(e)) throw e; }
-  // Attempt 2: front camera
-  try {
-    return await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user' }
-    });
-  } catch (e) { if (bail(e)) throw e; }
-  // Attempt 3: any video, no constraints
+  // Attempt 1: simplest — no constraints (most compatible, especially iOS Safari)
   try {
     return await navigator.mediaDevices.getUserMedia({ video: true });
   } catch (e) { if (bail(e)) throw e; }
-  // Attempt 4: enumerate devices and try each by explicit deviceId
+  // Attempt 2: enumerate devices and try each by explicit deviceId
+  // (more reliable than facingMode on iOS Safari)
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
-    for (const dev of devices.filter(d => d.kind === 'videoinput' && d.deviceId)) {
+    const cameras = devices.filter(d => d.kind === 'videoinput' && d.deviceId);
+    // Prefer back camera if available
+    const back = cameras.find(d => /back|rear|environment/i.test(d.label));
+    const chosen = back || cameras[0];
+    if (chosen) {
+      try {
+        return await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: chosen.deviceId } } });
+      } catch (e) { if (bail(e)) throw e; }
+    }
+    // Try remaining cameras
+    for (const dev of cameras) {
+      if (dev === chosen) continue;
       try {
         return await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: dev.deviceId } } });
       } catch (e) { if (bail(e)) throw e; }
     }
+  } catch (e) { if (bail(e)) throw e; }
+  // Attempt 3: facingMode as last resort
+  try {
+    return await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+  } catch (e) { if (bail(e)) throw e; }
+  try {
+    return await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
   } catch (e) { if (bail(e)) throw e; }
   throw new Error(lang === 'pl' ? 'Nie znaleziono kamery' : 'No camera found');
 }
@@ -799,18 +806,30 @@ async function getCameraStream() {
 // Helper: attach stream to video element and reliably start playback (iOS-safe)
 function attachStreamToVideo(vid, stream) {
   if (!vid) return Promise.resolve();
+  // Ensure iOS-critical attributes are set both as attributes and properties
   vid.setAttribute('autoplay', '');
   vid.setAttribute('playsinline', '');
   vid.setAttribute('muted', '');
+  vid.autoplay = true;
+  vid.playsInline = true;
   vid.muted = true;
+  // Prevent iOS from pausing video on touch
+  vid.style.userSelect = 'none';
+  vid.style.webkitUserSelect = 'none';
   vid.srcObject = stream;
   return new Promise(resolve => {
-    vid.onloadedmetadata = () => {
-      vid.play().then(resolve).catch(() => resolve());
-    };
-    // Fallback if metadata already loaded
+    function tryPlay() {
+      const p = vid.play();
+      if (p && p.then) p.then(resolve).catch(() => {
+        // iOS may need a small delay before play works
+        setTimeout(() => vid.play().then(resolve).catch(resolve), 100);
+      });
+      else resolve();
+    }
     if (vid.readyState >= 1) {
-      vid.play().then(resolve).catch(() => resolve());
+      tryPlay();
+    } else {
+      vid.onloadedmetadata = tryPlay;
     }
   });
 }
@@ -819,10 +838,20 @@ async function blockStartCamera(id) {
   try {
     if (cameraStreams[id]) {
       cameraStreams[id].getTracks().forEach(t => t.stop());
+      cameraStreams[id] = null;
+    }
+    // Prepare the video element BEFORE getUserMedia to preserve user gesture on iOS
+    const vid = document.getElementById('vid-' + id);
+    if (vid) {
+      vid.setAttribute('autoplay', '');
+      vid.setAttribute('playsinline', '');
+      vid.setAttribute('muted', '');
+      vid.autoplay = true;
+      vid.playsInline = true;
+      vid.muted = true;
     }
     const stream = await getCameraStream();
     cameraStreams[id] = stream;
-    const vid = document.getElementById('vid-' + id);
     await attachStreamToVideo(vid, stream);
     setBlockStatus(document.getElementById(id), 'running');
     log('success', t('log_camera_start'));
