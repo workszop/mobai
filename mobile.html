@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0F172A">
+  <title>KlockiAI Mobile</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  <style>
+    :root {
+      --bg: #0F172A;
+      --bg2: #1E293B;
+      --bg3: #334155;
+      --border: #475569;
+      --text: #F1F5F9;
+      --muted: #94A3B8;
+      --accent: #3B82F6;
+      --accent2: #6366F1;
+      --success: #22C55E;
+      --warn: #F59E0B;
+      --error: #EF4444;
+      --c0: #0369A1;
+      --c1: #7C3AED;
+      --c2: #D97706;
+      --c3: #DC2626;
+      --c4: #059669;
+      --c5: #DB2777;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100%;
+      overscroll-behavior: none;
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: none; min-height: 100vh; }
+    .screen.active { display: flex; flex-direction: column; }
+
+    /* ── HOME SCREEN ── */
+    #screen-home {
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      gap: 32px;
+    }
+    .home-logo { text-align: center; }
+    .home-logo h1 { font-size: 36px; font-weight: 800; letter-spacing: -1px; color: var(--text); }
+    .home-logo h1 span { color: var(--accent); }
+    .home-logo p { color: var(--muted); font-size: 14px; margin-top: 6px; }
+    .home-cards { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 360px; }
+    .mode-card {
+      background: var(--bg2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .mode-card:active { transform: scale(0.97); background: var(--bg3); }
+    .mode-card.train { border-color: var(--accent); }
+    .mode-card.infer { border-color: var(--accent2); }
+    .mode-icon { font-size: 40px; flex-shrink: 0; }
+    .mode-info h2 { font-size: 20px; font-weight: 700; }
+    .mode-info p { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+    .mode-arrow { margin-left: auto; color: var(--muted); font-size: 22px; }
+
+    /* ── SHARED HEADER ── */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .back-btn {
+      background: none; border: none; color: var(--accent); font-size: 22px;
+      cursor: pointer; padding: 4px; line-height: 1;
+    }
+    .top-bar h2 { font-size: 18px; font-weight: 700; flex: 1; }
+    .top-badge {
+      font-size: 11px; font-weight: 700; padding: 4px 10px;
+      border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .badge-train { background: rgba(59,130,246,0.2); color: var(--accent); }
+    .badge-infer { background: rgba(99,102,241,0.2); color: var(--accent2); }
+
+    /* ── SCROLL CONTENT ── */
+    .scroll-area { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── STEP CARDS ── */
+    .step-card {
+      background: var(--bg2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .step-card.step-active { border-color: var(--accent); }
+    .step-card.step-done { border-color: var(--success); }
+    .step-card.step-error { border-color: var(--error); }
+    .step-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .step-num {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      background: var(--bg3); color: var(--muted);
+      transition: all 0.2s;
+    }
+    .step-active .step-num { background: var(--accent); color: white; }
+    .step-done .step-num { background: var(--success); color: white; }
+    .step-error .step-num { background: var(--error); color: white; }
+    .step-title { flex: 1; font-size: 15px; font-weight: 600; }
+    .step-status-badge {
+      font-size: 11px; font-weight: 600; padding: 3px 9px;
+      border-radius: 12px; background: var(--bg3); color: var(--muted);
+    }
+    .step-done .step-status-badge { background: rgba(34,197,94,0.15); color: var(--success); }
+    .step-error .step-status-badge { background: rgba(239,68,68,0.15); color: var(--error); }
+    .step-active .step-status-badge { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .step-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+    .step-body.collapsed { display: none; }
+
+    /* ── CAMERA ── */
+    .cam-wrap {
+      position: relative; width: 100%;
+      aspect-ratio: 4/3;
+      background: #000;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .cam-wrap video {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+    }
+    .cam-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: flex-end;
+      padding: 10px;
+      background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .cam-label {
+      font-size: 12px; font-weight: 600; color: white;
+      background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 8px;
+    }
+    .cam-flip-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(0,0,0,0.5); border: none; color: white;
+      width: 40px; height: 40px; border-radius: 50%;
+      font-size: 18px; cursor: pointer; z-index: 2;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 14px 20px; border-radius: 12px;
+      font-size: 15px; font-weight: 700; border: none;
+      cursor: pointer; transition: all 0.15s; user-select: none;
+      min-height: 50px;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-secondary { background: var(--bg3); color: var(--text); }
+    .btn-warn { background: var(--warn); color: white; }
+    .btn-danger { background: var(--error); color: white; }
+    .btn-infer { background: var(--accent2); color: white; }
+    .btn-sm { padding: 10px 16px; font-size: 13px; min-height: 42px; border-radius: 10px; }
+    .btn-row { display: flex; gap: 10px; }
+    .btn-row .btn { flex: 1; }
+
+    /* ── CLASS ROWS ── */
+    .class-list { display: flex; flex-direction: column; gap: 8px; }
+    .class-row {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--bg3); border-radius: var(--radius-sm);
+      padding: 10px 12px;
+    }
+    .class-dot {
+      width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+    }
+    .class-name-input {
+      flex: 1; background: none; border: none; color: var(--text);
+      font-size: 15px; font-weight: 600; outline: none; min-width: 0;
+    }
+    .class-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+    .class-capture-btn {
+      padding: 8px 14px; border-radius: 8px; border: none;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      color: white; transition: all 0.15s; flex-shrink: 0;
+    }
+    .class-capture-btn:active { transform: scale(0.95); }
+    .class-clear-btn {
+      background: none; border: none; color: var(--muted);
+      font-size: 16px; cursor: pointer; padding: 4px; line-height: 1;
+    }
+
+    /* ── THUMB STRIPS ── */
+    .thumb-strip {
+      display: flex; gap: 4px; overflow-x: auto;
+      padding: 4px 0; flex-wrap: nowrap;
+    }
+    .thumb-strip canvas, .thumb-strip img {
+      width: 52px; height: 52px; object-fit: cover;
+      border-radius: 6px; flex-shrink: 0;
+    }
+
+    /* ── FORM ROWS ── */
+    .param-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+    }
+    .param-row:last-child { border-bottom: none; }
+    .param-label { font-size: 13px; color: var(--muted); flex: 1; }
+    .param-row select, .param-row input[type="number"] {
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 8px 12px;
+      font-size: 14px; outline: none; -webkit-appearance: none;
+    }
+    .param-row select { min-width: 100px; }
+    .param-row input[type="number"] { width: 80px; }
+
+    /* ── PROGRESS ── */
+    .progress-wrap { background: var(--bg3); border-radius: 6px; height: 8px; overflow: hidden; }
+    .progress-bar { height: 100%; border-radius: 6px; transition: width 0.3s; background: var(--accent); }
+    .progress-label { font-size: 12px; color: var(--muted); text-align: center; margin-top: 6px; }
+
+    /* ── CHART ── */
+    .chart-canvas { width: 100%; height: 100px; border-radius: var(--radius-sm); background: var(--bg3); display: block; }
+
+    /* ── INFERENCE RESULTS ── */
+    .infer-result-box {
+      background: var(--bg3); border-radius: var(--radius-sm);
+      padding: 14px 16px;
+    }
+    .infer-top-label {
+      font-size: 22px; font-weight: 800; text-align: center;
+      padding: 12px; border-radius: var(--radius-sm);
+      margin-bottom: 10px; background: var(--bg2);
+      min-height: 60px; display: flex; align-items: center; justify-content: center;
+    }
+    .conf-bar-row { margin-bottom: 8px; }
+    .conf-bar-header {
+      display: flex; justify-content: space-between;
+      font-size: 12px; font-weight: 600; margin-bottom: 4px;
+    }
+    .conf-bar-track { background: var(--bg2); border-radius: 4px; height: 8px; overflow: hidden; }
+    .conf-bar-fill { height: 100%; border-radius: 4px; transition: width 0.2s; }
+
+    /* ── MODEL INFO ── */
+    .model-info-box {
+      background: var(--bg3); border-radius: var(--radius-sm);
+      padding: 12px 14px; font-size: 13px; line-height: 1.8; color: var(--muted);
+    }
+    .model-info-box b { color: var(--text); }
+
+    /* ── SAVED MODELS ── */
+    .saved-model-row {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .saved-model-row select {
+      flex: 1; background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 10px 12px;
+      font-size: 14px; outline: none; -webkit-appearance: none;
+    }
+    .refresh-btn {
+      background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+      width: 44px; height: 44px; border-radius: 8px; font-size: 18px;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ── LOG ── */
+    .log-box {
+      background: var(--bg3); border-radius: var(--radius-sm);
+      padding: 10px 12px; max-height: 120px; overflow-y: auto;
+      font-size: 11px; font-family: monospace; line-height: 1.6;
+    }
+    .log-info { color: #93C5FD; }
+    .log-success { color: #86EFAC; }
+    .log-warn { color: #FCD34D; }
+    .log-error { color: #FCA5A5; }
+    .log-step { color: #C4B5FD; font-weight: 700; }
+
+    /* ── NAME INPUT ── */
+    .name-input {
+      width: 100%; background: var(--bg3); border: 1.5px solid var(--border);
+      color: var(--text); border-radius: 10px; padding: 12px 14px;
+      font-size: 15px; outline: none;
+    }
+    .name-input:focus { border-color: var(--accent); }
+
+    /* ── SEPARATOR ── */
+    .or-sep {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--muted); font-size: 12px;
+    }
+    .or-sep::before, .or-sep::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── INFERENCE OVERLAY ── */
+    .infer-cam-wrap { position: relative; width: 100%; aspect-ratio: 4/3;
+      background: #000; border-radius: var(--radius-sm); overflow: hidden; }
+    .infer-cam-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .infer-cam-overlay {
+      position: absolute; top: 10px; left: 10px; right: 10px;
+      pointer-events: none;
+    }
+    .pred-overlay-label {
+      font-size: 18px; font-weight: 800;
+      background: rgba(0,0,0,0.7); color: white;
+      padding: 6px 14px; border-radius: 10px;
+      display: inline-block; backdrop-filter: blur(4px);
+    }
+
+    /* ── SPINNER ── */
+    .spinner {
+      width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%;
+      animation: spin 0.6s linear infinite; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── FOOTER ── */
+    .screen-footer {
+      padding: 12px 16px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* ── MISC ── */
+    .hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .gap-4 { display: flex; flex-direction: column; gap: 4px; }
+    .tag {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 3px 8px; border-radius: 6px;
+      background: rgba(59,130,246,0.15); color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     HOME SCREEN
+══════════════════════════════════════════════════════ -->
+<div id="screen-home" class="screen active">
+  <div class="home-logo">
+    <h1>Klocki<span>AI</span></h1>
+    <p>Mobile · Transfer Learning in your browser</p>
+  </div>
+  <div class="home-cards">
+    <div class="mode-card train" onclick="goToTraining()">
+      <div class="mode-icon">🧠</div>
+      <div class="mode-info">
+        <h2>Training</h2>
+        <p>Capture photos with your camera and teach the AI to recognise your custom classes</p>
+      </div>
+      <div class="mode-arrow">›</div>
+    </div>
+    <div class="mode-card infer" onclick="goToInference()">
+      <div class="mode-icon">🔍</div>
+      <div class="mode-info">
+        <h2>Inference</h2>
+        <p>Load a trained model and use your camera for real-time predictions</p>
+      </div>
+      <div class="mode-arrow">›</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     TRAINING SCREEN
+══════════════════════════════════════════════════════ -->
+<div id="screen-training" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goHome()">‹</button>
+    <h2>Training</h2>
+    <span class="top-badge badge-train">TRAIN</span>
+  </div>
+
+  <div class="scroll-area" id="training-scroll">
+
+    <!-- STEP 1: Camera & Classes -->
+    <div class="step-card step-active" id="step1-card">
+      <div class="step-header" onclick="toggleStep('step1')">
+        <div class="step-num">1</div>
+        <div class="step-title">Camera &amp; Classes</div>
+        <div class="step-status-badge" id="step1-badge">Active</div>
+      </div>
+      <div class="step-body" id="step1-body">
+        <!-- Camera -->
+        <div class="cam-wrap" id="train-cam-wrap">
+          <video id="train-video" autoplay playsinline muted></video>
+          <button class="cam-flip-btn" onclick="flipCamera()" title="Flip camera">🔄</button>
+          <div class="cam-overlay">
+            <span class="cam-label" id="train-cam-label">Camera off</span>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-start-cam" onclick="startTrainCamera()">
+            📷 Start Camera
+          </button>
+          <button class="btn btn-secondary" id="btn-stop-cam" onclick="stopTrainCamera()" style="display:none">
+            ⏹ Stop
+          </button>
+        </div>
+
+        <!-- Classes -->
+        <div class="gap-4">
+          <div style="font-size:13px; font-weight:700; color:var(--muted);">CLASSES</div>
+          <div class="class-list" id="class-list"></div>
+          <button class="btn btn-secondary btn-sm" onclick="addMobileClass()" id="btn-add-class">
+            + Add Class
+          </button>
+        </div>
+
+        <!-- Thumbnails -->
+        <div id="thumb-area"></div>
+
+        <!-- Params -->
+        <div class="param-row">
+          <span class="param-label">Samples / class</span>
+          <input type="number" id="samples-per-class" value="15" min="3" max="100">
+        </div>
+
+        <button class="btn btn-success" onclick="doneStep1()" id="btn-done-step1" disabled>
+          Continue →
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Prepare Data -->
+    <div class="step-card" id="step2-card">
+      <div class="step-header" onclick="toggleStep('step2')">
+        <div class="step-num">2</div>
+        <div class="step-title">Prepare Data</div>
+        <div class="step-status-badge" id="step2-badge">Waiting</div>
+      </div>
+      <div class="step-body collapsed" id="step2-body">
+        <p class="hint">Resize and optionally augment captured images to increase variety.</p>
+        <div class="param-row">
+          <span class="param-label">Augmentation</span>
+          <select id="aug-type">
+            <option value="none">None</option>
+            <option value="all" selected>Flip + Brightness</option>
+          </select>
+        </div>
+        <div class="param-row">
+          <span class="param-label">Multiplier</span>
+          <select id="aug-mul">
+            <option value="1">1×</option>
+            <option value="2" selected>2×</option>
+            <option value="3">3×</option>
+          </select>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar" id="prep-progress" style="width:0%"></div>
+        </div>
+        <div class="progress-label" id="prep-label">—</div>
+        <button class="btn btn-primary" onclick="runMobilePrepare()" id="btn-prepare">
+          ⚙️ Prepare Data
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Load Base Model -->
+    <div class="step-card" id="step3-card">
+      <div class="step-header" onclick="toggleStep('step3')">
+        <div class="step-num">3</div>
+        <div class="step-title">Base Model</div>
+        <div class="step-status-badge" id="step3-badge">Waiting</div>
+      </div>
+      <div class="step-body collapsed" id="step3-body">
+        <p class="hint">Download MobileNetV3-Small (~3 MB) — a neural network pre-trained on millions of images. It will extract visual features from your photos.</p>
+        <div class="progress-wrap">
+          <div class="progress-bar" id="model-progress" style="width:0%"></div>
+        </div>
+        <div class="progress-label" id="model-label">—</div>
+        <button class="btn btn-primary" onclick="runMobileLoadBase()" id="btn-load-base">
+          ⬇️ Load Base Model
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Train -->
+    <div class="step-card" id="step4-card">
+      <div class="step-header" onclick="toggleStep('step4')">
+        <div class="step-num">4</div>
+        <div class="step-title">Train Model</div>
+        <div class="step-status-badge" id="step4-badge">Waiting</div>
+      </div>
+      <div class="step-body collapsed" id="step4-body">
+        <div class="param-row">
+          <span class="param-label">Epochs</span>
+          <input type="number" id="train-epochs" value="20" min="1" max="100">
+        </div>
+        <div class="param-row">
+          <span class="param-label">Learning rate</span>
+          <select id="train-lr">
+            <option value="0.001" selected>0.001</option>
+            <option value="0.0001">0.0001</option>
+            <option value="0.01">0.01</option>
+          </select>
+        </div>
+        <div class="param-row">
+          <span class="param-label">Batch size</span>
+          <select id="train-batch">
+            <option value="8">8</option>
+            <option value="16" selected>16</option>
+            <option value="32">32</option>
+          </select>
+        </div>
+        <canvas class="chart-canvas" id="train-chart"></canvas>
+        <div class="progress-label" id="train-label">—</div>
+        <div class="btn-row">
+          <button class="btn btn-warn" onclick="runMobileTraining()" id="btn-train">
+            🚀 Train
+          </button>
+          <button class="btn btn-secondary" onclick="stopMobileTraining()" id="btn-stop-train">
+            ⏹ Stop
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: Save -->
+    <div class="step-card" id="step5-card">
+      <div class="step-header" onclick="toggleStep('step5')">
+        <div class="step-num">5</div>
+        <div class="step-title">Save Model</div>
+        <div class="step-status-badge" id="step5-badge">Waiting</div>
+      </div>
+      <div class="step-body collapsed" id="step5-body">
+        <div class="model-info-box" id="save-meta">—</div>
+        <div class="gap-4">
+          <label style="font-size:13px;color:var(--muted)">Model name</label>
+          <input type="text" class="name-input" id="save-model-name" value="my-model" placeholder="my-model">
+        </div>
+        <button class="btn btn-primary" onclick="runMobileSaveIDB()" id="btn-save-idb">
+          💾 Save to Browser
+        </button>
+        <button class="btn btn-secondary" onclick="runMobileDownload()" id="btn-download">
+          ⬇️ Download as File
+        </button>
+        <p class="hint">Saved models can be loaded in Inference mode without retraining.</p>
+      </div>
+    </div>
+
+    <!-- LOG -->
+    <div class="step-card">
+      <div class="step-header" onclick="toggleStep('train-log')">
+        <div class="step-num" style="font-size:16px">📋</div>
+        <div class="step-title">Log</div>
+      </div>
+      <div class="step-body collapsed" id="train-log-body">
+        <div class="log-box" id="train-log"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
+     INFERENCE SCREEN
+══════════════════════════════════════════════════════ -->
+<div id="screen-inference" class="screen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goHome()">‹</button>
+    <h2>Inference</h2>
+    <span class="top-badge badge-infer">PREDICT</span>
+  </div>
+
+  <div class="scroll-area">
+
+    <!-- STEP A: Load Model -->
+    <div class="step-card step-active" id="stepA-card">
+      <div class="step-header" onclick="toggleStep('stepA')">
+        <div class="step-num">1</div>
+        <div class="step-title">Load Model</div>
+        <div class="step-status-badge" id="stepA-badge">Active</div>
+      </div>
+      <div class="step-body" id="stepA-body">
+        <p class="hint">Load a model you trained and saved, or upload a downloaded file.</p>
+
+        <!-- From browser IDB -->
+        <div class="gap-4">
+          <div style="font-size:13px; font-weight:700; color:var(--muted);">FROM BROWSER STORAGE</div>
+          <div class="saved-model-row">
+            <select id="idb-model-select">
+              <option value="" disabled selected>No saved models</option>
+            </select>
+            <div class="refresh-btn" onclick="refreshInferIDB()">↺</div>
+          </div>
+          <button class="btn btn-infer" onclick="loadFromIDB()">
+            📂 Load from Browser
+          </button>
+        </div>
+
+        <div class="or-sep">or</div>
+
+        <!-- From file -->
+        <div class="gap-4">
+          <div style="font-size:13px; font-weight:700; color:var(--muted);">FROM FILE</div>
+          <input type="file" id="infer-file-input" accept=".json" style="display:none" onchange="loadFromFile()">
+          <button class="btn btn-secondary" onclick="document.getElementById('infer-file-input').click()">
+            📁 Open Model File (.json)
+          </button>
+        </div>
+
+        <!-- Model info -->
+        <div class="model-info-box" id="infer-meta" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- STEP B: Camera + Predictions -->
+    <div class="step-card" id="stepB-card">
+      <div class="step-header" onclick="toggleStep('stepB')">
+        <div class="step-num">2</div>
+        <div class="step-title">Live Prediction</div>
+        <div class="step-status-badge" id="stepB-badge">Waiting</div>
+      </div>
+      <div class="step-body collapsed" id="stepB-body">
+
+        <div class="infer-cam-wrap" id="infer-cam-wrap">
+          <video id="infer-video" autoplay playsinline muted></video>
+          <button class="cam-flip-btn" onclick="flipInferCamera()" title="Flip camera">🔄</button>
+          <div class="infer-cam-overlay">
+            <span class="pred-overlay-label" id="pred-overlay-text">—</span>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-infer" onclick="startInferCamera()" id="btn-start-infer">
+            📷 Start Camera
+          </button>
+          <button class="btn btn-secondary" onclick="stopInferCamera()" id="btn-stop-infer" style="display:none">
+            ⏹ Stop
+          </button>
+        </div>
+
+        <div class="param-row">
+          <span class="param-label">Speed</span>
+          <select id="infer-fps">
+            <option value="1000">1 FPS</option>
+            <option value="333">3 FPS</option>
+            <option value="200" selected>5 FPS</option>
+            <option value="100">10 FPS</option>
+          </select>
+        </div>
+
+        <div class="param-row">
+          <span class="param-label">Confidence threshold</span>
+          <select id="infer-threshold">
+            <option value="0.5">50%</option>
+            <option value="0.7" selected>70%</option>
+            <option value="0.8">80%</option>
+            <option value="0.9">90%</option>
+          </select>
+        </div>
+
+        <!-- Results -->
+        <div class="infer-result-box">
+          <div class="infer-top-label" id="pred-top-label" style="color:var(--muted); font-style:italic; font-size:16px">
+            Waiting for prediction…
+          </div>
+          <div id="pred-bars"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- LOG -->
+    <div class="step-card">
+      <div class="step-header" onclick="toggleStep('infer-log')">
+        <div class="step-num" style="font-size:16px">📋</div>
+        <div class="step-title">Log</div>
+      </div>
+      <div class="step-body collapsed" id="infer-log-body">
+        <div class="log-box" id="infer-log"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<script>
+// ═══════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════
+const MODEL_URL = 'https://www.kaggle.com/models/google/mobilenet-v3/frameworks/tfJs/variations/small-100-224-feature-vector/versions/1/model.json?tfjs-format=file';
+const CLASS_COLORS = ['#0369A1','#7C3AED','#D97706','#DC2626','#059669','#DB2777'];
+const SCHEMA_VERSION = 'v1';
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let classNames = ['Class 1', 'Class 2'];
+let capturedSamples = [[], []];  // per class array of {data, width, height}
+let preparedData = null;         // {xs, ys, numClasses}
+let baseModel = null;
+let trainedModel = null;
+let modelMetadata = null;
+let trainingCancelled = false;
+let lossHistory = [], accHistory = [];
+
+let trainStream = null;
+let trainFacingMode = 'environment'; // prefer back camera on mobile
+
+let inferStream = null;
+let inferFacingMode = 'environment';
+let inferInterval = null;
+let inferModel = null;
+let inferMeta = null;
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goHome() {
+  stopTrainCamera();
+  stopInferCamera();
+  showScreen('screen-home');
+}
+function goToTraining() {
+  renderClassList();
+  showScreen('screen-training');
+}
+function goToInference() {
+  refreshInferIDB();
+  showScreen('screen-inference');
+}
+
+// ═══════════════════════════════════════════════
+// STEP TOGGLE
+// ═══════════════════════════════════════════════
+function toggleStep(stepId) {
+  const body = document.getElementById(stepId + '-body');
+  if (body) body.classList.toggle('collapsed');
+}
+function openStep(stepId) {
+  const body = document.getElementById(stepId + '-body');
+  if (body) body.classList.remove('collapsed');
+}
+function closeStep(stepId) {
+  const body = document.getElementById(stepId + '-body');
+  if (body) body.classList.add('collapsed');
+}
+function setStepState(stepId, state) {
+  // state: 'active' | 'done' | 'error' | ''
+  const card = document.getElementById(stepId + '-card');
+  const badge = document.getElementById(stepId + '-badge');
+  if (!card) return;
+  card.className = 'step-card' + (state ? ' step-' + state : '');
+  if (badge) {
+    badge.textContent = state === 'active' ? 'Active'
+      : state === 'done' ? 'Done ✓'
+      : state === 'error' ? 'Error'
+      : 'Waiting';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// LOGGING
+// ═══════════════════════════════════════════════
+function mlog(type, msg, screen) {
+  const el = document.createElement('div');
+  el.className = 'log-' + type;
+  const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  el.textContent = '[' + ts + '] ' + msg;
+  const box = document.getElementById((screen || 'train') + '-log');
+  if (box) {
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+  }
+}
+function tlog(type, msg) { mlog(type, msg, 'train'); }
+function ilog(type, msg) { mlog(type, msg, 'infer'); }
+
+// ═══════════════════════════════════════════════
+// CLASSES
+// ═══════════════════════════════════════════════
+function renderClassList() {
+  const list = document.getElementById('class-list');
+  if (!list) return;
+  list.innerHTML = '';
+  classNames.forEach((name, i) => {
+    const row = document.createElement('div');
+    row.className = 'class-row';
+    row.innerHTML = `
+      <div class="class-dot" style="background:${CLASS_COLORS[i]}"></div>
+      <input class="class-name-input" value="${name}" data-idx="${i}"
+        oninput="classNames[${i}]=this.value">
+      <span class="class-count" id="count-${i}">${(capturedSamples[i]||[]).length} samples</span>
+      <button class="class-capture-btn" style="background:${CLASS_COLORS[i]}"
+        onclick="captureForClass(${i})" id="cap-btn-${i}">📸 Capture</button>
+      <button class="class-clear-btn" onclick="clearClass(${i})" title="Clear samples">✕</button>
+    `;
+    list.appendChild(row);
+    // Add thumb strip
+    const strip = document.createElement('div');
+    strip.className = 'thumb-strip';
+    strip.id = 'thumbs-' + i;
+    list.appendChild(strip);
+    renderThumbs(i);
+  });
+  updateContinueBtn();
+}
+
+function addMobileClass() {
+  if (classNames.length >= CLASS_COLORS.length) {
+    tlog('warn', 'Maximum 6 classes');
+    return;
+  }
+  classNames.push('Class ' + (classNames.length + 1));
+  capturedSamples.push([]);
+  renderClassList();
+}
+
+function clearClass(idx) {
+  capturedSamples[idx] = [];
+  renderThumbs(idx);
+  updateCountLabel(idx);
+  updateContinueBtn();
+  tlog('info', 'Cleared samples for "' + classNames[idx] + '"');
+}
+
+function updateCountLabel(idx) {
+  const el = document.getElementById('count-' + idx);
+  if (el) el.textContent = (capturedSamples[idx]||[]).length + ' samples';
+}
+
+function updateContinueBtn() {
+  const btn = document.getElementById('btn-done-step1');
+  if (!btn) return;
+  const hasEnough = classNames.length >= 2 &&
+    capturedSamples.every((s, i) => i >= classNames.length || s.length >= 2) &&
+    capturedSamples.slice(0, classNames.length).every(s => s.length >= 2);
+  btn.disabled = !hasEnough;
+}
+
+function renderThumbs(idx) {
+  const strip = document.getElementById('thumbs-' + idx);
+  if (!strip) return;
+  strip.innerHTML = '';
+  const samples = capturedSamples[idx] || [];
+  samples.slice(-6).forEach(s => {
+    const cv = document.createElement('canvas');
+    cv.width = s.width; cv.height = s.height;
+    cv.getContext('2d').putImageData(
+      new ImageData(new Uint8ClampedArray(s.data), s.width, s.height), 0, 0
+    );
+    cv.style.borderTop = '3px solid ' + CLASS_COLORS[idx];
+    strip.appendChild(cv);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// CAMERA — TRAINING
+// ═══════════════════════════════════════════════
+async function getCameraStream(facingMode) {
+  // Try environment camera first on mobile, fall back gracefully
+  const constraints = [
+    { video: { facingMode: facingMode || 'environment', width: { ideal: 640 }, height: { ideal: 480 } } },
+    { video: { facingMode: facingMode || 'environment' } },
+    { video: { width: 640, height: 480 } },
+    { video: true }
+  ];
+  for (const c of constraints) {
+    try {
+      return await navigator.mediaDevices.getUserMedia(c);
+    } catch (e) {
+      if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') throw e;
+    }
+  }
+  throw new Error('No camera found');
+}
+
+async function startTrainCamera() {
+  const btn = document.getElementById('btn-start-cam');
+  const stopBtn = document.getElementById('btn-stop-cam');
+  const label = document.getElementById('train-cam-label');
+  btn.innerHTML = '<span class="spinner"></span> Starting…';
+  btn.disabled = true;
+  try {
+    if (trainStream) trainStream.getTracks().forEach(t => t.stop());
+    trainStream = await getCameraStream(trainFacingMode);
+    const vid = document.getElementById('train-video');
+    vid.srcObject = trainStream;
+    vid.play().catch(() => {});
+    label.textContent = 'Live';
+    btn.style.display = 'none';
+    stopBtn.style.display = '';
+    tlog('success', 'Camera started');
+  } catch (err) {
+    tlog('error', 'Camera error: ' + err.message);
+    btn.innerHTML = '📷 Start Camera';
+    btn.disabled = false;
+    if (location.protocol === 'file:')
+      tlog('warn', 'Open via http://localhost (not file://)');
+  }
+}
+
+function stopTrainCamera() {
+  if (trainStream) { trainStream.getTracks().forEach(t => t.stop()); trainStream = null; }
+  const vid = document.getElementById('train-video');
+  if (vid) vid.srcObject = null;
+  const btn = document.getElementById('btn-start-cam');
+  const stopBtn = document.getElementById('btn-stop-cam');
+  if (btn) { btn.style.display = ''; btn.innerHTML = '📷 Start Camera'; btn.disabled = false; }
+  if (stopBtn) stopBtn.style.display = 'none';
+  const label = document.getElementById('train-cam-label');
+  if (label) label.textContent = 'Camera off';
+}
+
+async function flipCamera() {
+  trainFacingMode = trainFacingMode === 'environment' ? 'user' : 'environment';
+  if (trainStream) {
+    stopTrainCamera();
+    await startTrainCamera();
+  }
+}
+
+let capturingClass = -1;
+
+function captureForClass(classIdx) {
+  if (capturingClass !== -1) return; // already capturing
+  const vid = document.getElementById('train-video');
+  if (!vid || !vid.srcObject) {
+    tlog('warn', 'Start camera first!');
+    return;
+  }
+  if (vid.readyState < 2 || vid.videoWidth === 0) {
+    tlog('warn', 'Camera still loading, please wait…');
+    return;
+  }
+  const spc = parseInt(document.getElementById('samples-per-class')?.value || '15');
+  const res = 224;
+  const off = document.createElement('canvas');
+  off.width = res; off.height = res;
+  const ctx = off.getContext('2d');
+  if (!capturedSamples[classIdx]) capturedSamples[classIdx] = [];
+  let captured = 0;
+  capturingClass = classIdx;
+  const btn = document.getElementById('cap-btn-' + classIdx);
+  if (btn) btn.innerHTML = '⏳ …';
+
+  function grab() {
+    if (captured >= spc || !trainStream) {
+      capturingClass = -1;
+      if (btn) btn.innerHTML = '📸 Capture';
+      tlog('success', `Captured ${captured} samples for "${classNames[classIdx]}"`);
+      renderThumbs(classIdx);
+      updateCountLabel(classIdx);
+      updateContinueBtn();
+      return;
+    }
+    ctx.drawImage(vid, 0, 0, res, res);
+    const imgData = ctx.getImageData(0, 0, res, res);
+    capturedSamples[classIdx].push({ data: imgData.data.buffer.slice(0), width: res, height: res });
+    captured++;
+    if (btn) btn.innerHTML = `⏳ ${captured}/${spc}`;
+    setTimeout(grab, 180);
+  }
+  grab();
+}
+
+function doneStep1() {
+  const totalSamples = capturedSamples.slice(0, classNames.length).reduce((s,a)=>s+a.length, 0);
+  tlog('step', `Step 1 done — ${totalSamples} total samples across ${classNames.length} classes`);
+  setStepState('step1', 'done');
+  setStepState('step2', 'active');
+  openStep('step2');
+  closeStep('step1');
+  document.getElementById('step2-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════
+// AUGMENTATION WEB WORKER
+// ═══════════════════════════════════════════════
+const WORKER_CODE = `
+self.onmessage = function(e) {
+  const { samples, labels, multiplier, augType } = e.data;
+  const result = [];
+  const resultLabels = [];
+  for (let i = 0; i < samples.length; i++) {
+    result.push(samples[i]);
+    resultLabels.push(labels[i]);
+  }
+  const target = samples.length * multiplier;
+  let idx = 0;
+  while (result.length < target) {
+    const src = samples[idx % samples.length];
+    const lbl = labels[idx % labels.length];
+    const w = src.width, h = src.height;
+    const buf = new Uint8ClampedArray(src.data);
+    if (augType !== 'none') {
+      const bj = 0.7 + Math.random() * 0.6;
+      for (let i = 0; i < buf.length; i += 4) {
+        buf[i] = Math.min(255, buf[i]*bj);
+        buf[i+1] = Math.min(255, buf[i+1]*bj);
+        buf[i+2] = Math.min(255, buf[i+2]*bj);
+      }
+      if (Math.random() > 0.5) {
+        for (let row = 0; row < h; row++) {
+          for (let col = 0; col < Math.floor(w/2); col++) {
+            const a = (row*w+col)*4, b = (row*w+(w-1-col))*4;
+            for (let c = 0; c < 4; c++) {
+              const tmp = buf[a+c]; buf[a+c] = buf[b+c]; buf[b+c] = tmp;
+            }
+          }
+        }
+      }
+    }
+    result.push({ data: buf.buffer, width: w, height: h });
+    resultLabels.push(lbl);
+    idx++;
+    if (result.length % 20 === 0) {
+      self.postMessage({ type: 'progress', pct: Math.round(result.length / target * 100) });
+    }
+  }
+  self.postMessage({ type: 'done', result, labels: resultLabels }, result.map(r => r.data));
+};
+`;
+
+// ═══════════════════════════════════════════════
+// STEP 2: PREPARE DATA
+// ═══════════════════════════════════════════════
+async function runMobilePrepare() {
+  const allSamples = capturedSamples.slice(0, classNames.length);
+  const total = allSamples.reduce((s,a)=>s+a.length,0);
+  if (total === 0) { tlog('warn', 'No samples! Capture images first.'); return; }
+  setStepState('step2', 'active');
+  document.getElementById('btn-prepare').disabled = true;
+  document.getElementById('prep-label').textContent = 'Preparing…';
+  tlog('step', 'Preparing data…');
+
+  const augType = document.getElementById('aug-type').value;
+  const multiplier = parseInt(document.getElementById('aug-mul').value);
+
+  // Flatten
+  const flatSamples = [];
+  const flatLabels = [];
+  for (let cls = 0; cls < classNames.length; cls++) {
+    for (const s of (capturedSamples[cls]||[])) {
+      flatSamples.push(s);
+      flatLabels.push(cls);
+    }
+  }
+
+  const blob = new Blob([WORKER_CODE], { type: 'application/javascript' });
+  const workerURL = URL.createObjectURL(blob);
+  const worker = new Worker(workerURL);
+
+  await new Promise(resolve => {
+    worker.onmessage = e => {
+      if (e.data.type === 'progress') {
+        const pct = e.data.pct;
+        document.getElementById('prep-progress').style.width = pct + '%';
+        document.getElementById('prep-label').textContent = pct + '%';
+      } else if (e.data.type === 'done') {
+        preparedData = { xs: e.data.result, ys: e.data.labels, numClasses: classNames.length };
+        const n = e.data.result.length;
+        document.getElementById('prep-progress').style.width = '100%';
+        document.getElementById('prep-label').textContent = `Ready — ${n} samples`;
+        tlog('success', `Data ready — ${n} samples (${classNames.length} classes)`);
+        worker.terminate();
+        URL.revokeObjectURL(workerURL);
+        resolve();
+      }
+    };
+    worker.postMessage(
+      { samples: flatSamples, labels: flatLabels, multiplier, augType },
+      flatSamples.map(s => s.data)
+    );
+  });
+
+  setStepState('step2', 'done');
+  setStepState('step3', 'active');
+  openStep('step3');
+  closeStep('step2');
+  document.getElementById('step3-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════
+// STEP 3: LOAD BASE MODEL
+// ═══════════════════════════════════════════════
+async function runMobileLoadBase() {
+  if (baseModel) {
+    tlog('info', 'Base model already loaded');
+    advanceToStep4();
+    return;
+  }
+  const btn = document.getElementById('btn-load-base');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Loading…';
+  setStepState('step3', 'active');
+  tlog('step', 'Loading MobileNetV3-Small…');
+
+  try {
+    baseModel = await tf.loadGraphModel(MODEL_URL, {
+      onProgress: frac => {
+        const pct = Math.round(frac * 100);
+        document.getElementById('model-progress').style.width = pct + '%';
+        document.getElementById('model-label').textContent = pct + '%';
+      }
+    });
+    document.getElementById('model-progress').style.width = '100%';
+    document.getElementById('model-label').textContent = 'MobileNetV3-Small loaded ✓';
+    tlog('success', 'Base model loaded ✓');
+    setStepState('step3', 'done');
+    advanceToStep4();
+  } catch (err) {
+    tlog('error', 'Failed to load model: ' + err.message);
+    setStepState('step3', 'error');
+    btn.disabled = false;
+    btn.innerHTML = '⬇️ Load Base Model';
+  }
+}
+
+function advanceToStep4() {
+  setStepState('step4', 'active');
+  openStep('step4');
+  closeStep('step3');
+  document.getElementById('step4-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════
+// STEP 4: TRAINING
+// ═══════════════════════════════════════════════
+function drawMobileChart() {
+  const cv = document.getElementById('train-chart');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.offsetWidth || 300;
+  const H = 100;
+  cv.width = W; cv.height = H;
+  ctx.fillStyle = '#1E293B';
+  ctx.fillRect(0, 0, W, H);
+
+  function drawLine(data, color) {
+    if (data.length < 2) return;
+    const max = Math.max(...data, 1);
+    const min = Math.min(...data, 0);
+    const range = max - min || 1;
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    data.forEach((v, i) => {
+      const x = (i / (data.length - 1)) * (W - 20) + 10;
+      const y = H - 10 - ((v - min) / range) * (H - 20);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    const lv = data[data.length - 1];
+    const lx = W - 14;
+    const ly = H - 10 - ((lv - min) / range) * (H - 20);
+    ctx.fillStyle = color;
+    ctx.font = '10px monospace';
+    ctx.fillText(lv.toFixed(3), lx - 32, Math.max(12, ly - 4));
+  }
+  drawLine(lossHistory, '#EF4444');
+  drawLine(accHistory, '#22C55E');
+  ctx.font = '10px monospace';
+  ctx.fillStyle = '#EF4444'; ctx.fillText('loss', 8, 12);
+  ctx.fillStyle = '#22C55E'; ctx.fillText('acc', 44, 12);
+}
+
+async function runMobileTraining() {
+  if (!preparedData) { tlog('warn', 'No data! Run Prepare Data first.'); return; }
+  if (!baseModel) { tlog('warn', 'Load base model first!'); return; }
+
+  trainingCancelled = false;
+  lossHistory = []; accHistory = [];
+  const epochs = parseInt(document.getElementById('train-epochs').value || '20');
+  const lr = parseFloat(document.getElementById('train-lr').value || '0.001');
+  const batchSize = parseInt(document.getElementById('train-batch').value || '16');
+  const numClasses = preparedData.numClasses;
+  const { xs: rawXs, ys: rawYs } = preparedData;
+
+  const btn = document.getElementById('btn-train');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Training…';
+  setStepState('step4', 'active');
+  tlog('step', `Training — ${epochs} epochs, ${rawXs.length} samples`);
+
+  let featsTensor = null;
+  let ysTensor = null;
+
+  try {
+    // Feature extraction
+    document.getElementById('train-label').textContent = 'Extracting features…';
+    const allFeats = [];
+    const reuseCanvas = document.createElement('canvas');
+    reuseCanvas.width = 224; reuseCanvas.height = 224;
+    const reuseCtx = reuseCanvas.getContext('2d');
+
+    for (let i = 0; i < rawXs.length; i++) {
+      if (trainingCancelled) throw new Error('cancelled');
+      const s = rawXs[i];
+      const feat = tf.tidy(() => {
+        reuseCtx.putImageData(
+          new ImageData(new Uint8ClampedArray(s.data), s.width, s.height), 0, 0
+        );
+        return baseModel.predict(
+          tf.browser.fromPixels(reuseCanvas)
+            .resizeBilinear([224, 224])
+            .toFloat().div(255)
+            .expandDims(0)
+        );
+      });
+      allFeats.push(feat);
+      if (i % 10 === 0) {
+        document.getElementById('train-label').textContent = `Features: ${i+1}/${rawXs.length}`;
+        await tf.nextFrame();
+      }
+    }
+
+    featsTensor = tf.concat(allFeats, 0);
+    allFeats.forEach(f => f.dispose());
+    const featSize = featsTensor.shape[1];
+
+    const idxTensor = tf.tensor1d(rawYs, 'int32');
+    ysTensor = tf.oneHot(idxTensor, numClasses);
+    idxTensor.dispose();
+
+    tlog('info', `Features: ${rawXs.length}×${featSize}`);
+
+    // Build classifier
+    const classifier = tf.sequential({
+      layers: [
+        tf.layers.dense({ inputShape: [featSize], units: 128, activation: 'relu' }),
+        tf.layers.dropout({ rate: 0.3 }),
+        tf.layers.dense({ units: numClasses, activation: 'softmax' })
+      ]
+    });
+    classifier.compile({
+      optimizer: tf.train.adam(lr),
+      loss: 'categoricalCrossentropy',
+      metrics: ['accuracy']
+    });
+
+    const startTime = Date.now();
+    await classifier.fit(featsTensor, ysTensor, {
+      epochs, batchSize, shuffle: true,
+      callbacks: {
+        onEpochBegin: async (epoch) => {
+          if (trainingCancelled) throw new Error('cancelled');
+        },
+        onEpochEnd: async (epoch, logs) => {
+          const acc = logs.acc || logs.accuracy || 0;
+          lossHistory.push(logs.loss);
+          accHistory.push(acc);
+          drawMobileChart();
+          const elapsed = (Date.now() - startTime) / 1000;
+          const eta = Math.round((epochs - epoch - 1) * elapsed / (epoch + 1));
+          document.getElementById('train-label').textContent =
+            `Epoch ${epoch+1}/${epochs} | acc: ${(acc*100).toFixed(1)}% | ETA: ${eta}s`;
+          tlog('info', `Epoch ${epoch+1}: loss=${logs.loss.toFixed(4)}, acc=${(acc*100).toFixed(1)}%`);
+          await tf.nextFrame();
+        }
+      }
+    });
+
+    const finalAcc = accHistory[accHistory.length - 1] || 0;
+    modelMetadata = {
+      schemaVersion: SCHEMA_VERSION,
+      classLabels: classNames.slice(0, numClasses),
+      inputSize: 224,
+      trainingAccuracy: finalAcc,
+      baseModel: 'MobileNetV3-Small',
+      timestamp: new Date().toISOString()
+    };
+    trainedModel = classifier;
+
+    tlog('success', `Training complete — accuracy: ${(finalAcc*100).toFixed(1)}%`);
+    document.getElementById('train-label').textContent =
+      `Done ✓ — ${(finalAcc*100).toFixed(1)}% accuracy`;
+
+    setStepState('step4', 'done');
+    // Update save meta
+    document.getElementById('save-meta').innerHTML =
+      `<b>Classes:</b> ${modelMetadata.classLabels.join(', ')}<br>
+       <b>Accuracy:</b> ${(finalAcc*100).toFixed(1)}%<br>
+       <b>Trained:</b> ${new Date(modelMetadata.timestamp).toLocaleString()}`;
+    setStepState('step5', 'active');
+    openStep('step5');
+    closeStep('step4');
+    document.getElementById('step5-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (err) {
+    if (err.message === 'cancelled') {
+      tlog('warn', 'Training stopped');
+      setStepState('step4', '');
+    } else {
+      tlog('error', 'Training error: ' + err.message);
+      setStepState('step4', 'error');
+    }
+  } finally {
+    if (featsTensor) featsTensor.dispose();
+    if (ysTensor) ysTensor.dispose();
+    btn.disabled = false;
+    btn.innerHTML = '🚀 Train';
+  }
+}
+
+function stopMobileTraining() {
+  trainingCancelled = true;
+  tlog('warn', 'Stopping after current epoch…');
+}
+
+// ═══════════════════════════════════════════════
+// SAVE / DOWNLOAD HELPERS
+// ═══════════════════════════════════════════════
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const CHUNK = 0x8000;
+  const parts = [];
+  for (let i = 0; i < bytes.length; i += CHUNK)
+    parts.push(String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK)));
+  return btoa(parts.join(''));
+}
+function base64ToArrayBuffer(b64) {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+function normalizeWeightData(wd) {
+  if (Array.isArray(wd)) {
+    const total = wd.reduce((s, b) => s + b.byteLength, 0);
+    const merged = new Uint8Array(total);
+    let off = 0;
+    for (const buf of wd) { merged.set(new Uint8Array(buf), off); off += buf.byteLength; }
+    return merged.buffer;
+  }
+  if (wd instanceof ArrayBuffer) return wd;
+  if (typeof wd.slice === 'function') return wd.slice(0);
+  return new Uint8Array(wd).buffer;
+}
+async function captureArtifacts(model) {
+  let a = null;
+  await model.save({ save: async (artifacts) => { a = artifacts; return { modelArtifactsInfo: { dateSaved: new Date() } }; } });
+  const wd = normalizeWeightData(a.weightData);
+  return { modelTopology: a.modelTopology, weightSpecs: a.weightSpecs, weightData: arrayBufferToBase64(wd), format: a.format };
+}
+
+// ═══════════════════════════════════════════════
+// STEP 5: SAVE
+// ═══════════════════════════════════════════════
+async function runMobileSaveIDB() {
+  if (!trainedModel) { tlog('warn', 'No trained model yet!'); return; }
+  const name = document.getElementById('save-model-name').value.trim() || 'my-model';
+  const btn = document.getElementById('btn-save-idb');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving…';
+  try {
+    trainedModel.userDefinedMetadata = modelMetadata;
+    await trainedModel.save('indexeddb://ml-blocks-' + name);
+    await baseModel.save('indexeddb://ml-blocks-base-' + name);
+    localStorage.setItem('ml-blocks-meta-' + name, JSON.stringify(modelMetadata));
+    tlog('success', `Model saved as "${name}" ✓`);
+    setStepState('step5', 'done');
+  } catch (err) {
+    tlog('error', 'Save error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '💾 Save to Browser';
+  }
+}
+
+async function runMobileDownload() {
+  if (!trainedModel || !baseModel) { tlog('warn', 'Nothing to download yet!'); return; }
+  const btn = document.getElementById('btn-download');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Bundling…';
+  tlog('step', 'Preparing download…');
+  try {
+    trainedModel.userDefinedMetadata = modelMetadata;
+    const [classifierArt, baseArt] = await Promise.all([
+      captureArtifacts(trainedModel),
+      captureArtifacts(baseModel),
+    ]);
+    const bundle = {
+      schemaVersion: SCHEMA_VERSION,
+      metadata: modelMetadata,
+      classifier: classifierArt,
+      base: baseArt,
+    };
+    const blob = new Blob([JSON.stringify(bundle)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const fname = (document.getElementById('save-model-name').value.trim() || 'klocki-model') + '.json';
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    tlog('success', 'Downloaded: ' + fname);
+  } catch (err) {
+    tlog('error', 'Download error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '⬇️ Download as File';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// INFERENCE — LOAD MODEL
+// ═══════════════════════════════════════════════
+async function refreshInferIDB() {
+  const sel = document.getElementById('idb-model-select');
+  if (!sel) return;
+  try {
+    const models = await tf.io.listModels();
+    const names = Object.keys(models)
+      .filter(k => k.startsWith('indexeddb://ml-blocks-') && !k.startsWith('indexeddb://ml-blocks-base-'))
+      .map(k => k.replace('indexeddb://ml-blocks-', ''));
+    sel.innerHTML = names.length
+      ? names.map(n => `<option value="${n}">${n}</option>`).join('')
+      : '<option value="" disabled selected>No saved models</option>';
+  } catch (e) {
+    sel.innerHTML = '<option value="" disabled selected>No saved models</option>';
+  }
+}
+
+async function loadFromIDB() {
+  const sel = document.getElementById('idb-model-select');
+  const name = sel?.value;
+  if (!name) { ilog('warn', 'Select a model first'); return; }
+  const btn = document.querySelector('#stepA-body .btn-infer');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Loading…';
+  ilog('step', 'Loading "' + name + '" from browser…');
+  try {
+    inferModel = await tf.loadLayersModel('indexeddb://ml-blocks-' + name);
+    try {
+      baseModel = await tf.loadGraphModel('indexeddb://ml-blocks-base-' + name);
+      ilog('info', 'Base model loaded ✓');
+    } catch (_) {
+      ilog('warn', 'Base model not found in browser — try downloading again');
+    }
+    const metaStr = localStorage.getItem('ml-blocks-meta-' + name);
+    const meta = metaStr ? JSON.parse(metaStr) : {};
+    inferMeta = meta;
+    showInferMeta(meta);
+    ilog('success', 'Model loaded — classes: ' + (meta.classLabels || []).join(', '));
+    advanceToStepB();
+  } catch (err) {
+    ilog('error', 'Load error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '📂 Load from Browser';
+  }
+}
+
+async function loadFromFile() {
+  const fileInput = document.getElementById('infer-file-input');
+  const file = fileInput?.files?.[0];
+  if (!file) return;
+  ilog('step', 'Loading from file: ' + file.name);
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    if (parsed.base && parsed.classifier) {
+      inferModel = await tf.loadLayersModel({
+        load: async () => ({
+          modelTopology: parsed.classifier.modelTopology,
+          weightSpecs: parsed.classifier.weightSpecs,
+          weightData: base64ToArrayBuffer(parsed.classifier.weightData),
+          format: parsed.classifier.format,
+        })
+      });
+      baseModel = await tf.loadGraphModel({
+        load: async () => ({
+          modelTopology: parsed.base.modelTopology,
+          weightSpecs: parsed.base.weightSpecs,
+          weightData: base64ToArrayBuffer(parsed.base.weightData),
+          format: parsed.base.format,
+        })
+      });
+      ilog('success', 'Bundled model loaded from file ✓');
+      inferMeta = parsed.metadata || {};
+      showInferMeta(inferMeta);
+      advanceToStepB();
+    } else {
+      ilog('error', 'Invalid model file. Use a .json file downloaded from Training.');
+    }
+  } catch (err) {
+    ilog('error', 'File load error: ' + err.message);
+  }
+  fileInput.value = '';
+}
+
+function showInferMeta(meta) {
+  const box = document.getElementById('infer-meta');
+  if (!box) return;
+  box.style.display = '';
+  box.innerHTML =
+    `<b>Classes:</b> ${(meta.classLabels || []).join(', ') || '—'}<br>` +
+    `<b>Accuracy:</b> ${meta.trainingAccuracy ? (meta.trainingAccuracy*100).toFixed(1)+'%' : '—'}<br>` +
+    `<b>Trained:</b> ${meta.timestamp ? new Date(meta.timestamp).toLocaleString() : '—'}`;
+}
+
+function advanceToStepB() {
+  setStepState('stepA', 'done');
+  setStepState('stepB', 'active');
+  openStep('stepB');
+  closeStep('stepA');
+  document.getElementById('stepB-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════
+// INFERENCE — CAMERA
+// ═══════════════════════════════════════════════
+async function startInferCamera() {
+  if (!inferModel || !baseModel) {
+    ilog('warn', 'Load a model first!');
+    return;
+  }
+  const btn = document.getElementById('btn-start-infer');
+  const stopBtn = document.getElementById('btn-stop-infer');
+  btn.innerHTML = '<span class="spinner"></span> Starting…';
+  btn.disabled = true;
+  try {
+    if (inferStream) inferStream.getTracks().forEach(t => t.stop());
+    inferStream = await getCameraStream(inferFacingMode);
+    const vid = document.getElementById('infer-video');
+    vid.srcObject = inferStream;
+    vid.play().catch(() => {});
+    btn.style.display = 'none';
+    stopBtn.style.display = '';
+    ilog('success', 'Camera started — predicting…');
+    setStepState('stepB', 'active');
+    // Start inference loop
+    const fpsEl = document.getElementById('infer-fps');
+    const interval = fpsEl ? parseInt(fpsEl.value) : 200;
+    if (inferInterval) clearInterval(inferInterval);
+    inferInterval = setInterval(runMobileInference, interval);
+  } catch (err) {
+    ilog('error', 'Camera error: ' + err.message);
+    btn.innerHTML = '📷 Start Camera';
+    btn.disabled = false;
+  }
+}
+
+function stopInferCamera() {
+  if (inferInterval) { clearInterval(inferInterval); inferInterval = null; }
+  if (inferStream) { inferStream.getTracks().forEach(t => t.stop()); inferStream = null; }
+  const vid = document.getElementById('infer-video');
+  if (vid) vid.srcObject = null;
+  const btn = document.getElementById('btn-start-infer');
+  const stopBtn = document.getElementById('btn-stop-infer');
+  if (btn) { btn.style.display = ''; btn.innerHTML = '📷 Start Camera'; btn.disabled = false; }
+  if (stopBtn) stopBtn.style.display = 'none';
+  document.getElementById('pred-overlay-text').textContent = '—';
+  setStepState('stepB', 'active');
+}
+
+async function flipInferCamera() {
+  inferFacingMode = inferFacingMode === 'environment' ? 'user' : 'environment';
+  if (inferStream) {
+    stopInferCamera();
+    await startInferCamera();
+  }
+}
+
+async function runMobileInference() {
+  if (!inferModel || !baseModel) return;
+  const vid = document.getElementById('infer-video');
+  if (!vid || !vid.srcObject || vid.readyState < 2) return;
+
+  try {
+    const tensor = tf.tidy(() =>
+      tf.browser.fromPixels(vid)
+        .resizeBilinear([224, 224])
+        .toFloat().div(255)
+        .expandDims(0)
+    );
+    const features = baseModel.predict(tensor);
+    const predTensor = inferModel.predict(features);
+    const predictions = await predTensor.data();
+    predTensor.dispose();
+    features.dispose();
+    tensor.dispose();
+
+    const labels = (inferMeta?.classLabels) || classNames;
+    const best = Array.from(predictions);
+    const maxIdx = best.indexOf(Math.max(...best));
+    const confidence = best[maxIdx];
+    const thresh = parseFloat(document.getElementById('infer-threshold').value || '0.7');
+
+    // Overlay
+    const overlayText = document.getElementById('pred-overlay-text');
+    if (confidence >= thresh) {
+      overlayText.textContent = labels[maxIdx] + ' ' + (confidence*100).toFixed(0) + '%';
+      overlayText.style.color = CLASS_COLORS[maxIdx % CLASS_COLORS.length];
+    } else {
+      overlayText.textContent = 'uncertain';
+      overlayText.style.color = '#94A3B8';
+    }
+
+    // Top label
+    const topLabel = document.getElementById('pred-top-label');
+    if (confidence >= thresh) {
+      topLabel.textContent = labels[maxIdx] + ' — ' + (confidence*100).toFixed(1) + '%';
+      topLabel.style.color = CLASS_COLORS[maxIdx % CLASS_COLORS.length];
+      topLabel.style.fontStyle = '';
+    } else {
+      topLabel.textContent = 'below confidence threshold';
+      topLabel.style.color = 'var(--muted)';
+      topLabel.style.fontStyle = 'italic';
+    }
+
+    // Bars
+    const barsEl = document.getElementById('pred-bars');
+    if (barsEl) {
+      barsEl.innerHTML = Array.from(predictions).map((p, i) => {
+        const pct = (p * 100).toFixed(1);
+        const color = CLASS_COLORS[i % CLASS_COLORS.length];
+        const lbl = labels[i] || ('Class ' + i);
+        return `<div class="conf-bar-row">
+  <div class="conf-bar-header">
+    <span style="color:${color}">${lbl}</span>
+    <span style="color:var(--muted)">${pct}%</span>
+  </div>
+  <div class="conf-bar-track">
+    <div class="conf-bar-fill" style="background:${color};width:${pct}%"></div>
+  </div>
+</div>`;
+      }).join('');
+    }
+  } catch (_) { /* silent during inference loop */ }
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  renderClassList();
+});
+</script>
+</body>
+</html>

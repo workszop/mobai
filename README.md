@@ -1,2 +1,2 @@
-# mobai
-mobile ai training
+# klocki
+edu blocks for training AI model
