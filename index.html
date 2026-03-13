@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
   <title>KlockiAI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
@@ -24,6 +24,10 @@
       <button class="tb-btn" onclick="clearCanvas()" data-i18n="btn_clear">Wyczyść</button>
     </div>
   </div>
+
+  <!-- MOBILE SIDEBAR TOGGLE -->
+  <button id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Menu">+</button>
+  <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <!-- WORKSPACE -->
   <div id="workspace">

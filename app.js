@@ -256,6 +256,23 @@ function canvasDrop(e) {
     draggedPaletteType = null;
   }
 }
+// Mobile: tap palette block to place it on canvas
+function paletteTap(e) {
+  const type = e.currentTarget.dataset.type;
+  if (!type) return;
+  const canvas = document.getElementById('canvas');
+  const rect = canvas.getBoundingClientRect();
+  // Stack blocks vertically with some offset
+  const existing = placedBlocks.length;
+  const x = 16;
+  const y = 16 + existing * 80;
+  placeBlock(type, x, Math.min(y, rect.height - 80));
+  // On mobile, close sidebar after placing
+  if (window.innerWidth <= 900) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  }
+}
 
 // ===== BLOCK STATUS =====
 function setBlockStatus(card, status) {
@@ -323,7 +340,7 @@ function buildBlockHTML(type, id) {
   }
 
   return `
-<div class="bk-header" style="background:${bg}" onmousedown="cardDragStart(event,'${id}')" ondblclick="toggleCollapse('${id}')">
+<div class="bk-header" style="background:${bg}" onmousedown="cardDragStart(event,'${id}')" ontouchstart="cardDragStart(event,'${id}')" ondblclick="toggleCollapse('${id}')">
   <span class="drag-handle">⠸</span>
   <span class="bk-title" data-block-title="${id}">${title}</span>
   <span class="bk-badge">${phase}</span>
@@ -629,41 +646,47 @@ function toggleCollapse(id) {
   if (card) card.classList.toggle('collapsed');
 }
 
-// ===== CARD DRAG (reposition) =====
+// ===== CARD DRAG (reposition) — supports mouse + touch =====
 function cardDragStart(e, id) {
   if (EDU_MODE) return;
-  if (e.button !== 0) return;
+  const isTouch = e.type === 'touchstart';
+  if (!isTouch && e.button !== 0) return;
   e.stopPropagation();
+  if (isTouch) e.preventDefault();
   draggedCard = id;
   const card = document.getElementById(id);
   const rect = card.getBoundingClientRect();
   const trash = document.getElementById('trash-zone');
-  dragOffsetX = e.clientX - rect.left;
-  dragOffsetY = e.clientY - rect.top;
+  const pt = isTouch ? e.touches[0] : e;
+  dragOffsetX = pt.clientX - rect.left;
+  dragOffsetY = pt.clientY - rect.top;
   card.classList.add('dragging');
   trash.classList.add('visible');
 
   function onMove(ev) {
+    const p = ev.touches ? ev.touches[0] : ev;
+    if (ev.cancelable) ev.preventDefault();
     const canvas = document.getElementById('canvas');
     const cr = canvas.getBoundingClientRect();
-    let nx = ev.clientX - cr.left - dragOffsetX;
-    let ny = ev.clientY - cr.top - dragOffsetY;
+    let nx = p.clientX - cr.left - dragOffsetX;
+    let ny = p.clientY - cr.top - dragOffsetY;
     nx = Math.max(0, Math.min(nx, cr.width - 280));
     ny = Math.max(0, ny);
     card.style.left = nx + 'px';
     card.style.top = ny + 'px';
     // Trash detection
     const tr = trash.getBoundingClientRect();
-    const inTrash = ev.clientX >= tr.left && ev.clientX <= tr.right &&
-      ev.clientY >= tr.top && ev.clientY <= tr.bottom;
+    const inTrash = p.clientX >= tr.left && p.clientX <= tr.right &&
+      p.clientY >= tr.top && p.clientY <= tr.bottom;
     trash.classList.toggle('hot', inTrash);
   }
   function onUp(ev) {
+    const p = ev.changedTouches ? ev.changedTouches[0] : ev;
     card.classList.remove('dragging');
     trash.classList.remove('visible', 'hot');
     const tr = trash.getBoundingClientRect();
-    const inTrash = ev.clientX >= tr.left && ev.clientX <= tr.right &&
-      ev.clientY >= tr.top && ev.clientY <= tr.bottom;
+    const inTrash = p.clientX >= tr.left && p.clientX <= tr.right &&
+      p.clientY >= tr.top && p.clientY <= tr.bottom;
     if (inTrash && !EDU_MODE) {
       removeBlock(id);
     } else {
@@ -676,9 +699,13 @@ function cardDragStart(e, id) {
     draggedCard = null;
     document.removeEventListener('mousemove', onMove);
     document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onUp);
   }
   document.addEventListener('mousemove', onMove);
   document.addEventListener('mouseup', onUp);
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('touchend', onUp);
 }
 
 function removeBlock(id) {
@@ -1981,6 +2008,14 @@ if (EDU_MODE) {
   document.body.style.fontSize = '18px';
 }
 
+// ===== MOBILE SIDEBAR =====
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('open');
+}
+
 // ===== INIT =====
 window.activeClass = 0;
 
@@ -1993,6 +2028,17 @@ document.addEventListener('DOMContentLoaded', () => {
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
   }, { passive: false });
+
+  // Mobile: attach tap handlers to palette blocks
+  const isMobile = 'ontouchstart' in window || window.innerWidth <= 900;
+  if (isMobile) {
+    document.querySelectorAll('.palette-block').forEach(el => {
+      el.addEventListener('click', paletteTap);
+    });
+    // On mobile, switch canvas to flow layout instead of absolute positioning
+    canvas.style.overflow = 'auto';
+    canvas.style.WebkitOverflowScrolling = 'touch';
+  }
 
   // Quick start if EDU mode
   if (EDU_MODE) {
