@@ -757,12 +757,18 @@ function updateClassNamesEverywhere() {
 let cameraStreams = {};
 
 async function getCameraStream() {
-  const bail = e => e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError';
-  // HTTPS check — required on iOS Safari
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1' && location.protocol !== 'file:') {
-    throw new Error(lang === 'pl' ? 'Kamera wymaga HTTPS!' : 'Camera requires HTTPS!');
+  // Check if mediaDevices API is available (requires secure context on iOS)
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    const isInsecure = location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1';
+    if (isInsecure) {
+      throw new Error(lang === 'pl'
+        ? 'Kamera wymaga HTTPS! Otwórz stronę przez https://...'
+        : 'Camera requires HTTPS! Open the page via https://...');
+    }
+    throw new Error(lang === 'pl' ? 'Przeglądarka nie wspiera kamery' : 'Browser does not support camera API');
   }
-  // Attempt 1: preferred resolution with facingMode (needed for iOS)
+  const bail = e => e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError';
+  // Attempt 1: environment camera with preferred resolution
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
@@ -2044,6 +2050,12 @@ function toggleSidebar() {
   const overlay = document.getElementById('sidebar-overlay');
   sidebar.classList.toggle('open');
   overlay.classList.toggle('open');
+}
+
+// ===== MOBILE LOG PANEL =====
+function toggleLogPanel() {
+  const panel = document.getElementById('log-panel');
+  panel.classList.toggle('mobile-open');
 }
 
 // ===== INIT =====

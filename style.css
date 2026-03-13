@@ -876,6 +876,25 @@ canvas.chart-canvas {
   -webkit-tap-highlight-color: transparent;
 }
 
+#log-toggle {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 200;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #0F172A;
+  color: #94A3B8;
+  font-size: 22px;
+  border: 3px solid #334155;
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
 #sidebar-overlay {
   display: none;
   position: fixed;
@@ -906,6 +925,7 @@ canvas.chart-canvas {
   .tb-btn { padding: 6px 10px; font-size: 12px }
 
   #sidebar-toggle { display: flex }
+  #log-toggle { display: flex }
 
   /* Sidebar: off-canvas drawer */
   #sidebar {
@@ -966,8 +986,26 @@ canvas.chart-canvas {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Hide log panel on mobile */
-  #log-panel { display: none }
+  /* Log panel: slide-up drawer on mobile */
+  #log-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50vh;
+    z-index: 150;
+    transform: translateY(100%);
+    transition: transform .25s ease;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,.3);
+  }
+  #log-panel.mobile-open {
+    transform: translateY(0);
+  }
+  #log-header {
+    padding: 14px 16px;
+    border-radius: 16px 16px 0 0;
+  }
 
   /* Trash zone: fixed bottom-center */
   #trash-zone {
