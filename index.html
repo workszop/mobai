@@ -339,13 +339,11 @@
     }
     .pred-overlay-raw {
       font-size: 12px; font-weight: 600; font-family: monospace;
-      background: rgba(0,0,0,0.65); color: #e2e8f0;
+      background: rgba(0,0,0,0.65); color: #38bdf8;
       padding: 6px 10px; border-radius: 8px;
       backdrop-filter: blur(4px);
-      line-height: 1.6;
+      display: inline-block;
     }
-    .pred-overlay-raw .prob-row { display: flex; justify-content: space-between; gap: 12px; }
-    .pred-overlay-raw .prob-val { color: #38bdf8; }
 
     /* ── SPINNER ── */
     .spinner {
@@ -1641,10 +1639,7 @@ async function runMobileInference() {
 
     // Overlay — raw probabilities
     const overlayRaw = document.getElementById('pred-overlay-raw');
-    overlayRaw.innerHTML = Array.from(predictions).map((p, i) => {
-      const lbl = labels[i] || ('C' + i);
-      return `<div class="prob-row"><span>${lbl}</span><span class="prob-val">${p.toFixed(4)}</span></div>`;
-    }).join('');
+    overlayRaw.textContent = Array.from(predictions).map(p => p.toFixed(4)).join('  ');
 
     // Top label
     const topLabel = document.getElementById('pred-top-label');
