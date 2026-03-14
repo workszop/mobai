@@ -182,7 +182,7 @@ let dragOffsetX = 0, dragOffsetY = 0;
 let draggedCard = null;
 
 // Training state
-let classNames = ['Klasa 1', 'Klasa 2'];
+let classNames = ['.', '..'];
 let classColors = CLASS_COLORS.slice(0, 2);
 let capturedSamples = [[], []]; // per class, array of ImageData — dynamic
 let preparedData = null; // {xs, ys}
@@ -441,7 +441,7 @@ function addClass(labelBlockId) {
     log('warn', lang === 'pl' ? 'Maksymalna liczba klas osi\u0105gni\u0119ta' : 'Maximum class count reached');
     return;
   }
-  const name = lang === 'pl' ? `Klasa ${idx + 1}` : `Class ${idx + 1}`;
+  const name = '.'.repeat(idx + 1);
   classNames.push(name);
   capturedSamples.push([]);
   // Re-render label blocks: specific one if passed, otherwise all
@@ -733,7 +733,7 @@ function removeBlock(id) {
 function clearCanvas() {
   placedBlocks.forEach(b => { if (b.card) b.card.remove(); });
   placedBlocks = [];
-  classNames = ['Klasa 1', 'Klasa 2'];
+  classNames = ['.', '..'];
   capturedSamples = [[], []];
   baseModel = null;
   fullModel = null;
