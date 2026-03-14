@@ -594,7 +594,6 @@
     <button class="back-btn" onclick="goHome()"><i data-lucide="arrow-left" class="lucide"></i></button>
     <h2>Inference</h2>
     <span class="top-badge badge-infer">PREDICT</span>
-    <button class="top-nav-btn" onclick="goToTrainingFromInference()" title="Back to Training"><i data-lucide="brain" style="width:16px;height:16px"></i> Retrain</button>
   </div>
 
   <div class="scroll-area">
@@ -688,6 +687,10 @@
           </div>
           <div id="pred-bars"></div>
         </div>
+
+        <button class="btn btn-secondary" onclick="goToTrainingFromInference()" style="margin-top:8px">
+          <i data-lucide="brain" style="width:16px;height:16px;vertical-align:-3px"></i> Retrain — Add Data or Classes
+        </button>
 
       </div>
     </div>
