@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
-  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-title" content="KlockiAI" />
@@ -201,7 +201,6 @@
     .btn-success { background: var(--success); color: white; }
     .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
     .btn-warn { background: var(--text); color: white; }
-    .btn-danger { background: var(--error); color: white; }
     .btn-infer { background: var(--text); color: white; }
     .btn-sm { padding: 8px 14px; font-size: 13px; min-height: 38px; border-radius: 6px; }
     .btn-row { display: flex; gap: 8px; }
@@ -323,21 +322,12 @@
     .log-box::-webkit-scrollbar { width: 5px; }
     .log-box::-webkit-scrollbar-track { background: transparent; }
     .log-box::-webkit-scrollbar-thumb { background: #3b3d57; border-radius: 3px; }
-    .log-line {
-      font-family: inherit; font-size: inherit; padding: 1px 0;
-      white-space: pre-wrap; word-break: break-all;
-    }
-    .log-line.ll-info { color: #7aa2f7; }
-    .log-line.ll-success { color: #9ece6a; }
-    .log-line.ll-warn { color: #e0af68; }
-    .log-line.ll-error { color: #f7768e; }
-    .log-line.ll-step { color: #bb9af7; font-weight: 700; }
-    .log-line.ll-data { color: #73daca; }
     .log-info { color: #7aa2f7; }
     .log-success { color: #9ece6a; }
     .log-warn { color: #e0af68; }
     .log-error { color: #f7768e; }
     .log-step { color: #bb9af7; font-weight: 700; }
+    .log-data { color: #73daca; }
 
     /* ── NAME INPUT ── */
     .name-input {
