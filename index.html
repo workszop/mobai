@@ -337,12 +337,15 @@
       position: absolute; top: 10px; left: 10px; right: 10px;
       pointer-events: none;
     }
-    .pred-overlay-label {
-      font-size: 16px; font-weight: 700;
-      background: rgba(0,0,0,0.6); color: white;
-      padding: 6px 14px; border-radius: 8px;
-      display: inline-block; backdrop-filter: blur(4px);
+    .pred-overlay-raw {
+      font-size: 12px; font-weight: 600; font-family: monospace;
+      background: rgba(0,0,0,0.65); color: #e2e8f0;
+      padding: 6px 10px; border-radius: 8px;
+      backdrop-filter: blur(4px);
+      line-height: 1.6;
     }
+    .pred-overlay-raw .prob-row { display: flex; justify-content: space-between; gap: 12px; }
+    .pred-overlay-raw .prob-val { color: #38bdf8; }
 
     /* ── SPINNER ── */
     .spinner {
@@ -628,7 +631,7 @@
           <video id="infer-video" autoplay playsinline muted></video>
           <button class="cam-flip-btn" onclick="flipInferCamera()" title="Flip camera"><i data-lucide="refresh-cw" style="width:18px;height:18px;stroke-width:2"></i></button>
           <div class="infer-cam-overlay">
-            <span class="pred-overlay-label" id="pred-overlay-text">—</span>
+            <div class="pred-overlay-raw" id="pred-overlay-raw">—</div>
           </div>
         </div>
 
@@ -656,8 +659,9 @@
           </select>
         </div>
 
-        <!-- Results -->
+        <!-- Interpretation -->
         <div class="infer-result-box">
+          <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Interpretation</div>
           <div class="infer-top-label" id="pred-top-label" style="color:var(--muted); font-style:italic; font-size:16px">
             Waiting for prediction…
           </div>
@@ -1598,7 +1602,7 @@ function stopInferCamera() {
   if (vid) vid.srcObject = null;
   const btn = document.getElementById('btn-toggle-infer');
   if (btn) { btn.innerHTML = '📷 Start Camera'; btn.disabled = false; btn.className = 'btn btn-infer'; }
-  document.getElementById('pred-overlay-text').textContent = '—';
+  document.getElementById('pred-overlay-raw').textContent = '—';
   setStepState('stepB', 'active');
 }
 
@@ -1635,15 +1639,12 @@ async function runMobileInference() {
     const confidence = best[maxIdx];
     const thresh = parseFloat(document.getElementById('infer-threshold').value || '0.7');
 
-    // Overlay
-    const overlayText = document.getElementById('pred-overlay-text');
-    if (confidence >= thresh) {
-      overlayText.textContent = labels[maxIdx] + ' ' + (confidence*100).toFixed(0) + '%';
-      overlayText.style.color = CLASS_COLORS[maxIdx % CLASS_COLORS.length];
-    } else {
-      overlayText.textContent = 'uncertain';
-      overlayText.style.color = '#94A3B8';
-    }
+    // Overlay — raw probabilities
+    const overlayRaw = document.getElementById('pred-overlay-raw');
+    overlayRaw.innerHTML = Array.from(predictions).map((p, i) => {
+      const lbl = labels[i] || ('C' + i);
+      return `<div class="prob-row"><span>${lbl}</span><span class="prob-val">${p.toFixed(4)}</span></div>`;
+    }).join('');
 
     // Top label
     const topLabel = document.getElementById('pred-top-label');
