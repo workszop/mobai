@@ -7,7 +7,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="KlockiAI" />
+  <link rel="manifest" href="/site.webmanifest" />
   <title>KlockiAI Mobile</title>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -337,11 +342,12 @@
       position: absolute; top: 10px; left: 10px; right: 10px;
       pointer-events: none;
     }
-    .pred-overlay-label {
-      font-size: 16px; font-weight: 700;
-      background: rgba(0,0,0,0.6); color: white;
-      padding: 6px 14px; border-radius: 8px;
-      display: inline-block; backdrop-filter: blur(4px);
+    .pred-overlay-raw {
+      font-size: 12px; font-weight: 600; font-family: monospace;
+      background: rgba(0,0,0,0.65); color: #38bdf8;
+      padding: 6px 10px; border-radius: 8px;
+      backdrop-filter: blur(4px);
+      display: inline-block;
     }
 
     /* ── SPINNER ── */
@@ -628,7 +634,7 @@
           <video id="infer-video" autoplay playsinline muted></video>
           <button class="cam-flip-btn" onclick="flipInferCamera()" title="Flip camera"><i data-lucide="refresh-cw" style="width:18px;height:18px;stroke-width:2"></i></button>
           <div class="infer-cam-overlay">
-            <span class="pred-overlay-label" id="pred-overlay-text">—</span>
+            <div class="pred-overlay-raw" id="pred-overlay-raw">—</div>
           </div>
         </div>
 
@@ -656,8 +662,9 @@
           </select>
         </div>
 
-        <!-- Results -->
+        <!-- Interpretation -->
         <div class="infer-result-box">
+          <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Interpretation</div>
           <div class="infer-top-label" id="pred-top-label" style="color:var(--muted); font-style:italic; font-size:16px">
             Waiting for prediction…
           </div>
@@ -879,10 +886,11 @@ async function getCameraStream(facingMode) {
 
   // Try simplest constraint FIRST (best compatibility, preserves user gesture)
   // More complex constraints tried only if the simple one fails for non-permission reasons
+  const fm = facingMode || 'environment';
   const constraints = [
+    { video: { facingMode: { exact: fm } } },
+    { video: { facingMode: fm } },
     { video: true },
-    { video: { facingMode: facingMode || 'environment' } },
-    { video: { facingMode: facingMode || 'environment', width: { ideal: 640 }, height: { ideal: 480 } } },
   ];
   let lastErr;
   for (const c of constraints) {
@@ -1028,7 +1036,7 @@ self.onmessage = function(e) {
     const src = samples[idx % samples.length];
     const lbl = labels[idx % labels.length];
     const w = src.width, h = src.height;
-    const buf = new Uint8ClampedArray(src.data);
+    const buf = new Uint8ClampedArray(src.data.slice(0));
     if (augType !== 'none') {
       const bj = 0.7 + Math.random() * 0.6;
       for (let i = 0; i < buf.length; i += 4) {
@@ -1084,7 +1092,7 @@ async function runMobilePrepare() {
   const workerURL = URL.createObjectURL(blob);
   const worker = new Worker(workerURL);
 
-  await new Promise(resolve => {
+  await new Promise((resolve, reject) => {
     worker.onmessage = e => {
       if (e.data.type === 'progress') {
         // progress logged silently
@@ -1096,6 +1104,12 @@ async function runMobilePrepare() {
         URL.revokeObjectURL(workerURL);
         resolve();
       }
+    };
+    worker.onerror = e => {
+      tlog('error', 'Data preparation failed: ' + (e.message || 'unknown error'));
+      worker.terminate();
+      URL.revokeObjectURL(workerURL);
+      reject(new Error(e.message));
     };
     worker.postMessage(
       { samples: flatSamples, labels: flatLabels, multiplier, augType },
@@ -1591,7 +1605,7 @@ function stopInferCamera() {
   if (vid) vid.srcObject = null;
   const btn = document.getElementById('btn-toggle-infer');
   if (btn) { btn.innerHTML = '📷 Start Camera'; btn.disabled = false; btn.className = 'btn btn-infer'; }
-  document.getElementById('pred-overlay-text').textContent = '—';
+  document.getElementById('pred-overlay-raw').textContent = '—';
   setStepState('stepB', 'active');
 }
 
@@ -1628,15 +1642,9 @@ async function runMobileInference() {
     const confidence = best[maxIdx];
     const thresh = parseFloat(document.getElementById('infer-threshold').value || '0.7');
 
-    // Overlay
-    const overlayText = document.getElementById('pred-overlay-text');
-    if (confidence >= thresh) {
-      overlayText.textContent = labels[maxIdx] + ' ' + (confidence*100).toFixed(0) + '%';
-      overlayText.style.color = CLASS_COLORS[maxIdx % CLASS_COLORS.length];
-    } else {
-      overlayText.textContent = 'uncertain';
-      overlayText.style.color = '#94A3B8';
-    }
+    // Overlay — raw probabilities
+    const overlayRaw = document.getElementById('pred-overlay-raw');
+    overlayRaw.textContent = Array.from(predictions).map(p => p.toFixed(4)).join('  ');
 
     // Top label
     const topLabel = document.getElementById('pred-top-label');
