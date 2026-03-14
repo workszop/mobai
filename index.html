@@ -108,6 +108,12 @@
     }
     .badge-train { background: var(--bg3); color: var(--muted); }
     .badge-infer { background: var(--bg3); color: var(--muted); }
+    .top-nav-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px;
+      cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap;
+    }
+    .top-nav-btn:active { background: var(--bg3); }
 
     /* ── SCROLL CONTENT ── */
     .scroll-area { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--bg2); }
@@ -435,6 +441,7 @@
     <button class="back-btn" onclick="goHome()"><i data-lucide="arrow-left" class="lucide"></i></button>
     <h2>Training</h2>
     <span class="top-badge badge-train">TRAIN</span>
+    <button class="top-nav-btn" onclick="goToInferenceFromTraining()" title="Test in Inference"><i data-lucide="scan-search" style="width:16px;height:16px"></i> Test</button>
   </div>
 
   <div class="scroll-area" id="training-scroll">
@@ -567,6 +574,10 @@
           Download as File
         </button>
         <p class="hint">Saved models can be loaded in Inference mode without retraining.</p>
+        <div class="or-sep">or</div>
+        <button class="btn btn-infer" onclick="goToInferenceFromTraining()" id="btn-test-infer">
+          <i data-lucide="scan-search" style="width:16px;height:16px;vertical-align:-3px"></i> Test in Inference
+        </button>
       </div>
     </div>
 
@@ -593,6 +604,7 @@
     <button class="back-btn" onclick="goHome()"><i data-lucide="arrow-left" class="lucide"></i></button>
     <h2>Inference</h2>
     <span class="top-badge badge-infer">PREDICT</span>
+    <button class="top-nav-btn" onclick="goToTrainingFromInference()" title="Back to Training"><i data-lucide="brain" style="width:16px;height:16px"></i> Retrain</button>
   </div>
 
   <div class="scroll-area">
@@ -754,6 +766,28 @@ function goToInference() {
   refreshInferIDB();
   showScreen('screen-inference');
 }
+function goToTrainingFromInference() {
+  stopInferCamera();
+  renderClassList();
+  showScreen('screen-training');
+  tlog('step', 'Returned to training — add more data or classes and retrain');
+}
+function goToInferenceFromTraining() {
+  stopTrainCamera();
+  if (trainedModel) {
+    inferModel = trainedModel;
+    inferMeta = modelMetadata;
+    refreshInferIDB();
+    showScreen('screen-inference');
+    ilog('step', 'Testing with current model — start camera to predict');
+  } else if (inferModel) {
+    refreshInferIDB();
+    showScreen('screen-inference');
+    ilog('step', 'Switching to inference');
+  } else {
+    tlog('warn', 'Train a model first before testing inference');
+  }
+}
 
 // ═══════════════════════════════════════════════
 // STEP TOGGLE
@@ -792,11 +826,15 @@ function mlog(type, msg, screen) {
   el.className = 'log-' + type;
   const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   el.textContent = '[' + ts + '] ' + msg;
-  const box = document.getElementById((screen || 'train') + '-log');
+  const scr = screen || 'train';
+  const box = document.getElementById(scr + '-log');
   if (box) {
     box.appendChild(el);
     box.scrollTop = box.scrollHeight;
   }
+  // Auto-expand log section if collapsed
+  const body = document.getElementById(scr + '-log-body');
+  if (body && body.classList.contains('collapsed')) body.classList.remove('collapsed');
 }
 function tlog(type, msg) { mlog(type, msg, 'train'); }
 function ilog(type, msg) { mlog(type, msg, 'infer'); }
