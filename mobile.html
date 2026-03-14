@@ -2,8 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0F172A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
   <title>KlockiAI Mobile</title>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
   <style>
@@ -36,6 +40,7 @@
       color: var(--text);
       min-height: 100%;
       overscroll-behavior: none;
+      padding-bottom: env(safe-area-inset-bottom, 0);
     }
 
     /* ── SCREENS ── */
@@ -47,6 +52,7 @@
       align-items: center;
       justify-content: center;
       padding: 24px;
+      padding-top: calc(env(safe-area-inset-top, 0px) + 24px);
       gap: 32px;
     }
     .home-logo { text-align: center; }
@@ -79,6 +85,7 @@
       display: flex;
       align-items: center;
       padding: 14px 16px;
+      padding-top: calc(env(safe-area-inset-top, 14px) + 14px);
       background: var(--bg2);
       border-bottom: 1px solid var(--border);
       gap: 12px;
@@ -419,14 +426,9 @@
           </div>
         </div>
 
-        <div class="btn-row">
-          <button class="btn btn-primary" id="btn-start-cam" onclick="startTrainCamera()">
-            📷 Start Camera
-          </button>
-          <button class="btn btn-secondary" id="btn-stop-cam" onclick="stopTrainCamera()" style="display:none">
-            ⏹ Stop
-          </button>
-        </div>
+        <button class="btn btn-primary" id="btn-toggle-cam" onclick="toggleTrainCamera()">
+          📷 Start Camera
+        </button>
 
         <!-- Classes -->
         <div class="gap-4">
@@ -452,44 +454,10 @@
       </div>
     </div>
 
-    <!-- STEP 2: Prepare Data -->
-    <div class="step-card" id="step2-card">
-      <div class="step-header" onclick="toggleStep('step2')">
-        <div class="step-num">2</div>
-        <div class="step-title">Prepare Data</div>
-        <div class="step-status-badge" id="step2-badge">Waiting</div>
-      </div>
-      <div class="step-body collapsed" id="step2-body">
-        <p class="hint">Resize and optionally augment captured images to increase variety.</p>
-        <div class="param-row">
-          <span class="param-label">Augmentation</span>
-          <select id="aug-type">
-            <option value="none">None</option>
-            <option value="all" selected>Flip + Brightness</option>
-          </select>
-        </div>
-        <div class="param-row">
-          <span class="param-label">Multiplier</span>
-          <select id="aug-mul">
-            <option value="1">1×</option>
-            <option value="2" selected>2×</option>
-            <option value="3">3×</option>
-          </select>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-bar" id="prep-progress" style="width:0%"></div>
-        </div>
-        <div class="progress-label" id="prep-label">—</div>
-        <button class="btn btn-primary" onclick="runMobilePrepare()" id="btn-prepare">
-          ⚙️ Prepare Data
-        </button>
-      </div>
-    </div>
-
-    <!-- STEP 3: Load Base Model -->
+    <!-- STEP 2: Load Base Model -->
     <div class="step-card" id="step3-card">
       <div class="step-header" onclick="toggleStep('step3')">
-        <div class="step-num">3</div>
+        <div class="step-num">2</div>
         <div class="step-title">Base Model</div>
         <div class="step-status-badge" id="step3-badge">Waiting</div>
       </div>
@@ -505,10 +473,10 @@
       </div>
     </div>
 
-    <!-- STEP 4: Train -->
+    <!-- STEP 3: Train -->
     <div class="step-card" id="step4-card">
       <div class="step-header" onclick="toggleStep('step4')">
-        <div class="step-num">4</div>
+        <div class="step-num">3</div>
         <div class="step-title">Train Model</div>
         <div class="step-status-badge" id="step4-badge">Waiting</div>
       </div>
@@ -533,6 +501,9 @@
             <option value="32">32</option>
           </select>
         </div>
+        <div class="progress-wrap" id="train-progress-wrap" style="display:none">
+          <div class="progress-bar" id="train-progress" style="width:0%"></div>
+        </div>
         <canvas class="chart-canvas" id="train-chart"></canvas>
         <div class="progress-label" id="train-label">—</div>
         <div class="btn-row">
@@ -546,10 +517,10 @@
       </div>
     </div>
 
-    <!-- STEP 5: Save -->
+    <!-- STEP 4: Save -->
     <div class="step-card" id="step5-card">
       <div class="step-header" onclick="toggleStep('step5')">
-        <div class="step-num">5</div>
+        <div class="step-num">4</div>
         <div class="step-title">Save Model</div>
         <div class="step-status-badge" id="step5-badge">Waiting</div>
       </div>
@@ -653,14 +624,9 @@
           </div>
         </div>
 
-        <div class="btn-row">
-          <button class="btn btn-infer" onclick="startInferCamera()" id="btn-start-infer">
-            📷 Start Camera
-          </button>
-          <button class="btn btn-secondary" onclick="stopInferCamera()" id="btn-stop-infer" style="display:none">
-            ⏹ Stop
-          </button>
-        </div>
+        <button class="btn btn-infer" onclick="toggleInferCamera()" id="btn-toggle-infer">
+          📷 Start Camera
+        </button>
 
         <div class="param-row">
           <span class="param-label">Speed</span>
@@ -821,7 +787,8 @@ function renderClassList() {
       <span class="class-count" id="count-${i}">${(capturedSamples[i]||[]).length} samples</span>
       <button class="class-capture-btn" style="background:${CLASS_COLORS[i]}"
         onclick="captureForClass(${i})" id="cap-btn-${i}">📸 Capture</button>
-      <button class="class-clear-btn" onclick="clearClass(${i})" title="Clear samples">✕</button>
+      <button class="class-clear-btn" onclick="clearClass(${i})" title="Clear samples">🗑</button>
+      ${classNames.length > 2 ? `<button class="class-clear-btn" onclick="removeMobileClass(${i})" title="Remove class">✕</button>` : ''}
     `;
     list.appendChild(row);
     // Add thumb strip
@@ -842,6 +809,14 @@ function addMobileClass() {
   classNames.push('Class ' + (classNames.length + 1));
   capturedSamples.push([]);
   renderClassList();
+}
+
+function removeMobileClass(idx) {
+  if (classNames.length <= 2) { tlog('warn', 'Minimum 2 classes required'); return; }
+  classNames.splice(idx, 1);
+  capturedSamples.splice(idx, 1);
+  renderClassList();
+  tlog('info', 'Removed class');
 }
 
 function clearClass(idx) {
@@ -913,9 +888,12 @@ async function getCameraStream(facingMode) {
   throw lastErr || new Error('No camera found');
 }
 
+function toggleTrainCamera() {
+  if (trainStream) { stopTrainCamera(); } else { startTrainCamera(); }
+}
+
 async function startTrainCamera() {
-  const btn = document.getElementById('btn-start-cam');
-  const stopBtn = document.getElementById('btn-stop-cam');
+  const btn = document.getElementById('btn-toggle-cam');
   const label = document.getElementById('train-cam-label');
   btn.innerHTML = '<span class="spinner"></span> Starting…';
   btn.disabled = true;
@@ -926,17 +904,19 @@ async function startTrainCamera() {
     vid.srcObject = trainStream;
     vid.play().catch(() => {});
     label.textContent = 'Live';
-    btn.style.display = 'none';
-    stopBtn.style.display = '';
+    btn.innerHTML = '⏹ Stop Camera';
+    btn.disabled = false;
+    btn.className = 'btn btn-secondary';
     tlog('success', 'Camera started');
   } catch (err) {
     tlog('error', 'Camera error: ' + err.name + ': ' + err.message);
     btn.innerHTML = '📷 Start Camera';
+    btn.className = 'btn btn-primary';
     btn.disabled = false;
     if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      tlog('warn', '🔒 Camera permission denied. Check browser settings: tap the lock/info icon in the address bar → allow Camera.');
+      tlog('warn', 'Camera permission denied. Check browser settings: tap the lock/info icon in the address bar and allow Camera.');
     } else if (err.name === 'SecurityError') {
-      tlog('warn', '🔒 Camera blocked by security policy. Make sure you are using HTTPS or localhost.');
+      tlog('warn', 'Camera blocked by security policy. Make sure you are using HTTPS or localhost.');
     } else if (location.protocol === 'file:') {
       tlog('warn', 'Open via http://localhost (not file://)');
     }
@@ -947,10 +927,8 @@ function stopTrainCamera() {
   if (trainStream) { trainStream.getTracks().forEach(t => t.stop()); trainStream = null; }
   const vid = document.getElementById('train-video');
   if (vid) vid.srcObject = null;
-  const btn = document.getElementById('btn-start-cam');
-  const stopBtn = document.getElementById('btn-stop-cam');
-  if (btn) { btn.style.display = ''; btn.innerHTML = '📷 Start Camera'; btn.disabled = false; }
-  if (stopBtn) stopBtn.style.display = 'none';
+  const btn = document.getElementById('btn-toggle-cam');
+  if (btn) { btn.innerHTML = '📷 Start Camera'; btn.disabled = false; btn.className = 'btn btn-primary'; }
   const label = document.getElementById('train-cam-label');
   if (label) label.textContent = 'Camera off';
 }
@@ -1007,14 +985,20 @@ function captureForClass(classIdx) {
   grab();
 }
 
-function doneStep1() {
+async function doneStep1() {
   const totalSamples = capturedSamples.slice(0, classNames.length).reduce((s,a)=>s+a.length, 0);
   tlog('step', `Step 1 done — ${totalSamples} total samples across ${classNames.length} classes`);
+  const btn = document.getElementById('btn-done-step1');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Preparing data…';
+  setStepState('step1', 'active');
+  await runMobilePrepare();
   setStepState('step1', 'done');
-  setStepState('step2', 'active');
-  openStep('step2');
+  btn.innerHTML = 'Continue →';
   closeStep('step1');
-  document.getElementById('step2-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setStepState('step3', 'active');
+  openStep('step3');
+  document.getElementById('step3-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ═══════════════════════════════════════════════
@@ -1072,13 +1056,10 @@ async function runMobilePrepare() {
   const allSamples = capturedSamples.slice(0, classNames.length);
   const total = allSamples.reduce((s,a)=>s+a.length,0);
   if (total === 0) { tlog('warn', 'No samples! Capture images first.'); return; }
-  setStepState('step2', 'active');
-  document.getElementById('btn-prepare').disabled = true;
-  document.getElementById('prep-label').textContent = 'Preparing…';
-  tlog('step', 'Preparing data…');
+  tlog('step', 'Preparing data (2x augmentation)…');
 
-  const augType = document.getElementById('aug-type').value;
-  const multiplier = parseInt(document.getElementById('aug-mul').value);
+  const augType = 'all';
+  const multiplier = 2;
 
   // Flatten
   const flatSamples = [];
@@ -1097,14 +1078,10 @@ async function runMobilePrepare() {
   await new Promise(resolve => {
     worker.onmessage = e => {
       if (e.data.type === 'progress') {
-        const pct = e.data.pct;
-        document.getElementById('prep-progress').style.width = pct + '%';
-        document.getElementById('prep-label').textContent = pct + '%';
+        // progress logged silently
       } else if (e.data.type === 'done') {
         preparedData = { xs: e.data.result, ys: e.data.labels, numClasses: classNames.length };
         const n = e.data.result.length;
-        document.getElementById('prep-progress').style.width = '100%';
-        document.getElementById('prep-label').textContent = `Ready — ${n} samples`;
         tlog('success', `Data ready — ${n} samples (${classNames.length} classes)`);
         worker.terminate();
         URL.revokeObjectURL(workerURL);
@@ -1116,12 +1093,6 @@ async function runMobilePrepare() {
       flatSamples.map(s => s.data)
     );
   });
-
-  setStepState('step2', 'done');
-  setStepState('step3', 'active');
-  openStep('step3');
-  closeStep('step2');
-  document.getElementById('step3-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ═══════════════════════════════════════════════
@@ -1229,6 +1200,11 @@ async function runMobileTraining() {
   let featsTensor = null;
   let ysTensor = null;
 
+  const progWrap = document.getElementById('train-progress-wrap');
+  const progBar = document.getElementById('train-progress');
+  progWrap.style.display = '';
+  progBar.style.width = '0%';
+
   try {
     // Feature extraction
     document.getElementById('train-label').textContent = 'Extracting features…';
@@ -1252,10 +1228,10 @@ async function runMobileTraining() {
         );
       });
       allFeats.push(feat);
-      if (i % 10 === 0) {
-        document.getElementById('train-label').textContent = `Features: ${i+1}/${rawXs.length}`;
-        await tf.nextFrame();
-      }
+      const pct = Math.round(((i + 1) / rawXs.length) * 50);
+      progBar.style.width = pct + '%';
+      document.getElementById('train-label').textContent = `Features: ${i+1}/${rawXs.length}`;
+      if (i % 5 === 0) await tf.nextFrame();
     }
 
     featsTensor = tf.concat(allFeats, 0);
@@ -1296,6 +1272,8 @@ async function runMobileTraining() {
           drawMobileChart();
           const elapsed = (Date.now() - startTime) / 1000;
           const eta = Math.round((epochs - epoch - 1) * elapsed / (epoch + 1));
+          const pct = 50 + Math.round(((epoch + 1) / epochs) * 50);
+          progBar.style.width = pct + '%';
           document.getElementById('train-label').textContent =
             `Epoch ${epoch+1}/${epochs} | acc: ${(acc*100).toFixed(1)}% | ETA: ${eta}s`;
           tlog('info', `Epoch ${epoch+1}: loss=${logs.loss.toFixed(4)}, acc=${(acc*100).toFixed(1)}%`);
@@ -1561,8 +1539,7 @@ async function startInferCamera() {
     ilog('warn', 'Load a model first!');
     return;
   }
-  const btn = document.getElementById('btn-start-infer');
-  const stopBtn = document.getElementById('btn-stop-infer');
+  const btn = document.getElementById('btn-toggle-infer');
   btn.innerHTML = '<span class="spinner"></span> Starting…';
   btn.disabled = true;
   try {
@@ -1571,8 +1548,9 @@ async function startInferCamera() {
     const vid = document.getElementById('infer-video');
     vid.srcObject = inferStream;
     vid.play().catch(() => {});
-    btn.style.display = 'none';
-    stopBtn.style.display = '';
+    btn.innerHTML = '⏹ Stop Camera';
+    btn.className = 'btn btn-secondary';
+    btn.disabled = false;
     ilog('success', 'Camera started — predicting…');
     setStepState('stepB', 'active');
     // Start inference loop
@@ -1583,13 +1561,18 @@ async function startInferCamera() {
   } catch (err) {
     ilog('error', 'Camera error: ' + err.name + ': ' + err.message);
     btn.innerHTML = '📷 Start Camera';
+    btn.className = 'btn btn-infer';
     btn.disabled = false;
     if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      ilog('warn', '🔒 Camera permission denied. Check browser settings: tap the lock/info icon in the address bar → allow Camera.');
+      ilog('warn', 'Camera permission denied. Check browser settings: tap the lock/info icon in the address bar and allow Camera.');
     } else if (err.name === 'SecurityError') {
-      ilog('warn', '🔒 Camera blocked by security policy. Make sure you are using HTTPS or localhost.');
+      ilog('warn', 'Camera blocked by security policy. Make sure you are using HTTPS or localhost.');
     }
   }
+}
+
+function toggleInferCamera() {
+  if (inferStream) { stopInferCamera(); } else { startInferCamera(); }
 }
 
 function stopInferCamera() {
@@ -1597,10 +1580,8 @@ function stopInferCamera() {
   if (inferStream) { inferStream.getTracks().forEach(t => t.stop()); inferStream = null; }
   const vid = document.getElementById('infer-video');
   if (vid) vid.srcObject = null;
-  const btn = document.getElementById('btn-start-infer');
-  const stopBtn = document.getElementById('btn-stop-infer');
-  if (btn) { btn.style.display = ''; btn.innerHTML = '📷 Start Camera'; btn.disabled = false; }
-  if (stopBtn) stopBtn.style.display = 'none';
+  const btn = document.getElementById('btn-toggle-infer');
+  if (btn) { btn.innerHTML = '📷 Start Camera'; btn.disabled = false; btn.className = 'btn btn-infer'; }
   document.getElementById('pred-overlay-text').textContent = '—';
   setStepState('stepB', 'active');
 }
