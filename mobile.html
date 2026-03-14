@@ -886,21 +886,31 @@ function renderThumbs(idx) {
 // CAMERA — TRAINING
 // ═══════════════════════════════════════════════
 async function getCameraStream(facingMode) {
-  // Try environment camera first on mobile, fall back gracefully
+  // Guard: check API availability
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    const isInsecure = location.protocol === 'http:' && !['localhost','127.0.0.1'].includes(location.hostname);
+    if (isInsecure) throw new Error('Camera requires HTTPS. Open via https:// or localhost.');
+    throw new Error('Browser does not support camera API');
+  }
+
+  // Try simplest constraint FIRST (best compatibility, preserves user gesture)
+  // More complex constraints tried only if the simple one fails for non-permission reasons
   const constraints = [
-    { video: { facingMode: facingMode || 'environment', width: { ideal: 640 }, height: { ideal: 480 } } },
+    { video: true },
     { video: { facingMode: facingMode || 'environment' } },
-    { video: { width: 640, height: 480 } },
-    { video: true }
+    { video: { facingMode: facingMode || 'environment', width: { ideal: 640 }, height: { ideal: 480 } } },
   ];
+  let lastErr;
   for (const c of constraints) {
     try {
       return await navigator.mediaDevices.getUserMedia(c);
     } catch (e) {
-      if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') throw e;
+      lastErr = e;
+      // Permission errors won't be fixed by different constraints — bail immediately
+      if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError' || e.name === 'SecurityError') throw e;
     }
   }
-  throw new Error('No camera found');
+  throw lastErr || new Error('No camera found');
 }
 
 async function startTrainCamera() {
@@ -920,11 +930,16 @@ async function startTrainCamera() {
     stopBtn.style.display = '';
     tlog('success', 'Camera started');
   } catch (err) {
-    tlog('error', 'Camera error: ' + err.message);
+    tlog('error', 'Camera error: ' + err.name + ': ' + err.message);
     btn.innerHTML = '📷 Start Camera';
     btn.disabled = false;
-    if (location.protocol === 'file:')
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      tlog('warn', '🔒 Camera permission denied. Check browser settings: tap the lock/info icon in the address bar → allow Camera.');
+    } else if (err.name === 'SecurityError') {
+      tlog('warn', '🔒 Camera blocked by security policy. Make sure you are using HTTPS or localhost.');
+    } else if (location.protocol === 'file:') {
       tlog('warn', 'Open via http://localhost (not file://)');
+    }
   }
 }
 
@@ -1566,9 +1581,14 @@ async function startInferCamera() {
     if (inferInterval) clearInterval(inferInterval);
     inferInterval = setInterval(runMobileInference, interval);
   } catch (err) {
-    ilog('error', 'Camera error: ' + err.message);
+    ilog('error', 'Camera error: ' + err.name + ': ' + err.message);
     btn.innerHTML = '📷 Start Camera';
     btn.disabled = false;
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      ilog('warn', '🔒 Camera permission denied. Check browser settings: tap the lock/info icon in the address bar → allow Camera.');
+    } else if (err.name === 'SecurityError') {
+      ilog('warn', '🔒 Camera blocked by security policy. Make sure you are using HTTPS or localhost.');
+    }
   }
 }
 
