@@ -1028,7 +1028,7 @@ self.onmessage = function(e) {
     const src = samples[idx % samples.length];
     const lbl = labels[idx % labels.length];
     const w = src.width, h = src.height;
-    const buf = new Uint8ClampedArray(src.data);
+    const buf = new Uint8ClampedArray(src.data.slice(0));
     if (augType !== 'none') {
       const bj = 0.7 + Math.random() * 0.6;
       for (let i = 0; i < buf.length; i += 4) {
@@ -1084,7 +1084,7 @@ async function runMobilePrepare() {
   const workerURL = URL.createObjectURL(blob);
   const worker = new Worker(workerURL);
 
-  await new Promise(resolve => {
+  await new Promise((resolve, reject) => {
     worker.onmessage = e => {
       if (e.data.type === 'progress') {
         // progress logged silently
@@ -1096,6 +1096,12 @@ async function runMobilePrepare() {
         URL.revokeObjectURL(workerURL);
         resolve();
       }
+    };
+    worker.onerror = e => {
+      tlog('error', 'Data preparation failed: ' + (e.message || 'unknown error'));
+      worker.terminate();
+      URL.revokeObjectURL(workerURL);
+      reject(new Error(e.message));
     };
     worker.postMessage(
       { samples: flatSamples, labels: flatLabels, multiplier, augType },
