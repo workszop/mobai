@@ -379,7 +379,7 @@ function renderLabelRows(id) {
   oninput="classNames[${i}]=this.value;updateClassNamesEverywhere()" placeholder="${lang === 'pl' ? 'nazwa klasy...' : 'class name...'}">
 <span class="class-count" id="cc-${id}-${i}">${(capturedSamples[i] || []).length} ${t('lbl_samples')}</span>
 <button style="flex-shrink:0;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;border:none;cursor:pointer;background:${CLASS_COLORS[i]};color:#fff" onclick="labelCapture(${i})">${lang === 'pl' ? 'zbierz' : 'capture'}</button>
-<button class="class-delete-btn" onclick="clearClassSamples(${i})" title="${lang === 'pl' ? 'Usuń próbki' : 'Delete samples'}">✕</button>
+<button class="class-delete-btn" onclick="clearClassSamples(${i})" title="${lang === 'pl' ? 'Usuń próbki' : 'Delete samples'}">&times;</button>
 </div>
 <div id="thumbs-label-${i}-${id}" class="thumb-strip"></div>`;
   }
@@ -1998,7 +1998,7 @@ function drawHistChart(id) {
 
 function freezeFrame(id) {
   frozenFrame = !frozenFrame;
-  log('info', frozenFrame ? '❄️ Frame frozen' : '▶ Resumed');
+  log('info', frozenFrame ? 'Frame frozen' : 'Resumed');
 }
 
 // ===== FLOW BAR PHASE ACTIVATION =====
@@ -2044,16 +2044,16 @@ async function runPipeline() {
     if (EDU_MODE) {
       const ann = document.getElementById('ann-' + id);
       const annotations = {
-        'camera-input': '📷 Zbieramy dane treningowe — zdjęcia dla każdej klasy',
-        'label-classes': '🏷️ Etykiety identyfikują każdą kategorię obrazów',
-        'prepare-data': '⚙️ Zdjęcia są przeskalowane i augmentowane w Web Worker',
-        'pretrained-model': '🧠 MobileNet widział 1.2M zdjęć — "transfer learning"',
-        'train-model': '🚀 model.fit() dostosowuje wagi do naszych klas',
-        'save-model': '💾 Wagi modelu zapisywane w IndexedDB przeglądarki',
-        'upload-model': '📤 Wczytujemy wagi modelu z pliku .json + .bin',
-        'camera-infer': '📷 Kamera streamuje klatki do predykcji',
-        'predict': '🎯 model.predict() zwraca prawdopodobieństwa klas',
-        'show-results': '📊 Wynik z najwyższym prawdopodobieństwem = predykcja'
+        'camera-input': 'Zbieramy dane treningowe — zdjęcia dla każdej klasy',
+        'label-classes': 'Etykiety identyfikują każdą kategorię obrazów',
+        'prepare-data': 'Zdjęcia są przeskalowane i augmentowane w Web Worker',
+        'pretrained-model': 'MobileNet widział 1.2M zdjęć — "transfer learning"',
+        'train-model': 'model.fit() dostosowuje wagi do naszych klas',
+        'save-model': 'Wagi modelu zapisywane w IndexedDB przeglądarki',
+        'upload-model': 'Wczytujemy wagi modelu z pliku .json + .bin',
+        'camera-infer': 'Kamera streamuje klatki do predykcji',
+        'predict': 'model.predict() zwraca prawdopodobieństwa klas',
+        'show-results': 'Wynik z najwyższym prawdopodobieństwem = predykcja'
       };
       if (ann && annotations[b.type]) ann.textContent = annotations[b.type];
     }

@@ -11,6 +11,7 @@
     rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body>
@@ -26,8 +27,8 @@
   </div>
 
   <!-- MOBILE SIDEBAR TOGGLE -->
-  <button id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Menu">+</button>
-  <button id="log-toggle" onclick="toggleLogPanel()" aria-label="Log">&#9638;</button>
+  <button id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Menu"><i data-lucide="menu" style="width:20px;height:20px;stroke-width:2"></i></button>
+  <button id="log-toggle" onclick="toggleLogPanel()" aria-label="Log"><i data-lucide="terminal" style="width:20px;height:20px;stroke-width:2"></i></button>
   <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <!-- WORKSPACE -->
@@ -98,14 +99,14 @@
     <!-- CANVAS -->
     <div id="canvas" ondragover="canvasDragOver(event)" ondrop="canvasDrop(event)">
       <div id="canvas-inner"></div>
-      <div id="trash-zone">Kosz</div>
+      <div id="trash-zone"><i data-lucide="trash-2" style="width:22px;height:22px;stroke-width:1.5"></i></div>
     </div>
 
     <!-- LOG PANEL -->
     <div id="log-panel">
       <div id="log-header" onclick="if(window.innerWidth<=900)toggleLogPanel()">
         <div id="log-header-title" data-i18n="log_title">Pipeline Log</div>
-        <button id="log-close-mobile">&#x2715;</button>
+        <button id="log-close-mobile"><i data-lucide="x" style="width:16px;height:16px;stroke-width:2"></i></button>
         <button id="log-clear" onclick="event.stopPropagation();clearLog()">CLR</button>
       </div>
       <div id="log-entries"></div>
@@ -127,6 +128,7 @@
   </div>
 
   <script src="app.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => { if (typeof lucide !== 'undefined') lucide.createIcons(); });</script>
 </body>
 
 </html>

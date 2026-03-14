@@ -3,34 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0F172A">
+  <meta name="theme-color" content="#FFFFFF">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
   <title>KlockiAI Mobile</title>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
-      --bg: #0F172A;
-      --bg2: #1E293B;
-      --bg3: #334155;
-      --border: #475569;
-      --text: #F1F5F9;
-      --muted: #94A3B8;
-      --accent: #3B82F6;
-      --accent2: #6366F1;
-      --success: #22C55E;
-      --warn: #F59E0B;
-      --error: #EF4444;
+      --bg: #FFFFFF;
+      --bg2: #F8FAFC;
+      --bg3: #F1F5F9;
+      --border: #E2E8F0;
+      --text: #1A1A1A;
+      --muted: #64748B;
+      --accent: #1A1A1A;
+      --accent2: #475569;
+      --success: #16A34A;
+      --warn: #CA8A04;
+      --error: #DC2626;
       --c0: #0369A1;
       --c1: #7C3AED;
       --c2: #D97706;
       --c3: #DC2626;
       --c4: #059669;
       --c5: #DB2777;
-      --radius: 16px;
-      --radius-sm: 10px;
+      --radius: 12px;
+      --radius-sm: 8px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; }
@@ -56,29 +57,29 @@
       gap: 32px;
     }
     .home-logo { text-align: center; }
-    .home-logo h1 { font-size: 36px; font-weight: 800; letter-spacing: -1px; color: var(--text); }
-    .home-logo h1 span { color: var(--accent); }
+    .home-logo h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; color: var(--text); }
+    .home-logo h1 span { color: var(--muted); font-weight: 400; }
     .home-logo p { color: var(--muted); font-size: 14px; margin-top: 6px; }
-    .home-cards { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 360px; }
+    .home-cards { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 360px; }
     .mode-card {
-      background: var(--bg2);
-      border: 1.5px solid var(--border);
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 24px 20px;
+      padding: 20px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       cursor: pointer;
       transition: all 0.15s;
       user-select: none;
     }
-    .mode-card:active { transform: scale(0.97); background: var(--bg3); }
-    .mode-card.train { border-color: var(--accent); }
-    .mode-card.infer { border-color: var(--accent2); }
-    .mode-icon { font-size: 40px; flex-shrink: 0; }
-    .mode-info h2 { font-size: 20px; font-weight: 700; }
-    .mode-info p { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
-    .mode-arrow { margin-left: auto; color: var(--muted); font-size: 22px; }
+    .mode-card:active { transform: scale(0.98); background: var(--bg2); }
+    .mode-card.train { border-color: var(--border); }
+    .mode-card.infer { border-color: var(--border); }
+    .mode-icon { flex-shrink: 0; color: var(--muted); display: flex; align-items: center; }
+    .mode-info h2 { font-size: 17px; font-weight: 600; }
+    .mode-info p { font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    .mode-arrow { margin-left: auto; color: var(--muted); display: flex; align-items: center; }
 
     /* ── SHARED HEADER ── */
     .top-bar {
@@ -86,35 +87,35 @@
       align-items: center;
       padding: 14px 16px;
       padding-top: calc(env(safe-area-inset-top, 14px) + 14px);
-      background: var(--bg2);
+      background: var(--bg);
       border-bottom: 1px solid var(--border);
       gap: 12px;
       flex-shrink: 0;
     }
     .back-btn {
-      background: none; border: none; color: var(--accent); font-size: 22px;
-      cursor: pointer; padding: 4px; line-height: 1;
+      background: none; border: none; color: var(--text); font-size: 22px;
+      cursor: pointer; padding: 4px; line-height: 1; display: flex; align-items: center;
     }
-    .top-bar h2 { font-size: 18px; font-weight: 700; flex: 1; }
+    .top-bar h2 { font-size: 17px; font-weight: 600; flex: 1; }
     .top-badge {
-      font-size: 11px; font-weight: 700; padding: 4px 10px;
-      border-radius: 20px; letter-spacing: 0.5px;
+      font-size: 10px; font-weight: 600; padding: 3px 8px;
+      border-radius: 4px; letter-spacing: 0.5px; text-transform: uppercase;
     }
-    .badge-train { background: rgba(59,130,246,0.2); color: var(--accent); }
-    .badge-infer { background: rgba(99,102,241,0.2); color: var(--accent2); }
+    .badge-train { background: var(--bg3); color: var(--muted); }
+    .badge-infer { background: var(--bg3); color: var(--muted); }
 
     /* ── SCROLL CONTENT ── */
-    .scroll-area { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    .scroll-area { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--bg2); }
 
     /* ── STEP CARDS ── */
     .step-card {
-      background: var(--bg2);
-      border: 1.5px solid var(--border);
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
       transition: border-color 0.2s;
     }
-    .step-card.step-active { border-color: var(--accent); }
+    .step-card.step-active { border-color: var(--text); }
     .step-card.step-done { border-color: var(--success); }
     .step-card.step-error { border-color: var(--error); }
     .step-header {
@@ -124,23 +125,23 @@
       user-select: none;
     }
     .step-num {
-      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 700;
+      font-size: 12px; font-weight: 600;
       background: var(--bg3); color: var(--muted);
       transition: all 0.2s;
     }
-    .step-active .step-num { background: var(--accent); color: white; }
+    .step-active .step-num { background: var(--text); color: white; }
     .step-done .step-num { background: var(--success); color: white; }
     .step-error .step-num { background: var(--error); color: white; }
-    .step-title { flex: 1; font-size: 15px; font-weight: 600; }
+    .step-title { flex: 1; font-size: 14px; font-weight: 600; }
     .step-status-badge {
-      font-size: 11px; font-weight: 600; padding: 3px 9px;
-      border-radius: 12px; background: var(--bg3); color: var(--muted);
+      font-size: 11px; font-weight: 500; padding: 2px 8px;
+      border-radius: 4px; background: var(--bg3); color: var(--muted);
     }
-    .step-done .step-status-badge { background: rgba(34,197,94,0.15); color: var(--success); }
-    .step-error .step-status-badge { background: rgba(239,68,68,0.15); color: var(--error); }
-    .step-active .step-status-badge { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .step-done .step-status-badge { background: rgba(22,163,74,0.1); color: var(--success); }
+    .step-error .step-status-badge { background: rgba(220,38,38,0.1); color: var(--error); }
+    .step-active .step-status-badge { background: var(--bg3); color: var(--text); }
     .step-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
     .step-body.collapsed { display: none; }
 
@@ -148,7 +149,7 @@
     .cam-wrap {
       position: relative; width: 100%;
       aspect-ratio: 4/3;
-      background: #000;
+      background: #F1F5F9;
       border-radius: var(--radius-sm);
       overflow: hidden;
     }
@@ -160,65 +161,67 @@
       position: absolute; inset: 0;
       display: flex; align-items: flex-end;
       padding: 10px;
-      background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
+      background: linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 40%);
       pointer-events: none;
     }
     .cam-label {
-      font-size: 12px; font-weight: 600; color: white;
-      background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 8px;
+      font-size: 12px; font-weight: 500; color: white;
+      background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 6px;
     }
     .cam-flip-btn {
       position: absolute; top: 10px; right: 10px;
-      background: rgba(0,0,0,0.5); border: none; color: white;
-      width: 40px; height: 40px; border-radius: 50%;
-      font-size: 18px; cursor: pointer; z-index: 2;
+      background: rgba(0,0,0,0.4); border: none; color: white;
+      width: 36px; height: 36px; border-radius: 50%;
+      cursor: pointer; z-index: 2;
       display: flex; align-items: center; justify-content: center;
     }
 
     /* ── BUTTONS ── */
     .btn {
       display: flex; align-items: center; justify-content: center;
-      gap: 8px; padding: 14px 20px; border-radius: 12px;
-      font-size: 15px; font-weight: 700; border: none;
+      gap: 8px; padding: 12px 20px; border-radius: 8px;
+      font-size: 14px; font-weight: 600; border: none;
       cursor: pointer; transition: all 0.15s; user-select: none;
-      min-height: 50px;
+      min-height: 46px;
     }
-    .btn:active { transform: scale(0.97); }
+    .btn:active { transform: scale(0.98); }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary { background: var(--text); color: white; }
     .btn-success { background: var(--success); color: white; }
-    .btn-secondary { background: var(--bg3); color: var(--text); }
-    .btn-warn { background: var(--warn); color: white; }
+    .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+    .btn-warn { background: var(--text); color: white; }
     .btn-danger { background: var(--error); color: white; }
-    .btn-infer { background: var(--accent2); color: white; }
-    .btn-sm { padding: 10px 16px; font-size: 13px; min-height: 42px; border-radius: 10px; }
-    .btn-row { display: flex; gap: 10px; }
+    .btn-infer { background: var(--text); color: white; }
+    .btn-sm { padding: 8px 14px; font-size: 13px; min-height: 38px; border-radius: 6px; }
+    .btn-row { display: flex; gap: 8px; }
     .btn-row .btn { flex: 1; }
 
     /* ── CLASS ROWS ── */
-    .class-list { display: flex; flex-direction: column; gap: 8px; }
+    .class-list { display: flex; flex-direction: column; gap: 6px; }
     .class-row {
       display: flex; align-items: center; gap: 10px;
-      background: var(--bg3); border-radius: var(--radius-sm);
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
       padding: 10px 12px;
     }
     .class-dot {
-      width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
     }
     .class-name-input {
       flex: 1; background: none; border: none; color: var(--text);
-      font-size: 15px; font-weight: 600; outline: none; min-width: 0;
+      font-size: 14px; font-weight: 600; outline: none; min-width: 0;
     }
     .class-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
     .class-capture-btn {
-      padding: 8px 14px; border-radius: 8px; border: none;
-      font-size: 12px; font-weight: 700; cursor: pointer;
+      padding: 6px 12px; border-radius: 6px; border: none;
+      font-size: 12px; font-weight: 600; cursor: pointer;
       color: white; transition: all 0.15s; flex-shrink: 0;
     }
     .class-capture-btn:active { transform: scale(0.95); }
     .class-clear-btn {
       background: none; border: none; color: var(--muted);
-      font-size: 16px; cursor: pointer; padding: 4px; line-height: 1;
+      cursor: pointer; padding: 4px; line-height: 1;
+      display: flex; align-items: center;
     }
 
     /* ── THUMB STRIPS ── */
@@ -227,8 +230,8 @@
       padding: 4px 0; flex-wrap: nowrap;
     }
     .thumb-strip canvas, .thumb-strip img {
-      width: 52px; height: 52px; object-fit: cover;
-      border-radius: 6px; flex-shrink: 0;
+      width: 48px; height: 48px; object-fit: cover;
+      border-radius: 4px; flex-shrink: 0;
     }
 
     /* ── FORM ROWS ── */
@@ -239,16 +242,16 @@
     .param-row:last-child { border-bottom: none; }
     .param-label { font-size: 13px; color: var(--muted); flex: 1; }
     .param-row select, .param-row input[type="number"] {
-      background: var(--bg3); border: 1px solid var(--border);
-      color: var(--text); border-radius: 8px; padding: 8px 12px;
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); border-radius: 6px; padding: 8px 12px;
       font-size: 14px; outline: none; -webkit-appearance: none;
     }
     .param-row select { min-width: 100px; }
     .param-row input[type="number"] { width: 80px; }
 
     /* ── PROGRESS ── */
-    .progress-wrap { background: var(--bg3); border-radius: 6px; height: 8px; overflow: hidden; }
-    .progress-bar { height: 100%; border-radius: 6px; transition: width 0.3s; background: var(--accent); }
+    .progress-wrap { background: var(--bg3); border-radius: 4px; height: 6px; overflow: hidden; }
+    .progress-bar { height: 100%; border-radius: 4px; transition: width 0.3s; background: var(--text); }
     .progress-label { font-size: 12px; color: var(--muted); text-align: center; margin-top: 6px; }
 
     /* ── CHART ── */
@@ -256,26 +259,27 @@
 
     /* ── INFERENCE RESULTS ── */
     .infer-result-box {
-      background: var(--bg3); border-radius: var(--radius-sm);
-      padding: 14px 16px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px 16px;
     }
     .infer-top-label {
-      font-size: 22px; font-weight: 800; text-align: center;
+      font-size: 20px; font-weight: 700; text-align: center;
       padding: 12px; border-radius: var(--radius-sm);
-      margin-bottom: 10px; background: var(--bg2);
-      min-height: 60px; display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px; background: var(--bg3);
+      min-height: 56px; display: flex; align-items: center; justify-content: center;
     }
     .conf-bar-row { margin-bottom: 8px; }
     .conf-bar-header {
       display: flex; justify-content: space-between;
-      font-size: 12px; font-weight: 600; margin-bottom: 4px;
+      font-size: 12px; font-weight: 500; margin-bottom: 4px;
     }
-    .conf-bar-track { background: var(--bg2); border-radius: 4px; height: 8px; overflow: hidden; }
-    .conf-bar-fill { height: 100%; border-radius: 4px; transition: width 0.2s; }
+    .conf-bar-track { background: var(--bg3); border-radius: 3px; height: 6px; overflow: hidden; }
+    .conf-bar-fill { height: 100%; border-radius: 3px; transition: width 0.2s; }
 
     /* ── MODEL INFO ── */
     .model-info-box {
-      background: var(--bg3); border-radius: var(--radius-sm);
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
       padding: 12px 14px; font-size: 13px; line-height: 1.8; color: var(--muted);
     }
     .model-info-box b { color: var(--text); }
@@ -285,13 +289,13 @@
       display: flex; gap: 8px; align-items: center;
     }
     .saved-model-row select {
-      flex: 1; background: var(--bg3); border: 1px solid var(--border);
-      color: var(--text); border-radius: 8px; padding: 10px 12px;
+      flex: 1; background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); border-radius: 6px; padding: 10px 12px;
       font-size: 14px; outline: none; -webkit-appearance: none;
     }
     .refresh-btn {
-      background: var(--bg3); border: 1px solid var(--border); color: var(--text);
-      width: 44px; height: 44px; border-radius: 8px; font-size: 18px;
+      background: var(--bg); border: 1px solid var(--border); color: var(--muted);
+      width: 42px; height: 42px; border-radius: 6px;
       display: flex; align-items: center; justify-content: center; cursor: pointer;
       flex-shrink: 0;
     }
@@ -302,19 +306,19 @@
       padding: 10px 12px; max-height: 120px; overflow-y: auto;
       font-size: 11px; font-family: monospace; line-height: 1.6;
     }
-    .log-info { color: #93C5FD; }
-    .log-success { color: #86EFAC; }
-    .log-warn { color: #FCD34D; }
-    .log-error { color: #FCA5A5; }
-    .log-step { color: #C4B5FD; font-weight: 700; }
+    .log-info { color: #0369A1; }
+    .log-success { color: #16A34A; }
+    .log-warn { color: #CA8A04; }
+    .log-error { color: #DC2626; }
+    .log-step { color: #7C3AED; font-weight: 700; }
 
     /* ── NAME INPUT ── */
     .name-input {
-      width: 100%; background: var(--bg3); border: 1.5px solid var(--border);
-      color: var(--text); border-radius: 10px; padding: 12px 14px;
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 12px 14px;
       font-size: 15px; outline: none;
     }
-    .name-input:focus { border-color: var(--accent); }
+    .name-input:focus { border-color: var(--text); }
 
     /* ── SEPARATOR ── */
     .or-sep {
@@ -327,22 +331,22 @@
 
     /* ── INFERENCE OVERLAY ── */
     .infer-cam-wrap { position: relative; width: 100%; aspect-ratio: 4/3;
-      background: #000; border-radius: var(--radius-sm); overflow: hidden; }
+      background: #F1F5F9; border-radius: var(--radius-sm); overflow: hidden; }
     .infer-cam-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
     .infer-cam-overlay {
       position: absolute; top: 10px; left: 10px; right: 10px;
       pointer-events: none;
     }
     .pred-overlay-label {
-      font-size: 18px; font-weight: 800;
-      background: rgba(0,0,0,0.7); color: white;
-      padding: 6px 14px; border-radius: 10px;
+      font-size: 16px; font-weight: 700;
+      background: rgba(0,0,0,0.6); color: white;
+      padding: 6px 14px; border-radius: 8px;
       display: inline-block; backdrop-filter: blur(4px);
     }
 
     /* ── SPINNER ── */
     .spinner {
-      width: 20px; height: 20px; border: 2.5px solid rgba(255,255,255,0.3);
+      width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
       border-top-color: white; border-radius: 50%;
       animation: spin 0.6s linear infinite; display: inline-block;
     }
@@ -351,7 +355,7 @@
     /* ── FOOTER ── */
     .screen-footer {
       padding: 12px 16px;
-      background: var(--bg2);
+      background: var(--bg);
       border-top: 1px solid var(--border);
       flex-shrink: 0;
     }
@@ -360,10 +364,14 @@
     .hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
     .gap-4 { display: flex; flex-direction: column; gap: 4px; }
     .tag {
-      display: inline-block; font-size: 11px; font-weight: 700;
-      padding: 3px 8px; border-radius: 6px;
-      background: rgba(59,130,246,0.15); color: var(--accent);
+      display: inline-block; font-size: 11px; font-weight: 500;
+      padding: 2px 6px; border-radius: 4px;
+      background: var(--bg3); color: var(--muted);
     }
+    /* Lucide icon sizing */
+    .lucide { width: 18px; height: 18px; stroke-width: 1.5; }
+    .lucide-sm { width: 16px; height: 16px; stroke-width: 1.5; }
+    .lucide-lg { width: 24px; height: 24px; stroke-width: 1.5; }
   </style>
 </head>
 <body>
@@ -378,20 +386,20 @@
   </div>
   <div class="home-cards">
     <div class="mode-card train" onclick="goToTraining()">
-      <div class="mode-icon">🧠</div>
+      <div class="mode-icon"><i data-lucide="brain" class="lucide-lg"></i></div>
       <div class="mode-info">
         <h2>Training</h2>
         <p>Capture photos with your camera and teach the AI to recognise your custom classes</p>
       </div>
-      <div class="mode-arrow">›</div>
+      <div class="mode-arrow"><i data-lucide="chevron-right" class="lucide-sm"></i></div>
     </div>
     <div class="mode-card infer" onclick="goToInference()">
-      <div class="mode-icon">🔍</div>
+      <div class="mode-icon"><i data-lucide="scan-search" class="lucide-lg"></i></div>
       <div class="mode-info">
         <h2>Inference</h2>
         <p>Load a trained model and use your camera for real-time predictions</p>
       </div>
-      <div class="mode-arrow">›</div>
+      <div class="mode-arrow"><i data-lucide="chevron-right" class="lucide-sm"></i></div>
     </div>
   </div>
 </div>
@@ -402,7 +410,7 @@
 ══════════════════════════════════════════════════════ -->
 <div id="screen-training" class="screen">
   <div class="top-bar">
-    <button class="back-btn" onclick="goHome()">‹</button>
+    <button class="back-btn" onclick="goHome()"><i data-lucide="arrow-left" class="lucide"></i></button>
     <h2>Training</h2>
     <span class="top-badge badge-train">TRAIN</span>
   </div>
@@ -420,14 +428,14 @@
         <!-- Camera -->
         <div class="cam-wrap" id="train-cam-wrap">
           <video id="train-video" autoplay playsinline muted></video>
-          <button class="cam-flip-btn" onclick="flipCamera()" title="Flip camera">🔄</button>
+          <button class="cam-flip-btn" onclick="flipCamera()" title="Flip camera"><i data-lucide="refresh-cw" style="width:18px;height:18px;stroke-width:2"></i></button>
           <div class="cam-overlay">
             <span class="cam-label" id="train-cam-label">Camera off</span>
           </div>
         </div>
 
         <button class="btn btn-primary" id="btn-toggle-cam" onclick="toggleTrainCamera()">
-          📷 Start Camera
+          Start Camera
         </button>
 
         <!-- Classes -->
@@ -468,7 +476,7 @@
         </div>
         <div class="progress-label" id="model-label">—</div>
         <button class="btn btn-primary" onclick="runMobileLoadBase()" id="btn-load-base">
-          ⬇️ Load Base Model
+          Load Base Model
         </button>
       </div>
     </div>
@@ -508,10 +516,10 @@
         <div class="progress-label" id="train-label">—</div>
         <div class="btn-row">
           <button class="btn btn-warn" onclick="runMobileTraining()" id="btn-train">
-            🚀 Train
+            Train
           </button>
           <button class="btn btn-secondary" onclick="stopMobileTraining()" id="btn-stop-train">
-            ⏹ Stop
+            Stop
           </button>
         </div>
       </div>
@@ -531,10 +539,10 @@
           <input type="text" class="name-input" id="save-model-name" value="my-model" placeholder="my-model">
         </div>
         <button class="btn btn-primary" onclick="runMobileSaveIDB()" id="btn-save-idb">
-          💾 Save to Browser
+          Save to Browser
         </button>
         <button class="btn btn-secondary" onclick="runMobileDownload()" id="btn-download">
-          ⬇️ Download as File
+          Download as File
         </button>
         <p class="hint">Saved models can be loaded in Inference mode without retraining.</p>
       </div>
@@ -543,7 +551,7 @@
     <!-- LOG -->
     <div class="step-card">
       <div class="step-header" onclick="toggleStep('train-log')">
-        <div class="step-num" style="font-size:16px">📋</div>
+        <div class="step-num"><i data-lucide="file-text" class="lucide-sm"></i></div>
         <div class="step-title">Log</div>
       </div>
       <div class="step-body collapsed" id="train-log-body">
@@ -560,7 +568,7 @@
 ══════════════════════════════════════════════════════ -->
 <div id="screen-inference" class="screen">
   <div class="top-bar">
-    <button class="back-btn" onclick="goHome()">‹</button>
+    <button class="back-btn" onclick="goHome()"><i data-lucide="arrow-left" class="lucide"></i></button>
     <h2>Inference</h2>
     <span class="top-badge badge-infer">PREDICT</span>
   </div>
@@ -584,10 +592,10 @@
             <select id="idb-model-select">
               <option value="" disabled selected>No saved models</option>
             </select>
-            <div class="refresh-btn" onclick="refreshInferIDB()">↺</div>
+            <div class="refresh-btn" onclick="refreshInferIDB()"><i data-lucide="refresh-cw" class="lucide-sm"></i></div>
           </div>
           <button class="btn btn-infer" onclick="loadFromIDB()">
-            📂 Load from Browser
+            Load from Browser
           </button>
         </div>
 
@@ -598,7 +606,7 @@
           <div style="font-size:13px; font-weight:700; color:var(--muted);">FROM FILE</div>
           <input type="file" id="infer-file-input" accept=".json" style="display:none" onchange="loadFromFile()">
           <button class="btn btn-secondary" onclick="document.getElementById('infer-file-input').click()">
-            📁 Open Model File (.json)
+            Open Model File (.json)
           </button>
         </div>
 
@@ -618,14 +626,14 @@
 
         <div class="infer-cam-wrap" id="infer-cam-wrap">
           <video id="infer-video" autoplay playsinline muted></video>
-          <button class="cam-flip-btn" onclick="flipInferCamera()" title="Flip camera">🔄</button>
+          <button class="cam-flip-btn" onclick="flipInferCamera()" title="Flip camera"><i data-lucide="refresh-cw" style="width:18px;height:18px;stroke-width:2"></i></button>
           <div class="infer-cam-overlay">
             <span class="pred-overlay-label" id="pred-overlay-text">—</span>
           </div>
         </div>
 
         <button class="btn btn-infer" onclick="toggleInferCamera()" id="btn-toggle-infer">
-          📷 Start Camera
+          Start Camera
         </button>
 
         <div class="param-row">
@@ -662,7 +670,7 @@
     <!-- LOG -->
     <div class="step-card">
       <div class="step-header" onclick="toggleStep('infer-log')">
-        <div class="step-num" style="font-size:16px">📋</div>
+        <div class="step-num"><i data-lucide="file-text" class="lucide-sm"></i></div>
         <div class="step-title">Log</div>
       </div>
       <div class="step-body collapsed" id="infer-log-body">
@@ -786,9 +794,9 @@ function renderClassList() {
         oninput="classNames[${i}]=this.value">
       <span class="class-count" id="count-${i}">${(capturedSamples[i]||[]).length} samples</span>
       <button class="class-capture-btn" style="background:${CLASS_COLORS[i]}"
-        onclick="captureForClass(${i})" id="cap-btn-${i}">📸 Capture</button>
-      <button class="class-clear-btn" onclick="clearClass(${i})" title="Clear samples">🗑</button>
-      ${classNames.length > 2 ? `<button class="class-clear-btn" onclick="removeMobileClass(${i})" title="Remove class">✕</button>` : ''}
+        onclick="captureForClass(${i})" id="cap-btn-${i}">Capture</button>
+      <button class="class-clear-btn" onclick="clearClass(${i})" title="Clear samples"><i data-lucide="trash-2" class="lucide-sm"></i></button>
+      ${classNames.length > 2 ? `<button class="class-clear-btn" onclick="removeMobileClass(${i})" title="Remove class"><i data-lucide="x" class="lucide-sm"></i></button>` : ''}
     `;
     list.appendChild(row);
     // Add thumb strip
@@ -799,6 +807,7 @@ function renderClassList() {
     renderThumbs(i);
   });
   updateContinueBtn();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 function addMobileClass() {
@@ -1667,6 +1676,7 @@ async function runMobileInference() {
 // ═══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   renderClassList();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 });
 </script>
 </body>
