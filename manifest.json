@@ -1,9 +1,0 @@
-{
-  "name": "KlockiAI Mobile",
-  "short_name": "KlockiAI",
-  "start_url": "/mobile.html",
-  "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#FFFFFF",
-  "orientation": "portrait"
-}
