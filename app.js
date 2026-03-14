@@ -479,8 +479,9 @@ ${makeParam(t('param_lr'), `<select id="lr-${id}">
 ${makeParam(t('param_batch'), `<select id="bs-${id}">
   <option value="8">8</option><option value="16" selected>16</option><option value="32">32</option>
 </select>`)}
-<canvas class="chart-canvas" id="chart-${id}" height="80"></canvas>
+<progress id="prog-${id}" value="0" max="100" style="margin-top:6px"></progress>
 <div id="train-info-${id}" style="font-size:10px;color:var(--c-muted);text-align:center">—</div>
+<canvas class="chart-canvas" id="chart-${id}" height="80"></canvas>
 <div style="display:flex;gap:6px;margin-top:4px">
 ${makeBtn(t('btn_train'), `runTraining('${id}')`, 'var(--c-train)')}
 ${makeBtn(t('btn_stop_train'), `stopTraining('${id}')`, '#64748B')}
@@ -1181,6 +1182,9 @@ async function runTraining(id) {
   const numClasses = preparedData.numClasses;
   const { xs: rawXs, ys: rawYs } = preparedData;
 
+  const prog = document.getElementById('prog-' + id);
+  if (prog) prog.value = 0;
+
   setBlockStatus(document.getElementById(id), 'running');
   log('step', t('log_train_start', epochs));
 
@@ -1193,6 +1197,9 @@ async function runTraining(id) {
     // Always resize to 224×224 — MobileNetV3-Small requires that input size
     // regardless of the resolution the user chose when capturing samples.
     log('info', lang === 'pl' ? `Ekstrakcja cech z ${rawXs.length} próbek...` : `Extracting features from ${rawXs.length} samples...`);
+    if (info) info.textContent = lang === 'pl'
+      ? `Ekstrakcja cech: 0/${rawXs.length}`
+      : `Feature extraction: 0/${rawXs.length}`;
     const allFeats = [];
     const reuseCanvas = document.createElement('canvas');
     const reuseCtx = reuseCanvas.getContext('2d');
@@ -1212,12 +1219,13 @@ async function runTraining(id) {
         );
       });
       allFeats.push(feat);
-      if (i % 5 === 0) {
-        if (info) info.textContent = lang === 'pl'
-          ? `Ekstrakcja cech: ${i + 1}/${rawXs.length}`
-          : `Feature extraction: ${i + 1}/${rawXs.length}`;
-        await tf.nextFrame();
-      }
+      // Feature extraction = first 50% of progress; update every sample
+      const featPct = Math.round(((i + 1) / rawXs.length) * 50);
+      if (prog) prog.value = featPct;
+      if (info) info.textContent = lang === 'pl'
+        ? `Ekstrakcja cech: ${i + 1}/${rawXs.length}`
+        : `Feature extraction: ${i + 1}/${rawXs.length}`;
+      if (i % 3 === 0) await tf.nextFrame();
     }
     featsTensor = tf.concat(allFeats, 0);
     allFeats.forEach(f => f.dispose());
@@ -1228,7 +1236,10 @@ async function runTraining(id) {
     ysTensor = tf.oneHot(idxTensor, numClasses);
     idxTensor.dispose();
 
+    if (prog) prog.value = 50;
     log('info', lang === 'pl' ? `Cechy: ${rawXs.length}×${featSize}` : `Features: ${rawXs.length}×${featSize}`);
+    if (info) info.textContent = lang === 'pl' ? 'Kompilacja modelu...' : 'Compiling model...';
+    await tf.nextFrame();
 
     // ── STEP 2: Train small classifier on bottleneck features ──
     // The base model (GraphModel) cannot be fine-tuned in TF.js — it is always frozen.
@@ -1261,7 +1272,10 @@ async function runTraining(id) {
           const perEpoch = elapsed / (epoch + 1);
           const remaining = Math.round((epochs - epoch - 1) * perEpoch);
           const acc = logs.acc || logs.accuracy || 0;
-          if (info) info.textContent = `Epoch ${epoch + 1}/${epochs} | ETA: ${remaining}s`;
+          // Epochs = 50-100% of progress bar
+          const epochPct = 50 + Math.round(((epoch + 1) / epochs) * 50);
+          if (prog) prog.value = epochPct;
+          if (info) info.textContent = `Epoch ${epoch + 1}/${epochs} | acc: ${(acc * 100).toFixed(0)}% | ETA: ${remaining}s`;
           log('data', t('log_train_epoch', epoch + 1, logs.loss, acc));
           await tf.nextFrame();
         }
@@ -1286,6 +1300,7 @@ async function runTraining(id) {
     inferModel = classifier;       // available immediately for same-session inference
     inferMetadata = modelMetadata; // so inference blocks see the right class labels
 
+    if (prog) prog.value = 100;
     log('info', lang === 'pl' ? 'Model gotowy...' : 'Model ready...');
     log('success', t('log_train_done', finalAcc));
     setBlockStatus(document.getElementById(id), 'done');
