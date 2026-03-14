@@ -226,15 +226,29 @@ function toggleLang() {
 
 // ===== LOG PANEL =====
 function log(type, msg) {
+  // Route to the correct log container based on active screen
+  const isInfer = document.getElementById('screen-inference')?.classList.contains('active');
+  const entries = document.getElementById(isInfer ? 'infer-log' : 'train-log');
+  if (!entries) return;
+
   const el = document.createElement('div');
   el.className = `log-line ll-${type}`;
   const ts = new Date().toLocaleTimeString('pl', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   el.textContent = `[${ts}] ${msg}`;
-  const entries = document.getElementById('log-entries');
   entries.appendChild(el);
   entries.scrollTop = entries.scrollHeight;
+
+  // Auto-expand the log section if collapsed
+  const bodyId = isInfer ? 'infer-log-body' : 'train-log-body';
+  const body = document.getElementById(bodyId);
+  if (body && body.classList.contains('collapsed')) body.classList.remove('collapsed');
 }
-function clearLog() { document.getElementById('log-entries').innerHTML = ''; }
+function clearLog() {
+  const tl = document.getElementById('train-log');
+  const il = document.getElementById('infer-log');
+  if (tl) tl.innerHTML = '';
+  if (il) il.innerHTML = '';
+}
 
 // ===== DRAG & DROP — PALETTE =====
 function paletteDragStart(e) {
@@ -922,6 +936,7 @@ function blockCapture(id, cls) {
   let captured = 0;
   const statusEl = document.getElementById('cam-status-' + id);
   setBlockStatus(document.getElementById(id), 'running');
+  log('info', `Capturing ${spc} samples for "${classNames[cls]}" at ${res}x${res}px...`);
   function grab() {
     if (captured >= spc) {
       log('success', t('log_capture', spc, classNames[cls]));
@@ -1058,11 +1073,19 @@ async function runPrepare(id) {
     }
   }
 
+  log('info', `${totalSamples} samples across ${classNames.length} classes | augmentation: ${augType} x${multiplier}`);
+
   return new Promise((resolve) => {
+    let lastLoggedPct = 0;
     worker.onmessage = async (e) => {
       if (e.data.type === 'progress') {
         if (prog) prog.value = e.data.pct;
         if (status) status.textContent = e.data.pct + '%';
+        // Log every 25%
+        if (e.data.pct >= lastLoggedPct + 25) {
+          lastLoggedPct = Math.floor(e.data.pct / 25) * 25;
+          log('data', `Augmentation progress: ${lastLoggedPct}%`);
+        }
       } else if (e.data.type === 'done') {
         const augmented = e.data.result;
         const n = augmented.length;
@@ -1103,10 +1126,16 @@ async function runLoadBaseModel(id) {
   const prog = document.getElementById('prog-' + id);
   const mstat = document.getElementById('model-status-' + id);
   try {
+    let lastLoggedPct = 0;
     baseModel = await tf.loadGraphModel(MODEL_URL, {
       onProgress: (frac) => {
-        if (prog) prog.value = Math.round(frac * 100);
-        if (mstat) mstat.textContent = Math.round(frac * 100) + '%';
+        const pct = Math.round(frac * 100);
+        if (prog) prog.value = pct;
+        if (mstat) mstat.textContent = pct + '%';
+        if (pct >= lastLoggedPct + 20) {
+          lastLoggedPct = Math.floor(pct / 20) * 20;
+          log('data', `Downloading MobileNetV3-Small... ${lastLoggedPct}%`);
+        }
       }
     });
 
@@ -1238,6 +1267,7 @@ async function runTraining(id) {
 
     if (prog) prog.value = 50;
     log('info', lang === 'pl' ? `Cechy: ${rawXs.length}×${featSize}` : `Features: ${rawXs.length}×${featSize}`);
+    log('info', `Feature extraction complete. Building classifier (${featSize} → 128 → ${numClasses})...`);
     if (info) info.textContent = lang === 'pl' ? 'Kompilacja modelu...' : 'Compiling model...';
     await tf.nextFrame();
 
@@ -1257,6 +1287,7 @@ async function runTraining(id) {
       metrics: ['accuracy']
     });
 
+    log('step', `Training ${epochs} epochs (lr=${lr}, batch=${batchSize})...`);
     const startTime = Date.now();
     await classifier.fit(featsTensor, ysTensor, {
       epochs, batchSize, shuffle: true,
@@ -1301,7 +1332,9 @@ async function runTraining(id) {
     inferMetadata = modelMetadata; // so inference blocks see the right class labels
 
     if (prog) prog.value = 100;
-    log('info', lang === 'pl' ? 'Model gotowy...' : 'Model ready...');
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    log('info', `Training finished in ${elapsed}s | final accuracy: ${(finalAcc * 100).toFixed(1)}%`);
+    log('info', `Classes: [${classNames.slice(0, numClasses).join(', ')}]`);
     log('success', t('log_train_done', finalAcc));
     setBlockStatus(document.getElementById(id), 'done');
   } catch (err) {
@@ -1333,8 +1366,10 @@ async function runSaveIDB(id) {
   const nameEl = document.getElementById('model-name-' + id);
   const name = (nameEl ? nameEl.value.trim() : '') || 'model-1';
   try {
+    log('info', `Saving model "${name}" to IndexedDB...`);
     fullModel.userDefinedMetadata = modelMetadata; // bake labels into model JSON
     await fullModel.save('indexeddb://ml-blocks-' + name);
+    log('info', 'Classifier saved. Saving base model...');
     await baseModel.save('indexeddb://ml-blocks-base-' + name);
     localStorage.setItem('ml-blocks-meta-' + name, JSON.stringify(modelMetadata));
     log('success', t('log_save_idb'));
@@ -1453,6 +1488,7 @@ async function runLoadIDB(id) {
   log('step', 'Loading from IndexedDB: ' + name + '...');
   try {
     inferModel = await tf.loadLayersModel('indexeddb://ml-blocks-' + name);
+    log('info', 'Classifier loaded. Loading base model...');
     try {
       baseModel = await tf.loadGraphModel('indexeddb://ml-blocks-base-' + name);
       log('info', lang === 'pl' ? 'Model bazowy wczytany z przeglądarki ✓' : 'Base model loaded from browser ✓');
@@ -1800,8 +1836,19 @@ async function runInference(camId) {
       drawHistChart(showBlock.id);
     }
 
-    const raw = Array.from(predictions).map(v => v.toFixed(4));
-    log('data', `[${raw.join(', ')}]`);
+    // Throttle inference logs to once per second to avoid flooding
+    const now = Date.now();
+    if (!runInference._lastLog || now - runInference._lastLog > 1000) {
+      runInference._lastLog = now;
+      const pctStr = Array.from(predictions).map((p, i) =>
+        `${classNames[i] || i}: ${(p * 100).toFixed(1)}%`
+      ).join(' | ');
+      if (confidence >= (predictBlock ? parseFloat(document.getElementById('thr-' + predictBlock.id)?.value || '0.7') : 0.7)) {
+        log('data', `predict → ${classNames[maxIdx]} (${(confidence * 100).toFixed(1)}%)  [${pctStr}]`);
+      } else {
+        log('info', `predict → uncertain  [${pctStr}]`);
+      }
+    }
 
   } catch (err) {
     // silent
