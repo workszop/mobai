@@ -58,7 +58,8 @@ select {
 /* TOPBAR */
 #topbar {
   height: var(--topbar-h);
-  background: #0F172A;
+  background: #fff;
+  border-bottom: 1px solid var(--c-border);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -70,13 +71,14 @@ select {
 #logo {
   font-size: 18px;
   font-weight: 700;
-  color: #fff;
+  color: var(--c-text);
   letter-spacing: -.5px;
   white-space: nowrap
 }
 
 #logo span {
-  color: #22D3EE
+  color: var(--c-muted);
+  font-weight: 400
 }
 
 #flowbar {
@@ -92,12 +94,12 @@ select {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 10px;
-  border-radius: 20px;
+  padding: 4px 10px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
   color: #fff;
-  opacity: .5;
+  opacity: .4;
   transition: .2s;
   cursor: default;
   white-space: nowrap
@@ -144,24 +146,23 @@ select {
 }
 
 .tb-btn {
-  padding: 8px 14px;
-  border-radius: 10px;
-  border: 2px solid rgba(203, 213, 225, .25);
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--c-border);
   font-size: 13px;
-  font-weight: 600;
-  background: #1E293B;
-  color: #CBD5E1;
-  transition: transform .12s, background .15s, color .15s;
+  font-weight: 500;
+  background: var(--c-surface);
+  color: var(--c-text);
+  transition: transform .12s, background .15s;
   white-space: nowrap
 }
 
 .tb-btn:hover {
-  background: #334155;
-  color: #fff
+  background: var(--c-bg);
 }
 
 .tb-btn:active {
-  transform: scale(.95)
+  transform: scale(.97)
 }
 
 #btn-lang {
@@ -170,24 +171,22 @@ select {
 }
 
 #btn-run {
-  background: #059669;
+  background: var(--c-text);
   color: #fff;
-  padding: 8px 18px;
-  border-radius: 10px;
-  border: 3px solid #1a1a2e;
-  box-shadow: 4px 4px 0 #1a1a2e;
+  padding: 7px 18px;
+  border-radius: 6px;
+  border: none;
   font-size: 13px;
-  font-weight: 700;
-  transition: transform .12s, box-shadow .12s, background .15s
+  font-weight: 600;
+  transition: transform .12s, opacity .15s
 }
 
 #btn-run:hover {
-  background: #047857
+  opacity: .85
 }
 
 #btn-run:active {
-  transform: scale(.95) translateY(2px);
-  box-shadow: 2px 2px 0 #1a1a2e
+  transform: scale(.97)
 }
 
 /* WORKSPACE */
@@ -222,19 +221,18 @@ select {
 }
 
 .palette-block {
-  background: #F8FAFC;
-  border: 3px solid #1a1a2e;
-  border-radius: 12px;
-  box-shadow: 4px 4px 0 #1a1a2e;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
   padding: 10px 12px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   cursor: grab;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  font-weight: 600;
-  transition: transform .12s, box-shadow .12s;
+  font-weight: 500;
+  transition: transform .12s, background .15s;
   user-select: none;
   overflow: hidden
 }
@@ -246,8 +244,7 @@ select {
 }
 
 .palette-block:hover {
-  box-shadow: 2px 2px 0 #1a1a2e;
-  transform: translate(2px, 2px)
+  background: var(--c-bg);
 }
 
 .palette-block:active {
@@ -280,19 +277,19 @@ select {
   position: absolute;
   bottom: 16px;
   right: calc(var(--log-w) + 16px);
-  width: 60px;
-  height: 60px;
-  border: 2px dashed #EF4444;
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  border: 1.5px dashed var(--c-muted);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #EF4444;
-  font-size: 22px;
+  color: var(--c-muted);
+  font-size: 20px;
   opacity: 0;
   transition: .2s;
   pointer-events: none;
-  background: rgba(239, 68, 68, .05)
+  background: var(--c-surface)
 }
 
 #trash-zone.visible {
@@ -301,7 +298,9 @@ select {
 }
 
 #trash-zone.hot {
-  background: rgba(239, 68, 68, .15);
+  background: rgba(220, 38, 38, .08);
+  border-color: var(--c-error);
+  color: var(--c-error);
   border-style: solid
 }
 
@@ -310,23 +309,23 @@ select {
   position: absolute;
   width: 340px;
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 6px 6px 0 #1a1a2e;
-  border: 3px solid #1a1a2e;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--c-border);
   user-select: none;
   min-height: 60px;
   transition: box-shadow .12s, transform .12s
 }
 
 .block-card.dragging {
-  opacity: .85;
-  box-shadow: 3px 3px 0 #1a1a2e;
+  opacity: .9;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
   z-index: 1000
 }
 
 .block-card .bk-header {
-  padding: 11px 14px;
-  border-radius: 13px 13px 0 0;
+  padding: 10px 14px;
+  border-radius: 9px 9px 0 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -450,11 +449,10 @@ select {
 
 .bk-btn {
   padding: 7px 12px;
-  border-radius: 10px;
-  border: 3px solid #1a1a2e;
-  box-shadow: 3px 3px 0 #1a1a2e;
+  border-radius: 6px;
+  border: none;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: #fff;
   width: 100%;
   text-align: center;
@@ -462,12 +460,12 @@ select {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: transform .12s, box-shadow .12s
+  transition: transform .12s, opacity .15s
 }
 
 .bk-btn:active {
-  transform: scale(.95) translateY(2px);
-  box-shadow: 1px 1px 0 #1a1a2e
+  transform: scale(.97);
+  opacity: .85
 }
 
 progress {
@@ -545,7 +543,8 @@ canvas.bk-canvas {
 /* LOG PANEL */
 #log-panel {
   width: var(--log-w);
-  background: #000;
+  background: var(--c-surface);
+  border-left: 1px solid var(--c-border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0
@@ -553,23 +552,23 @@ canvas.bk-canvas {
 
 #log-header {
   padding: 12px 14px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--c-border);
   display: flex;
   align-items: center;
   justify-content: space-between
 }
 
 #log-header-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-muted);
   text-transform: uppercase;
   letter-spacing: .08em
 }
 
 #log-clear {
   font-size: 10px;
-  color: #888;
+  color: var(--c-muted);
   background: none;
   border: none;
   cursor: pointer;
@@ -578,7 +577,7 @@ canvas.bk-canvas {
 #log-close-mobile {
   display: none;
   font-size: 16px;
-  color: #fff;
+  color: var(--c-text);
   background: none;
   border: none;
   cursor: pointer;
@@ -602,32 +601,32 @@ canvas.bk-canvas {
   border-radius: 3px;
   line-height: 1.5;
   word-break: break-all;
-  color: #fff
+  color: var(--c-text)
 }
 
 .log-line.ll-info {
-  color: #ccc
+  color: var(--c-muted)
 }
 
 .log-line.ll-success {
-  color: #4ADE80
+  color: var(--c-success)
 }
 
 .log-line.ll-warn {
-  color: #FCD34D
+  color: var(--c-warn)
 }
 
 .log-line.ll-error {
-  color: #F87171
+  color: var(--c-error)
 }
 
 .log-line.ll-step {
-  color: #38BDF8;
+  color: var(--c-info);
   font-weight: 700
 }
 
 .log-line.ll-data {
-  color: #93C5FD
+  color: var(--c-info)
 }
 
 #log-entries::-webkit-scrollbar {
@@ -647,12 +646,12 @@ canvas.bk-canvas {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, .6);
+  background: rgba(0, 0, 0, .3);
   z-index: 500;
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(4px)
+  backdrop-filter: blur(2px)
 }
 
 .modal-overlay.hidden {
@@ -661,11 +660,11 @@ canvas.bk-canvas {
 
 .modal-box {
   background: #fff;
-  border-radius: 20px;
-  border: 3px solid #1a1a2e;
-  box-shadow: 8px 8px 0 #1a1a2e;
-  padding: 32px;
-  max-width: 560px;
+  border-radius: 12px;
+  border: 1px solid var(--c-border);
+  box-shadow: 0 8px 32px rgba(0,0,0,.12);
+  padding: 28px;
+  max-width: 520px;
   width: calc(100% - 32px);
   max-height: 90vh;
   overflow-y: auto
@@ -698,7 +697,7 @@ canvas.bk-canvas {
 .guide-step-num {
   font-size: 11px;
   font-weight: 700;
-  background: var(--c-deploy);
+  background: var(--c-text);
   color: #fff;
   width: 24px;
   height: 24px;
@@ -741,24 +740,22 @@ canvas.bk-canvas {
 }
 
 .modal-close-btn {
-  background: var(--c-deploy);
+  background: var(--c-text);
   color: #fff;
-  padding: 10px 24px;
-  border-radius: 12px;
-  border: 3px solid #1a1a2e;
-  box-shadow: 4px 4px 0 #1a1a2e;
+  padding: 9px 22px;
+  border-radius: 6px;
+  border: none;
   font-size: 14px;
-  font-weight: 700;
-  transition: transform .12s, box-shadow .12s, background .15s
+  font-weight: 600;
+  transition: transform .12s, opacity .15s
 }
 
 .modal-close-btn:hover {
-  background: #14532D
+  opacity: .85
 }
 
 .modal-close-btn:active {
-  transform: scale(.95) translateY(2px);
-  box-shadow: 2px 2px 0 #1a1a2e
+  transform: scale(.97)
 }
 
 /* EDU MODE */
@@ -775,7 +772,7 @@ body.edu-mode .bk-header {
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  background: #1E3932;
+  background: var(--c-text);
   color: #fff;
   font-size: 11px;
   padding: 5px 10px;
@@ -874,14 +871,14 @@ canvas.chart-canvas {
   bottom: 20px;
   left: 20px;
   z-index: 200;
-  width: 52px;
-  height: 52px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: #0F172A;
-  color: #fff;
-  font-size: 24px;
-  border: 3px solid #22D3EE;
-  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: 20px;
+  border: 1px solid var(--c-border);
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
   align-items: center;
   justify-content: center;
   -webkit-tap-highlight-color: transparent;
@@ -893,14 +890,14 @@ canvas.chart-canvas {
   bottom: 20px;
   right: 20px;
   z-index: 200;
-  width: 52px;
-  height: 52px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: #000;
-  color: #fff;
-  font-size: 22px;
-  border: 3px solid #555;
-  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: 20px;
+  border: 1px solid var(--c-border);
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
   align-items: center;
   justify-content: center;
   -webkit-tap-highlight-color: transparent;
@@ -964,8 +961,8 @@ canvas.chart-canvas {
     -webkit-tap-highlight-color: transparent;
   }
   .palette-block:active {
-    transform: scale(.96);
-    box-shadow: 2px 2px 0 #1a1a2e;
+    transform: scale(.97);
+    background: var(--c-bg);
   }
 
   /* Canvas: full width, flow layout */
@@ -1012,8 +1009,8 @@ canvas.chart-canvas {
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -4px 20px rgba(0,0,0,.3);
     pointer-events: none;
-    background: #000;
-    color: #fff;
+    background: var(--c-surface);
+    color: var(--c-text);
   }
   #log-panel.mobile-open {
     transform: translateY(0);

@@ -226,15 +226,29 @@ function toggleLang() {
 
 // ===== LOG PANEL =====
 function log(type, msg) {
+  // Route to the correct log container based on active screen
+  const isInfer = document.getElementById('screen-inference')?.classList.contains('active');
+  const entries = document.getElementById(isInfer ? 'infer-log' : 'train-log');
+  if (!entries) return;
+
   const el = document.createElement('div');
   el.className = `log-line ll-${type}`;
   const ts = new Date().toLocaleTimeString('pl', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   el.textContent = `[${ts}] ${msg}`;
-  const entries = document.getElementById('log-entries');
   entries.appendChild(el);
   entries.scrollTop = entries.scrollHeight;
+
+  // Auto-expand the log section if collapsed
+  const bodyId = isInfer ? 'infer-log-body' : 'train-log-body';
+  const body = document.getElementById(bodyId);
+  if (body && body.classList.contains('collapsed')) body.classList.remove('collapsed');
 }
-function clearLog() { document.getElementById('log-entries').innerHTML = ''; }
+function clearLog() {
+  const tl = document.getElementById('train-log');
+  const il = document.getElementById('infer-log');
+  if (tl) tl.innerHTML = '';
+  if (il) il.innerHTML = '';
+}
 
 // ===== DRAG & DROP — PALETTE =====
 function paletteDragStart(e) {
@@ -379,7 +393,7 @@ function renderLabelRows(id) {
   oninput="classNames[${i}]=this.value;updateClassNamesEverywhere()" placeholder="${lang === 'pl' ? 'nazwa klasy...' : 'class name...'}">
 <span class="class-count" id="cc-${id}-${i}">${(capturedSamples[i] || []).length} ${t('lbl_samples')}</span>
 <button style="flex-shrink:0;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;border:none;cursor:pointer;background:${CLASS_COLORS[i]};color:#fff" onclick="labelCapture(${i})">${lang === 'pl' ? 'zbierz' : 'capture'}</button>
-<button class="class-delete-btn" onclick="clearClassSamples(${i})" title="${lang === 'pl' ? 'Usuń próbki' : 'Delete samples'}">✕</button>
+<button class="class-delete-btn" onclick="clearClassSamples(${i})" title="${lang === 'pl' ? 'Usuń próbki' : 'Delete samples'}">&times;</button>
 </div>
 <div id="thumbs-label-${i}-${id}" class="thumb-strip"></div>`;
   }
@@ -479,8 +493,9 @@ ${makeParam(t('param_lr'), `<select id="lr-${id}">
 ${makeParam(t('param_batch'), `<select id="bs-${id}">
   <option value="8">8</option><option value="16" selected>16</option><option value="32">32</option>
 </select>`)}
-<canvas class="chart-canvas" id="chart-${id}" height="80"></canvas>
+<progress id="prog-${id}" value="0" max="100" style="margin-top:6px"></progress>
 <div id="train-info-${id}" style="font-size:10px;color:var(--c-muted);text-align:center">—</div>
+<canvas class="chart-canvas" id="chart-${id}" height="80"></canvas>
 <div style="display:flex;gap:6px;margin-top:4px">
 ${makeBtn(t('btn_train'), `runTraining('${id}')`, 'var(--c-train)')}
 ${makeBtn(t('btn_stop_train'), `stopTraining('${id}')`, '#64748B')}
@@ -921,6 +936,7 @@ function blockCapture(id, cls) {
   let captured = 0;
   const statusEl = document.getElementById('cam-status-' + id);
   setBlockStatus(document.getElementById(id), 'running');
+  log('info', `Capturing ${spc} samples for "${classNames[cls]}" at ${res}x${res}px...`);
   function grab() {
     if (captured >= spc) {
       log('success', t('log_capture', spc, classNames[cls]));
@@ -1057,11 +1073,19 @@ async function runPrepare(id) {
     }
   }
 
+  log('info', `${totalSamples} samples across ${classNames.length} classes | augmentation: ${augType} x${multiplier}`);
+
   return new Promise((resolve) => {
+    let lastLoggedPct = 0;
     worker.onmessage = async (e) => {
       if (e.data.type === 'progress') {
         if (prog) prog.value = e.data.pct;
         if (status) status.textContent = e.data.pct + '%';
+        // Log every 25%
+        if (e.data.pct >= lastLoggedPct + 25) {
+          lastLoggedPct = Math.floor(e.data.pct / 25) * 25;
+          log('data', `Augmentation progress: ${lastLoggedPct}%`);
+        }
       } else if (e.data.type === 'done') {
         const augmented = e.data.result;
         const n = augmented.length;
@@ -1102,10 +1126,16 @@ async function runLoadBaseModel(id) {
   const prog = document.getElementById('prog-' + id);
   const mstat = document.getElementById('model-status-' + id);
   try {
+    let lastLoggedPct = 0;
     baseModel = await tf.loadGraphModel(MODEL_URL, {
       onProgress: (frac) => {
-        if (prog) prog.value = Math.round(frac * 100);
-        if (mstat) mstat.textContent = Math.round(frac * 100) + '%';
+        const pct = Math.round(frac * 100);
+        if (prog) prog.value = pct;
+        if (mstat) mstat.textContent = pct + '%';
+        if (pct >= lastLoggedPct + 20) {
+          lastLoggedPct = Math.floor(pct / 20) * 20;
+          log('data', `Downloading MobileNetV3-Small... ${lastLoggedPct}%`);
+        }
       }
     });
 
@@ -1181,6 +1211,9 @@ async function runTraining(id) {
   const numClasses = preparedData.numClasses;
   const { xs: rawXs, ys: rawYs } = preparedData;
 
+  const prog = document.getElementById('prog-' + id);
+  if (prog) prog.value = 0;
+
   setBlockStatus(document.getElementById(id), 'running');
   log('step', t('log_train_start', epochs));
 
@@ -1193,6 +1226,9 @@ async function runTraining(id) {
     // Always resize to 224×224 — MobileNetV3-Small requires that input size
     // regardless of the resolution the user chose when capturing samples.
     log('info', lang === 'pl' ? `Ekstrakcja cech z ${rawXs.length} próbek...` : `Extracting features from ${rawXs.length} samples...`);
+    if (info) info.textContent = lang === 'pl'
+      ? `Ekstrakcja cech: 0/${rawXs.length}`
+      : `Feature extraction: 0/${rawXs.length}`;
     const allFeats = [];
     const reuseCanvas = document.createElement('canvas');
     const reuseCtx = reuseCanvas.getContext('2d');
@@ -1212,12 +1248,13 @@ async function runTraining(id) {
         );
       });
       allFeats.push(feat);
-      if (i % 5 === 0) {
-        if (info) info.textContent = lang === 'pl'
-          ? `Ekstrakcja cech: ${i + 1}/${rawXs.length}`
-          : `Feature extraction: ${i + 1}/${rawXs.length}`;
-        await tf.nextFrame();
-      }
+      // Feature extraction = first 50% of progress; update every sample
+      const featPct = Math.round(((i + 1) / rawXs.length) * 50);
+      if (prog) prog.value = featPct;
+      if (info) info.textContent = lang === 'pl'
+        ? `Ekstrakcja cech: ${i + 1}/${rawXs.length}`
+        : `Feature extraction: ${i + 1}/${rawXs.length}`;
+      if (i % 3 === 0) await tf.nextFrame();
     }
     featsTensor = tf.concat(allFeats, 0);
     allFeats.forEach(f => f.dispose());
@@ -1228,7 +1265,11 @@ async function runTraining(id) {
     ysTensor = tf.oneHot(idxTensor, numClasses);
     idxTensor.dispose();
 
+    if (prog) prog.value = 50;
     log('info', lang === 'pl' ? `Cechy: ${rawXs.length}×${featSize}` : `Features: ${rawXs.length}×${featSize}`);
+    log('info', `Feature extraction complete. Building classifier (${featSize} → 128 → ${numClasses})...`);
+    if (info) info.textContent = lang === 'pl' ? 'Kompilacja modelu...' : 'Compiling model...';
+    await tf.nextFrame();
 
     // ── STEP 2: Train small classifier on bottleneck features ──
     // The base model (GraphModel) cannot be fine-tuned in TF.js — it is always frozen.
@@ -1246,6 +1287,7 @@ async function runTraining(id) {
       metrics: ['accuracy']
     });
 
+    log('step', `Training ${epochs} epochs (lr=${lr}, batch=${batchSize})...`);
     const startTime = Date.now();
     await classifier.fit(featsTensor, ysTensor, {
       epochs, batchSize, shuffle: true,
@@ -1261,7 +1303,10 @@ async function runTraining(id) {
           const perEpoch = elapsed / (epoch + 1);
           const remaining = Math.round((epochs - epoch - 1) * perEpoch);
           const acc = logs.acc || logs.accuracy || 0;
-          if (info) info.textContent = `Epoch ${epoch + 1}/${epochs} | ETA: ${remaining}s`;
+          // Epochs = 50-100% of progress bar
+          const epochPct = 50 + Math.round(((epoch + 1) / epochs) * 50);
+          if (prog) prog.value = epochPct;
+          if (info) info.textContent = `Epoch ${epoch + 1}/${epochs} | acc: ${(acc * 100).toFixed(0)}% | ETA: ${remaining}s`;
           log('data', t('log_train_epoch', epoch + 1, logs.loss, acc));
           await tf.nextFrame();
         }
@@ -1286,7 +1331,10 @@ async function runTraining(id) {
     inferModel = classifier;       // available immediately for same-session inference
     inferMetadata = modelMetadata; // so inference blocks see the right class labels
 
-    log('info', lang === 'pl' ? 'Model gotowy...' : 'Model ready...');
+    if (prog) prog.value = 100;
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    log('info', `Training finished in ${elapsed}s | final accuracy: ${(finalAcc * 100).toFixed(1)}%`);
+    log('info', `Classes: [${classNames.slice(0, numClasses).join(', ')}]`);
     log('success', t('log_train_done', finalAcc));
     setBlockStatus(document.getElementById(id), 'done');
   } catch (err) {
@@ -1318,8 +1366,10 @@ async function runSaveIDB(id) {
   const nameEl = document.getElementById('model-name-' + id);
   const name = (nameEl ? nameEl.value.trim() : '') || 'model-1';
   try {
+    log('info', `Saving model "${name}" to IndexedDB...`);
     fullModel.userDefinedMetadata = modelMetadata; // bake labels into model JSON
     await fullModel.save('indexeddb://ml-blocks-' + name);
+    log('info', 'Classifier saved. Saving base model...');
     await baseModel.save('indexeddb://ml-blocks-base-' + name);
     localStorage.setItem('ml-blocks-meta-' + name, JSON.stringify(modelMetadata));
     log('success', t('log_save_idb'));
@@ -1438,6 +1488,7 @@ async function runLoadIDB(id) {
   log('step', 'Loading from IndexedDB: ' + name + '...');
   try {
     inferModel = await tf.loadLayersModel('indexeddb://ml-blocks-' + name);
+    log('info', 'Classifier loaded. Loading base model...');
     try {
       baseModel = await tf.loadGraphModel('indexeddb://ml-blocks-base-' + name);
       log('info', lang === 'pl' ? 'Model bazowy wczytany z przeglądarki ✓' : 'Base model loaded from browser ✓');
@@ -1785,8 +1836,19 @@ async function runInference(camId) {
       drawHistChart(showBlock.id);
     }
 
-    const raw = Array.from(predictions).map(v => v.toFixed(4));
-    log('data', `[${raw.join(', ')}]`);
+    // Throttle inference logs to once per second to avoid flooding
+    const now = Date.now();
+    if (!runInference._lastLog || now - runInference._lastLog > 1000) {
+      runInference._lastLog = now;
+      const pctStr = Array.from(predictions).map((p, i) =>
+        `${classNames[i] || i}: ${(p * 100).toFixed(1)}%`
+      ).join(' | ');
+      if (confidence >= (predictBlock ? parseFloat(document.getElementById('thr-' + predictBlock.id)?.value || '0.7') : 0.7)) {
+        log('data', `predict → ${classNames[maxIdx]} (${(confidence * 100).toFixed(1)}%)  [${pctStr}]`);
+      } else {
+        log('info', `predict → uncertain  [${pctStr}]`);
+      }
+    }
 
   } catch (err) {
     // silent
@@ -1998,7 +2060,7 @@ function drawHistChart(id) {
 
 function freezeFrame(id) {
   frozenFrame = !frozenFrame;
-  log('info', frozenFrame ? '❄️ Frame frozen' : '▶ Resumed');
+  log('info', frozenFrame ? 'Frame frozen' : 'Resumed');
 }
 
 // ===== FLOW BAR PHASE ACTIVATION =====
@@ -2044,16 +2106,16 @@ async function runPipeline() {
     if (EDU_MODE) {
       const ann = document.getElementById('ann-' + id);
       const annotations = {
-        'camera-input': '📷 Zbieramy dane treningowe — zdjęcia dla każdej klasy',
-        'label-classes': '🏷️ Etykiety identyfikują każdą kategorię obrazów',
-        'prepare-data': '⚙️ Zdjęcia są przeskalowane i augmentowane w Web Worker',
-        'pretrained-model': '🧠 MobileNet widział 1.2M zdjęć — "transfer learning"',
-        'train-model': '🚀 model.fit() dostosowuje wagi do naszych klas',
-        'save-model': '💾 Wagi modelu zapisywane w IndexedDB przeglądarki',
-        'upload-model': '📤 Wczytujemy wagi modelu z pliku .json + .bin',
-        'camera-infer': '📷 Kamera streamuje klatki do predykcji',
-        'predict': '🎯 model.predict() zwraca prawdopodobieństwa klas',
-        'show-results': '📊 Wynik z najwyższym prawdopodobieństwem = predykcja'
+        'camera-input': 'Zbieramy dane treningowe — zdjęcia dla każdej klasy',
+        'label-classes': 'Etykiety identyfikują każdą kategorię obrazów',
+        'prepare-data': 'Zdjęcia są przeskalowane i augmentowane w Web Worker',
+        'pretrained-model': 'MobileNet widział 1.2M zdjęć — "transfer learning"',
+        'train-model': 'model.fit() dostosowuje wagi do naszych klas',
+        'save-model': 'Wagi modelu zapisywane w IndexedDB przeglądarki',
+        'upload-model': 'Wczytujemy wagi modelu z pliku .json + .bin',
+        'camera-infer': 'Kamera streamuje klatki do predykcji',
+        'predict': 'model.predict() zwraca prawdopodobieństwa klas',
+        'show-results': 'Wynik z najwyższym prawdopodobieństwem = predykcja'
       };
       if (ann && annotations[b.type]) ann.textContent = annotations[b.type];
     }
