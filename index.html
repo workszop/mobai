@@ -879,10 +879,11 @@ async function getCameraStream(facingMode) {
 
   // Try simplest constraint FIRST (best compatibility, preserves user gesture)
   // More complex constraints tried only if the simple one fails for non-permission reasons
+  const fm = facingMode || 'environment';
   const constraints = [
+    { video: { facingMode: { exact: fm } } },
+    { video: { facingMode: fm } },
     { video: true },
-    { video: { facingMode: facingMode || 'environment' } },
-    { video: { facingMode: facingMode || 'environment', width: { ideal: 640 }, height: { ideal: 480 } } },
   ];
   let lastErr;
   for (const c of constraints) {
