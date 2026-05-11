@@ -1096,9 +1096,16 @@ async function doneStep1() {
   setStepState('step1', 'done');
   btn.innerHTML = 'Continue →';
   closeStep('step1');
-  setStepState('step3', 'active');
-  openStep('step3');
-  document.getElementById('step3-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (baseModel) {
+    // Skip re-download — base model already in memory
+    tlog('info', 'Base model already loaded, skipping download');
+    setStepState('step3', 'done');
+    advanceToStep4();
+  } else {
+    setStepState('step3', 'active');
+    openStep('step3');
+    document.getElementById('step3-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 // ═══════════════════════════════════════════════
