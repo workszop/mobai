@@ -778,6 +778,17 @@ function goToInference() {
 }
 function goToTrainingFromInference() {
   stopInferCamera();
+  // Reopen step 1 so the user can add classes/samples
+  setStepState('step1', 'active');
+  openStep('step1');
+  // Base model step: keep done if already loaded, otherwise reset to waiting
+  setStepState('step3', baseModel ? 'done' : '');
+  closeStep('step3');
+  // Reset train and save steps
+  setStepState('step4', '');
+  closeStep('step4');
+  setStepState('step5', '');
+  closeStep('step5');
   renderClassList();
   showScreen('screen-training');
   tlog('step', 'Returned to training — add more data or classes and retrain');
@@ -1183,9 +1194,12 @@ async function runMobilePrepare(onProgress) {
       URL.revokeObjectURL(workerURL);
       reject(new Error(e.message));
     };
+    // Clone buffers before transfer — transferring originals detaches them from
+    // capturedSamples, breaking renderThumbs and any subsequent retrain.
+    const transferSamples = flatSamples.map(s => ({ data: s.data.slice(0), width: s.width, height: s.height }));
     worker.postMessage(
-      { samples: flatSamples, labels: flatLabels, multiplier, augType },
-      flatSamples.map(s => s.data)
+      { samples: transferSamples, labels: flatLabels, multiplier, augType },
+      transferSamples.map(s => s.data)
     );
   });
 }
