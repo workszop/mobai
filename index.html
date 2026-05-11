@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#FFFFFF">
+  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0F172A" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
@@ -37,6 +38,19 @@
       --c5: #DB2777;
       --radius: 12px;
       --radius-sm: 8px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0F172A;
+        --bg2: #1E293B;
+        --bg3: #334155;
+        --border: #334155;
+        --text: #F1F5F9;
+        --muted: #94A3B8;
+        --success: #22C55E;
+        --warn: #EAB308;
+        --error: #EF4444;
+      }
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; }
@@ -160,7 +174,7 @@
     .cam-wrap {
       position: relative; width: 100%;
       aspect-ratio: 4/3;
-      background: #F1F5F9;
+      background: var(--bg3);
       border-radius: var(--radius-sm);
       overflow: hidden;
     }
@@ -348,7 +362,7 @@
 
     /* ── INFERENCE OVERLAY ── */
     .infer-cam-wrap { position: relative; width: 100%; aspect-ratio: 4/3;
-      background: #F1F5F9; border-radius: var(--radius-sm); overflow: hidden; }
+      background: var(--bg3); border-radius: var(--radius-sm); overflow: hidden; }
     .infer-cam-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
     .infer-cam-overlay {
       position: absolute; top: 10px; left: 10px; right: 10px;
@@ -661,7 +675,7 @@
 
         <div class="param-row">
           <span class="param-label">Speed</span>
-          <select id="infer-fps">
+          <select id="infer-fps" onchange="restartInferLoop()">
             <option value="1000">1 FPS</option>
             <option value="333">3 FPS</option>
             <option value="200" selected>5 FPS</option>
@@ -1218,7 +1232,7 @@ function drawMobileChart() {
   const W = cv.offsetWidth || 300;
   const H = 100;
   cv.width = W; cv.height = H;
-  ctx.fillStyle = '#1E293B';
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg3').trim() || '#1E293B';
   ctx.fillRect(0, 0, W, H);
 
   function drawLine(data, color) {
@@ -1397,6 +1411,13 @@ async function runMobileTraining() {
 function stopMobileTraining() {
   trainingCancelled = true;
   tlog('warn', 'Stopping after current epoch…');
+}
+
+function restartInferLoop() {
+  if (!inferStream) return;
+  if (inferInterval) clearInterval(inferInterval);
+  const interval = parseInt(document.getElementById('infer-fps')?.value) || 200;
+  inferInterval = setInterval(runMobileInference, interval);
 }
 
 // ═══════════════════════════════════════════════
