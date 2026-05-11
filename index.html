@@ -370,6 +370,19 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── PROCESSING STATE ── */
+    .step-card.step-processing { border-color: var(--warn); }
+    .step-processing .step-num { background: var(--warn); color: white; animation: proc-pulse 1.2s ease-in-out infinite; }
+    .step-processing .step-status-badge { background: rgba(202,138,4,0.1); color: var(--warn); }
+    @keyframes proc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+    /* ── AUTOSAVE NOTICE ── */
+    .autosave-notice {
+      display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+      background: rgba(22,163,74,0.08); border: 1px solid rgba(22,163,74,0.25);
+      border-radius: var(--radius-sm); font-size: 13px; color: var(--success);
+    }
+
     /* ── FOOTER ── */
     .screen-footer {
       padding: 12px 16px;
@@ -553,17 +566,21 @@
       </div>
       <div class="step-body collapsed" id="step5-body">
         <div class="model-info-box" id="save-meta">—</div>
+        <div id="autosave-status" class="autosave-notice" style="display:none">
+          <i data-lucide="check-circle" style="width:16px;height:16px;flex-shrink:0"></i>
+          <span>Auto-saved to this browser</span>
+        </div>
         <div class="gap-4">
           <label style="font-size:13px;color:var(--muted)">Model name</label>
           <input type="text" class="name-input" id="save-model-name" value="my-model" placeholder="my-model">
         </div>
-        <button class="btn btn-primary" onclick="runMobileSaveIDB()" id="btn-save-idb">
-          Save to Browser
-        </button>
-        <button class="btn btn-secondary" onclick="runMobileDownload()" id="btn-download">
+        <button class="btn btn-primary" onclick="runMobileDownload()" id="btn-download">
           Download as File
         </button>
-        <p class="hint">Saved models can be loaded in Inference mode without retraining.</p>
+        <button class="btn btn-secondary" onclick="runMobileSaveIDB()" id="btn-save-idb">
+          Re-save to Browser
+        </button>
+        <p class="hint">Download to load this model on other devices.</p>
         <div class="or-sep">or</div>
         <button class="btn btn-infer" onclick="goToInferenceFromTraining()" id="btn-test-infer">
           <i data-lucide="scan-search" style="width:16px;height:16px;vertical-align:-3px"></i> Test in Inference
@@ -798,17 +815,22 @@ function closeStep(stepId) {
   if (body) body.classList.add('collapsed');
 }
 function setStepState(stepId, state) {
-  // state: 'active' | 'done' | 'error' | ''
+  // state: 'active' | 'processing' | 'done' | 'error' | ''
   const card = document.getElementById(stepId + '-card');
   const badge = document.getElementById(stepId + '-badge');
   if (!card) return;
   card.className = 'step-card' + (state ? ' step-' + state : '');
   if (badge) {
     badge.textContent = state === 'active' ? 'Active'
+      : state === 'processing' ? '…'
       : state === 'done' ? 'Done ✓'
       : state === 'error' ? 'Error'
       : 'Waiting';
   }
+}
+function setStepBadge(stepId, text) {
+  const badge = document.getElementById(stepId + '-badge');
+  if (badge) badge.textContent = text;
 }
 
 // ═══════════════════════════════════════════════
@@ -1054,9 +1076,12 @@ async function doneStep1() {
   tlog('step', `Step 1 done — ${totalSamples} total samples across ${classNames.length} classes`);
   const btn = document.getElementById('btn-done-step1');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Preparing data…';
-  setStepState('step1', 'active');
-  await runMobilePrepare();
+  btn.innerHTML = '<span class="spinner"></span> Augmenting…';
+  setStepState('step1', 'processing');
+  await runMobilePrepare(pct => {
+    btn.innerHTML = `<span class="spinner"></span> Augmenting… ${pct}%`;
+    setStepBadge('step1', `${pct}%`);
+  });
   setStepState('step1', 'done');
   btn.innerHTML = 'Continue →';
   closeStep('step1');
@@ -1116,7 +1141,7 @@ self.onmessage = function(e) {
 // ═══════════════════════════════════════════════
 // STEP 2: PREPARE DATA
 // ═══════════════════════════════════════════════
-async function runMobilePrepare() {
+async function runMobilePrepare(onProgress) {
   const allSamples = capturedSamples.slice(0, classNames.length);
   const total = allSamples.reduce((s,a)=>s+a.length,0);
   if (total === 0) { tlog('warn', 'No samples! Capture images first.'); return; }
@@ -1142,7 +1167,7 @@ async function runMobilePrepare() {
   await new Promise((resolve, reject) => {
     worker.onmessage = e => {
       if (e.data.type === 'progress') {
-        // progress logged silently
+        if (onProgress) onProgress(e.data.pct);
       } else if (e.data.type === 'done') {
         preparedData = { xs: e.data.result, ys: e.data.labels, numClasses: classNames.length };
         const n = e.data.result.length;
@@ -1263,8 +1288,9 @@ async function runMobileTraining() {
 
   const btn = document.getElementById('btn-train');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Training…';
-  setStepState('step4', 'active');
+  btn.innerHTML = '<span class="spinner"></span> Extracting…';
+  setStepState('step4', 'processing');
+  setStepBadge('step4', 'Extracting…');
   tlog('step', `Training — ${epochs} epochs, ${rawXs.length} samples`);
 
   let featsTensor = null;
@@ -1276,32 +1302,35 @@ async function runMobileTraining() {
   progBar.style.width = '0%';
 
   try {
-    // Feature extraction
+    // Batch feature extraction — 8 samples per predict call (~8× fewer GPU round-trips)
     document.getElementById('train-label').textContent = 'Extracting features…';
     const allFeats = [];
     const reuseCanvas = document.createElement('canvas');
     reuseCanvas.width = 224; reuseCanvas.height = 224;
     const reuseCtx = reuseCanvas.getContext('2d');
+    const FEAT_BATCH = 8;
 
-    for (let i = 0; i < rawXs.length; i++) {
+    for (let i = 0; i < rawXs.length; i += FEAT_BATCH) {
       if (trainingCancelled) throw new Error('cancelled');
-      const s = rawXs[i];
-      const feat = tf.tidy(() => {
-        reuseCtx.putImageData(
-          new ImageData(new Uint8ClampedArray(s.data), s.width, s.height), 0, 0
-        );
-        return baseModel.predict(
-          tf.browser.fromPixels(reuseCanvas)
-            .resizeBilinear([224, 224])
-            .toFloat().div(255)
-            .expandDims(0)
-        );
+      const batchEnd = Math.min(i + FEAT_BATCH, rawXs.length);
+      const batchFeat = tf.tidy(() => {
+        const imgs = [];
+        for (let j = i; j < batchEnd; j++) {
+          const s = rawXs[j];
+          reuseCtx.putImageData(
+            new ImageData(new Uint8ClampedArray(s.data), s.width, s.height), 0, 0
+          );
+          // images are already 224×224 — skip resizeBilinear
+          imgs.push(tf.browser.fromPixels(reuseCanvas).toFloat().div(255));
+        }
+        return baseModel.predict(tf.stack(imgs));
       });
-      allFeats.push(feat);
-      const pct = Math.round(((i + 1) / rawXs.length) * 50);
+      allFeats.push(batchFeat);
+      const pct = Math.round((batchEnd / rawXs.length) * 50);
       progBar.style.width = pct + '%';
-      document.getElementById('train-label').textContent = `Features: ${i+1}/${rawXs.length}`;
-      if (i % 5 === 0) await tf.nextFrame();
+      document.getElementById('train-label').textContent = `Features: ${batchEnd}/${rawXs.length}`;
+      setStepBadge('step4', `Features ${batchEnd}/${rawXs.length}`);
+      await tf.nextFrame();
     }
 
     featsTensor = tf.concat(allFeats, 0);
@@ -1334,6 +1363,8 @@ async function runMobileTraining() {
       callbacks: {
         onEpochBegin: async (epoch) => {
           if (trainingCancelled) throw new Error('cancelled');
+          setStepBadge('step4', `Epoch ${epoch+1}/${epochs}`);
+          btn.innerHTML = `<span class="spinner"></span> Epoch ${epoch+1}/${epochs}`;
         },
         onEpochEnd: async (epoch, logs) => {
           const acc = logs.acc || logs.accuracy || 0;
@@ -1368,15 +1399,31 @@ async function runMobileTraining() {
       `Done ✓ — ${(finalAcc*100).toFixed(1)}% accuracy`;
 
     setStepState('step4', 'done');
-    // Update save meta
     document.getElementById('save-meta').innerHTML =
       `<b>Classes:</b> ${modelMetadata.classLabels.join(', ')}<br>
        <b>Accuracy:</b> ${(finalAcc*100).toFixed(1)}%<br>
        <b>Trained:</b> ${new Date(modelMetadata.timestamp).toLocaleString()}`;
-    setStepState('step5', 'active');
+
+    // Auto-save to browser before showing save step
+    const saveName = document.getElementById('save-model-name').value.trim() || 'my-model';
+    setStepState('step5', 'processing');
+    setStepBadge('step5', 'Saving…');
     openStep('step5');
     closeStep('step4');
     document.getElementById('step5-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    try {
+      classifier.userDefinedMetadata = modelMetadata;
+      await classifier.save('indexeddb://ml-blocks-' + saveName);
+      await baseModel.save('indexeddb://ml-blocks-base-' + saveName);
+      localStorage.setItem('ml-blocks-meta-' + saveName, JSON.stringify(modelMetadata));
+      tlog('success', `Auto-saved as "${saveName}" ✓`);
+      const autoEl = document.getElementById('autosave-status');
+      if (autoEl) { autoEl.style.display = ''; if (typeof lucide !== 'undefined') lucide.createIcons(); }
+      setStepState('step5', 'done');
+    } catch (saveErr) {
+      tlog('warn', `Auto-save failed: ${saveErr.message} — use Re-save to Browser`);
+      setStepState('step5', 'active');
+    }
 
   } catch (err) {
     if (err.message === 'cancelled') {
@@ -1390,7 +1437,7 @@ async function runMobileTraining() {
     if (featsTensor) featsTensor.dispose();
     if (ysTensor) ysTensor.dispose();
     btn.disabled = false;
-    btn.innerHTML = '🚀 Train';
+    btn.innerHTML = 'Train';
   }
 }
 
@@ -1449,13 +1496,15 @@ async function runMobileSaveIDB() {
     await trainedModel.save('indexeddb://ml-blocks-' + name);
     await baseModel.save('indexeddb://ml-blocks-base-' + name);
     localStorage.setItem('ml-blocks-meta-' + name, JSON.stringify(modelMetadata));
-    tlog('success', `Model saved as "${name}" ✓`);
+    tlog('success', `Saved as "${name}" ✓`);
+    const autoEl = document.getElementById('autosave-status');
+    if (autoEl) { autoEl.style.display = ''; if (typeof lucide !== 'undefined') lucide.createIcons(); }
     setStepState('step5', 'done');
   } catch (err) {
     tlog('error', 'Save error: ' + err.message);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '💾 Save to Browser';
+    btn.innerHTML = 'Re-save to Browser';
   }
 }
 
@@ -1492,7 +1541,7 @@ async function runMobileDownload() {
     tlog('error', 'Download error: ' + err.message);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '⬇️ Download as File';
+    btn.innerHTML = 'Download as File';
   }
 }
 
