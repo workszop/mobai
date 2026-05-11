@@ -1292,6 +1292,7 @@ async function runMobileTraining() {
   setStepState('step4', 'processing');
   setStepBadge('step4', 'Extracting…');
   tlog('step', `Training — ${epochs} epochs, ${rawXs.length} samples`);
+  await tf.nextFrame(); // flush paint before heavy work
 
   let featsTensor = null;
   let ysTensor = null;
