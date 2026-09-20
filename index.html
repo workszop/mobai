@@ -288,7 +288,7 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
     [data-state="error"] .step-num { background: var(--red); color: var(--red-ink); }
     [data-state="processing"] .step-num { background: var(--yellow); color: var(--yellow-ink); animation: proc-pulse 1.2s ease-in-out infinite; }
     .btn-spinner { width: 12px; height: 12px; border-radius: 50%; background: currentColor; animation: proc-pulse 1s ease-in-out infinite; flex-shrink: 0; }
-    .btn.preparing { opacity: .85; cursor: progress; }
+    .btn.preparing { opacity: .85; cursor: progress; pointer-events: none; }
     @media (prefers-reduced-motion: reduce) { .btn-spinner, [data-state="processing"] .step-num { animation: none; } }
     @keyframes proc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
     .step-title { flex: 1; font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
@@ -1054,7 +1054,7 @@ function releaseWakeLock() {
   if (wakeLock) { try { wakeLock.release(); } catch (_) {} wakeLock = null; }
 }
 function updateWakeLock() {
-  if (trainStream || inferStream || trainPhase === 'training' || trainPhase === 'preparing') acquireWakeLock(); else releaseWakeLock();
+  if (trainStream || inferStream || trainingBusy()) acquireWakeLock(); else releaseWakeLock();
 }
 
 // ─── Helpers: IndexedDB (dataset + model metadata) ───
@@ -1246,6 +1246,13 @@ async function embedPending() {
   }
 }
 
+// Resolves once every queued frame has been embedded (or dropped).
+function embedQueued() {
+  if (!pending.length && !embedding) return Promise.resolve();
+  embedPending();
+  return new Promise(r => { const tick = () => (!pending.length && !embedding) ? r() : setTimeout(tick, 50); tick(); });
+}
+
 // ─── Render ───
 function stepBadge(state) {
   return state === 'active' ? t('badge_active') : state === 'done' ? t('badge_done') : state === 'error' ? t('badge_error') : state === 'processing' ? t('badge_busy') : t('badge_waiting');
@@ -1354,18 +1361,19 @@ function updateCountLabel(classId) {
 function readyToTrain() {
   return classes.length >= 2 && classes.every(c => (samples[c.id] || []).length >= MIN_SAMPLES_TO_TRAIN);
 }
+function trainingBusy() { return trainPhase === 'preparing' || trainPhase === 'training'; }
 function setTrainPhase(p) { trainPhase = p; bodyEl.dataset.trainPhase = p; renderBars(); updateWakeLock(); }
 function renderBars() {
   // Training bar
   const tb = $('train-bar-btn'), tt = $('train-bar-title'), ts = $('train-bar-sub');
-  if (trainPhase !== 'preparing') { tb.removeAttribute('aria-disabled'); tb.removeAttribute('aria-busy'); }
+  if (trainPhase === 'preparing') { tb.setAttribute('aria-disabled', 'true'); tb.setAttribute('aria-busy', 'true'); } else { tb.removeAttribute('aria-disabled'); tb.removeAttribute('aria-busy'); }
   trainBar.classList.toggle('visible', currentScreen === 'training');
   inferBar.classList.toggle('visible', currentScreen === 'inference');
   if (trainPhase === 'preparing') {
     tt.textContent = t('train_bar_preparing'); ts.textContent = t('train_bar_preparing_sub');
     if (tb.dataset.action !== 'none') { tb.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span><span></span>'; tb.dataset.action = 'none'; }
     tb.lastChild.textContent = t('train_bar_preparing');
-    tb.className = 'btn btn-primary preparing'; tb.disabled = false; tb.setAttribute('aria-disabled', 'true'); tb.setAttribute('aria-busy', 'true'); // stays focusable, so keyboard focus survives into Stop
+    tb.className = 'btn btn-primary preparing'; tb.disabled = false; // stays focusable (aria-disabled above), so keyboard focus survives into Stop
   } else if (trainPhase === 'training') {
     tt.textContent = t('train_bar_training'); ts.textContent = tb.dataset.epoch || '';
     tb.textContent = t('stop'); tb.className = 'btn btn-danger'; tb.disabled = false; tb.dataset.action = 'stop';
@@ -1528,7 +1536,7 @@ function startHold(classId) {
   if (holdClassId) return;
   if (!trainStream) { toast(t('t_start_camera'), 'warn'); return; }
   if (!videoReady(trainVideo)) { toast(t('t_cam_loading'), 'warn'); return; }
-  if (trainPhase === 'training' || trainPhase === 'preparing') return;
+  if (trainingBusy()) return;
   if (pending.length >= MAX_PENDING) { toast(t('t_pending_full'), 'warn'); ensureBaseModel().catch(() => {}); return; }
   holdClassId = classId; holdCount = 0;
   trainCamWrap.classList.add('recording');
@@ -1580,7 +1588,6 @@ function stopHold() {
 }
 
 // ─── Classes ───
-function trainingBusy() { return trainPhase === 'preparing' || trainPhase === 'training'; }
 function addClass() {
   if (trainingBusy()) { toast(t('t_busy_training'), 'warn'); return; }
   if (classes.length >= MAX_CLASSES) { toast(t('t_max_classes'), 'warn'); return; }
@@ -1699,16 +1706,17 @@ function renderConfusion(matrix, labels) {
   host.innerHTML = cells.join('');
 }
 async function runTraining() {
-  if (trainPhase === 'training' || trainPhase === 'preparing') return;
+  if (trainingBusy()) return;
   if (!readyToTrain()) { toast(t('train_bar_need', 2, MIN_SAMPLES_TO_TRAIN), 'warn'); return; }
   if (!baseModel) { toast(t('train_bar_base_loading'), 'warn'); ensureBaseModel().catch(() => {}); return; }
+  setTrainPhase('preparing'); // immediate feedback on the button before any heavy work; also before stopHold, whose re-render would otherwise disable (and blur) the button
   stopHold();
-  setTrainPhase('preparing'); // immediate feedback on the button before any heavy work
-  announce(t('train_bar_preparing'));
   let tr = null, te = null, classifier = null;
   try {
     await paintFrame(); // let the pressed state paint (falls back to a timer when the tab is hidden)
+    await embedQueued(); // frames captured right before the press must be in the dataset the split reads
     classes.forEach(c => { if ((samples[c.id] || []).length < MIN_RECOMMENDED) toast(t('t_low_samples', c.name), 'warn', 3500); });
+    announce(t('train_bar_preparing'));
 
     trainingCancelled = false;
     lossHistory = []; accHistory = []; valHistory = [];
@@ -1795,18 +1803,18 @@ async function runTraining() {
     setStep('train', 'done');
     tlog('success', t('t_training_done', (valAcc * 100).toFixed(1)));
     toast(t('t_training_done', (valAcc * 100).toFixed(0)), 'ok');
+    delete $('train-bar-btn').dataset.epoch;
     setTrainPhase('done');
     await autoSave();
   } catch (err) {
     if (err.message === 'cancelled') { tlog('warn', t('t_training_stopped')); toast(t('t_training_stopped'), 'warn'); setStep('train', ''); }
     else { tlog('error', t('t_training_error') + err.message); toast(t('t_training_error') + err.message, 'error', 4000); setStep('train', 'error'); }
     if (classifier) { try { classifier.dispose(); } catch (_) {} }
+    delete $('train-bar-btn').dataset.epoch;
     setTrainPhase('collect');
   } finally {
     if (tr) { tr.xs.dispose(); tr.ys.dispose(); }
     if (te) { te.xs.dispose(); te.ys.dispose(); }
-    delete $('train-bar-btn').dataset.epoch;
-    renderBars();
   }
 }
 function stopTraining() { trainingCancelled = true; }
@@ -2038,7 +2046,9 @@ $('btn-clear-dataset').addEventListener('click', clearDataset);
 
 classListEl.addEventListener('input', e => {
   const inp = e.target.closest('.class-name-input'); if (!inp) return;
-  const c = classes.find(x => x.id === inp.dataset.id); if (c) { c.name = inp.value; persistClassesSoon(); }
+  const c = classes.find(x => x.id === inp.dataset.id); if (!c) return;
+  if (trainingBusy()) { inp.value = c.name; toast(t('t_busy_training'), 'warn'); return; } // labels were frozen at training start
+  c.name = inp.value; persistClassesSoon();
 });
 classListEl.addEventListener('change', e => { if (e.target.closest('.class-name-input')) flushPersistClasses(); });
 classListEl.addEventListener('pointerdown', e => {
