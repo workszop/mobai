@@ -23,4 +23,4 @@ Serve over http (camera needs a secure context or localhost):
 python3 -m http.server 8080
 ```
 
-Automated checks can read state from `window.KLOCKI.state` and the `data-*` attributes on `<body>` (`data-screen`, `data-base-status`, `data-train-phase`), class cards (`data-count`, `data-pending`) and step cards (`data-state`). Chrome's `--use-fake-device-for-media-stream --use-fake-ui-for-media-stream` flags give a synthetic camera for headless runs.
+Automated checks can read state from `window.KLOCKI.state` and the `data-*` attributes on `<body>` (`data-screen`, `data-base-status`, `data-train-phase` = collect | preparing | training | done), class cards (`data-count`, `data-pending`) and step cards (`data-state`). Chrome's `--use-fake-device-for-media-stream --use-fake-ui-for-media-stream` flags give a synthetic camera for headless runs.

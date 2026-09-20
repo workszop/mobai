@@ -245,9 +245,9 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
     .mode-info { grid-area: info; align-self: end; }
     .mode-info h2 { font-family: var(--font-display); font-size: clamp(22px, 6vw, 28px); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
     .mode-info p { font-size: 14px; margin-top: 6px; line-height: 1.45; max-width: 34ch; opacity: .82; }
-    .mode-card.train { background: var(--yellow-soft); color: var(--yellow-ink); }
-    .mode-card.train .mode-icon { background: var(--ink); color: var(--yellow); }
-    .mode-card.train .mode-arrow { background: color-mix(in srgb, var(--ink) 12%, transparent); color: var(--ink); }
+    .mode-card.train { background: var(--green-soft); color: var(--green-ink); }
+    .mode-card.train .mode-icon { background: var(--paper); color: var(--green); }
+    .mode-card.train .mode-arrow { background: color-mix(in srgb, var(--paper) 22%, transparent); color: var(--green-ink); }
     .mode-card.infer { background: var(--blue-soft); color: var(--blue-ink); }
     .mode-card.infer .mode-icon { background: var(--paper); color: var(--blue); }
     .mode-card.infer .mode-arrow { background: color-mix(in srgb, var(--paper) 22%, transparent); color: var(--blue-ink); }
@@ -287,6 +287,9 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
     [data-state="done"] .step-num { background: var(--green); color: var(--green-ink); }
     [data-state="error"] .step-num { background: var(--red); color: var(--red-ink); }
     [data-state="processing"] .step-num { background: var(--yellow); color: var(--yellow-ink); animation: proc-pulse 1.2s ease-in-out infinite; }
+    .btn-spinner { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid currentColor; border-right-color: transparent; animation: btn-spin .8s linear infinite; flex-shrink: 0; }
+    @keyframes btn-spin { to { transform: rotate(360deg); } }
+    .btn.preparing:disabled { opacity: .85; }
     @keyframes proc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
     .step-title { flex: 1; font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
     .step-badge { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 4px 9px; border-radius: var(--r-pill); background: var(--paper-3); color: var(--ink-2); }
@@ -733,7 +736,7 @@ const CLASS_COLOR_TOKENS = ['--c0', '--c1', '--c2', '--c3', '--c4', '--c5'];
 const T = {
   pl: {
     home_tagline: 'Mobile · Transfer learning w przeglądarce',
-    home_train: 'Trenowanie', home_train_desc: 'Zrób zdjęcia kamerą i naucz AI rozpoznawać własne klasy',
+    home_train: 'Trening', home_train_desc: 'Zrób zdjęcia kamerą i naucz AI rozpoznawać własne klasy',
     home_infer: 'Rozpoznawanie', home_infer_desc: 'Wczytaj wytrenowany model i rozpoznawaj obraz z kamery na żywo',
     train_title: 'Trening', infer_title: 'Rozpoznaj',
     step_data: 'Dane', step_train: 'Trenuj model', step_save: 'Zapisz model', step_load: 'Wczytaj model', step_live: 'Rozpoznawanie na żywo',
@@ -757,7 +760,7 @@ const T = {
     train_bar_collect: 'Zbieranie danych', train_bar_need: (c, n) => `Potrzeba ≥ ${c} klas po ≥ ${n} zdjęć`,
     train_bar_ready: (n, c) => `${n} zdjęć w ${c} klasach – gotowe do treningu`,
     train_bar_embedding: n => `Przetwarzanie ${n} zdjęć…`,
-    train_bar_training: 'Trenowanie…', train_bar_epoch: (e, n) => `Epoka ${e}/${n}`,
+    train_bar_preparing: 'Przygotowanie…', train_bar_preparing_sub: 'Budowanie modelu i zbioru danych', train_bar_training: 'Trenowanie…', train_bar_epoch: (e, n) => `Epoka ${e}/${n}`,
     train_bar_done: 'Model gotowy', train_bar_done_sub: acc => `Dokładność testowa ${acc}%`,
     train_bar_base_loading: 'Pobieranie modelu bazowego…',
     model_name: 'Nazwa modelu', autosaved: 'Zapisano automatycznie w tej przeglądarce',
@@ -830,7 +833,7 @@ const T = {
     train_bar_collect: 'Collecting data', train_bar_need: (c, n) => `Need ≥ ${c} classes with ≥ ${n} photos`,
     train_bar_ready: (n, c) => `${n} photos in ${c} classes – ready to train`,
     train_bar_embedding: n => `Processing ${n} photos…`,
-    train_bar_training: 'Training…', train_bar_epoch: (e, n) => `Epoch ${e}/${n}`,
+    train_bar_preparing: 'Preparing…', train_bar_preparing_sub: 'Building the model and dataset', train_bar_training: 'Training…', train_bar_epoch: (e, n) => `Epoch ${e}/${n}`,
     train_bar_done: 'Model ready', train_bar_done_sub: acc => `Test accuracy ${acc}%`,
     train_bar_base_loading: 'Downloading base model…',
     model_name: 'Model name', autosaved: 'Auto-saved in this browser',
@@ -892,7 +895,7 @@ let baseProgress = 0;
 let featSize = 0;
 let trainedModel = null;
 let modelMetadata = null;
-let trainPhase = 'collect'; // collect | training | done
+let trainPhase = 'collect'; // collect | preparing | training | done
 let trainingCancelled = false;
 let lossHistory = [], accHistory = [], valHistory = [];
 let trainStream = null, trainFacingMode = 'environment';
@@ -1041,7 +1044,7 @@ function releaseWakeLock() {
   if (wakeLock) { try { wakeLock.release(); } catch (_) {} wakeLock = null; }
 }
 function updateWakeLock() {
-  if (trainStream || inferStream || trainPhase === 'training') acquireWakeLock(); else releaseWakeLock();
+  if (trainStream || inferStream || trainPhase === 'training' || trainPhase === 'preparing') acquireWakeLock(); else releaseWakeLock();
 }
 
 // ─── Helpers: IndexedDB (dataset + model metadata) ───
@@ -1347,7 +1350,11 @@ function renderBars() {
   const tb = $('train-bar-btn'), tt = $('train-bar-title'), ts = $('train-bar-sub');
   trainBar.classList.toggle('visible', currentScreen === 'training');
   inferBar.classList.toggle('visible', currentScreen === 'inference');
-  if (trainPhase === 'training') {
+  if (trainPhase === 'preparing') {
+    tt.textContent = t('train_bar_preparing'); ts.textContent = t('train_bar_preparing_sub');
+    tb.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span><span></span>'; tb.lastChild.textContent = t('train_bar_preparing');
+    tb.className = 'btn btn-primary preparing'; tb.disabled = true; tb.dataset.action = 'none';
+  } else if (trainPhase === 'training') {
     tt.textContent = t('train_bar_training'); ts.textContent = tb.dataset.epoch || '';
     tb.textContent = t('stop'); tb.className = 'btn btn-danger'; tb.disabled = false; tb.dataset.action = 'stop';
   } else if (trainPhase === 'done') {
@@ -1509,7 +1516,7 @@ function startHold(classId) {
   if (holdClassId) return;
   if (!trainStream) { toast(t('t_start_camera'), 'warn'); return; }
   if (!videoReady(trainVideo)) { toast(t('t_cam_loading'), 'warn'); return; }
-  if (trainPhase === 'training') return;
+  if (trainPhase === 'training' || trainPhase === 'preparing') return;
   if (pending.length >= MAX_PENDING) { toast(t('t_pending_full'), 'warn'); ensureBaseModel().catch(() => {}); return; }
   holdClassId = classId; holdCount = 0;
   trainCamWrap.classList.add('recording');
@@ -1676,9 +1683,12 @@ function renderConfusion(matrix, labels) {
   host.innerHTML = cells.join('');
 }
 async function runTraining() {
-  if (trainPhase === 'training') return;
+  if (trainPhase === 'training' || trainPhase === 'preparing') return;
   if (!readyToTrain()) { toast(t('train_bar_need', 2, MIN_SAMPLES_TO_TRAIN), 'warn'); return; }
   if (!baseModel) { toast(t('train_bar_base_loading'), 'warn'); ensureBaseModel().catch(() => {}); return; }
+  setTrainPhase('preparing'); // immediate feedback: spinner on the button before any heavy work
+  announce(t('train_bar_preparing'));
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); // let the pressed state paint
   stopHold();
   classes.forEach(c => { if ((samples[c.id] || []).length < MIN_RECOMMENDED) toast(t('t_low_samples', c.name), 'warn', 3500); });
 
@@ -1690,7 +1700,6 @@ async function runTraining() {
   const numClasses = classes.length;
   const labels = classes.map(c => c.name);
 
-  setTrainPhase('training');
   setStep('data', 'done'); openStep('data', false);
   setStep('train', 'processing'); openStep('train', true); scrollToCard('train');
   $('train-result').style.display = 'none';
@@ -1720,6 +1729,7 @@ async function runTraining() {
       validationData: te ? [te.xs, te.ys] : undefined,
       callbacks: {
         onEpochBegin: async (epoch) => {
+          if (epoch === 0) setTrainPhase('training'); // model and tensors are built; Stop becomes available
           if (trainingCancelled) throw new Error('cancelled');
           barBtn.dataset.epoch = t('train_bar_epoch', epoch + 1, epochs);
           $('train-bar-sub').textContent = barBtn.dataset.epoch;
