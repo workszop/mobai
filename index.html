@@ -1,683 +1,642 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#FFFFFF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
-  <link rel="icon" type="image/x-icon" href="favicon.ico" />
-  <link rel="shortcut icon" href="favicon.ico" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg?v=2" />
+  <link rel="icon" type="image/png" href="favicon-96x96.png?v=2" sizes="96x96" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico?v=2" />
+  <link rel="shortcut icon" href="favicon.ico?v=2" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=2" />
   <meta name="apple-mobile-web-app-title" content="KlockiAI" />
   <link rel="manifest" href="site.webmanifest" />
   <title>KlockiAI Mobile</title>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@1.47.0/dist/umd/lucide.min.js"></script>
   <style>
+/* ============================================================
+   edulab — Colors & Type foundation
+   Fonts loaded from Google Fonts (CDN). See README "Visual
+   Foundations" for substitution notes.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ---- Brand fonts ---- */
+  --font-display: 'Outfit', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-sans:    'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-mono:    'Roboto Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ============================================================
+     RAW COLOR TOKENS
+     ============================================================ */
+
+  /* Paper — page background is white; the sand steps are wells/alternating sections */
+  --paper:    #FFFFFF;   /* page background (white)    */
+  --paper-2:  #FBF7E6;   /* alternating section        */
+  --paper-3:  #F5EDCB;   /* deepest sand / wells       */
+  --surface:  #FFFFFF;   /* cards & sheets             */
+
+  /* Ink — warm near-black text & lines */
+  --ink:      #1C1917;   /* primary text               */
+  --ink-2:    #57534E;   /* secondary text             */
+  --ink-3:    #948C82;   /* muted / placeholder        */
+  --line:     #EDE7D2;   /* hairline borders           */
+  --line-2:   #DDD4B6;   /* stronger borders           */
+
+  /* ---- Brand: Yellow main · Blue + Green secondary · Red danger ----
+     Plain saturated colours. A "-soft" tint IS the saturated colour
+     (panels and chips are solid), "-ink" is the text colour ON it:
+     white on blue/green/red, dark ink on yellow. Never colour-on-colour
+     (no green text on green); the saturated colour itself goes only on
+     white or black. */
+
+  /* Yellow — primary (buttons, progress, values on dark panels) */
+  --yellow:      #FFD500;
+  --yellow-600:  #F0C800;  /* hover / press          */
+  --yellow-soft: #FFD500;  /* chip / panel fill      */
+  --yellow-ink:  #1C1917;  /* text on yellow         */
+
+  /* Blue — secondary (panels, chips, correct / selected state) */
+  --blue:      #1E8FC2;
+  --blue-600:  #177AA8;
+  --blue-soft: #1E8FC2;
+  --blue-ink:  #FFFFFF;
+
+  /* Green — secondary support (chips, success) */
+  --green:      #00A651;
+  --green-600:  #009444;
+  --green-soft: #00A651;
+  --green-ink:  #FFFFFF;
+
+  /* Red — danger / important / wrong (use sparingly) */
+  --red:      #E5322D;
+  --red-600:  #C92823;
+  --red-soft: #E5322D;
+  --red-ink:  #FFFFFF;
+
+  /* Legacy role aliases — older edulab apps use these names */
+  --marigold: var(--yellow); --marigold-600: var(--yellow-600); --marigold-soft: var(--yellow-soft); --marigold-ink: var(--yellow-ink);
+  --teal:     var(--blue);   --teal-600:     var(--blue-600);   --teal-soft:     var(--blue-soft);   --teal-ink:     var(--blue-ink);
+  --sky:      var(--green);                                     --sky-soft:      var(--green-soft);  --sky-ink:      var(--green-ink);
+  --coral:    var(--red);    --coral-600:    var(--red-600);    --coral-soft:    var(--red-soft);    --coral-ink:    var(--red-ink);
+
+  /* Play palette — subject/category colours in the kids app */
+  --play-sun:    #FFD500;
+  --play-grass:  #00A651;
+  --play-berry:  #C6478B;
+  --play-grape:  #7A5AC2;
+  --play-sky:    #1E8FC2;
+  --play-coral:  #E5322D;
+
+  /* ---- Semantic ---- */
+  --success:      #00A651;  --success-soft: #00A651;  --success-ink: #FFFFFF;
+  --warning:      #FFD500;  --warning-soft: #FFD500;  --warning-ink: #1C1917;
+  --danger:       #E5322D;  --danger-soft:  #E5322D;  --danger-ink:  #FFFFFF;
+  --info:         #1E8FC2;  --info-soft:    #1E8FC2;  --info-ink:    #FFFFFF;
+
+  /* ---- Functional aliases ---- */
+  --bg:        var(--paper);
+  --fg:        var(--ink);
+  --fg-muted:  var(--ink-2);
+  --primary:   var(--yellow);
+  --on-primary:#1C1917;      /* dark text on yellow */
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--yellow) 45%, transparent);
+
+  /* ============================================================
+     SPACING  (4pt base)
+     ============================================================ */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
+  --sp-12: 48px; --sp-16: 64px; --sp-20: 80px; --sp-24: 96px;
+
+  /* ---- Radii (friendly, generous) ---- */
+  --r-xs: 6px; --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
+
+  /* ---- Elevation — warm, low, soft ---- */
+  --shadow-sm: 0 1px 2px rgba(33,30,26,.06), 0 1px 1px rgba(33,30,26,.04);
+  --shadow-md: 0 4px 16px rgba(33,30,26,.08), 0 1px 3px rgba(33,30,26,.05);
+  --shadow-lg: 0 16px 40px rgba(33,30,26,.12), 0 3px 8px rgba(33,30,26,.06);
+  --shadow-primary:  0 8px 22px color-mix(in srgb, var(--yellow) 30%, transparent);
+  --shadow-marigold: var(--shadow-primary);   /* legacy alias */
+
+  /* ============================================================
+     TYPE SCALE (semantic sizes)
+     ============================================================ */
+  --display-font:  clamp(48px, 6vw, 72px);
+  --h1: 44px; --h2: 33px; --h3: 25px; --h4: 19px;
+  --body-lg: 18px; --body: 16px; --body-sm: 14px;
+  --caption: 13px; --overline: 12px;
+}
+
+/* ============================================================
+   SEMANTIC ELEMENT STYLES
+   Apply via element selectors or .edu-prose wrapper.
+   ============================================================ */
+
+.edu-display, .edu h1.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--display-font);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.edu h1, .edu-h1 {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: var(--h1);
+  line-height: 1.06; letter-spacing: -0.02em; color: var(--ink);
+}
+.edu h2, .edu-h2 {
+  font-family: var(--font-display);
+  font-weight: 600; font-size: var(--h2);
+  line-height: 1.12; letter-spacing: -0.015em; color: var(--ink);
+}
+.edu h3, .edu-h3 {
+  font-family: var(--font-display);
+  font-weight: 600; font-size: var(--h3);
+  line-height: 1.2; letter-spacing: -0.01em; color: var(--ink);
+}
+.edu h4, .edu-h4 {
+  font-family: var(--font-sans);
+  font-weight: 700; font-size: var(--h4);
+  line-height: 1.3; color: var(--ink);
+}
+.edu p, .edu-p, .edu-body {
+  font-family: var(--font-sans);
+  font-weight: 400; font-size: var(--body);
+  line-height: 1.6; color: var(--ink-2);
+}
+.edu-body-lg { font-family: var(--font-sans); font-size: var(--body-lg); line-height: 1.6; color: var(--ink-2); }
+.edu-small  { font-family: var(--font-sans); font-size: var(--body-sm); line-height: 1.5; color: var(--ink-2); }
+.edu-caption{ font-family: var(--font-sans); font-size: var(--caption); line-height: 1.45; color: var(--ink-3); }
+
+/* Overline — mono, tracked; functional labels only (never above page/section titles) */
+.edu-overline {
+  font-family: var(--font-mono);
+  font-weight: 500; font-size: var(--overline);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink);
+}
+.edu code, .edu-mono {
+  font-family: var(--font-mono);
+  font-size: 0.92em; color: var(--ink);
+  background: var(--paper-3); padding: 0.12em 0.4em; border-radius: var(--r-xs);
+}
+
+/* Solid colour blocks (callouts, stat cards, chips): set background: var(--X-soft) and
+   color: var(--X-ink) on the block, add .edu-block, and every heading/paragraph inside
+   inherits that text colour instead of the default ink. */
+.edu-block, .edu-block h1, .edu-block h2, .edu-block h3, .edu-block h4, .edu-block p,
+.edu-block li, .edu-block small { color: inherit; }
+
+body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-sans); }
+
+    /* ─── App tokens (mapped onto edulab) ─── */
     :root {
-      --bg: #FFFFFF;
-      --bg2: #F8FAFC;
-      --bg3: #F1F5F9;
-      --border: #E2E8F0;
-      --text: #1A1A1A;
-      --muted: #64748B;
-      --accent: #1A1A1A;
-      --accent2: #475569;
-      --success: #16A34A;
-      --warn: #CA8A04;
-      --error: #DC2626;
-      --c0: #0369A1;
-      --c1: #7C3AED;
-      --c2: #D97706;
-      --c3: #DC2626;
-      --c4: #059669;
-      --c5: #DB2777;
-      --radius: 12px;
-      --radius-sm: 8px;
+      --bg: var(--paper); --bg2: var(--paper-2); --bg3: var(--paper-3);
+      --border: var(--line); --text: var(--ink); --muted: var(--ink-2); --muted-2: var(--ink-3);
+      --c0: var(--play-sky); --c1: var(--play-grape); --c2: var(--play-grass); --c3: var(--play-berry); --c4: var(--play-coral); --c5: var(--play-sun);
+      --c0-ink: #FFFFFF; --c1-ink: #FFFFFF; --c2-ink: #FFFFFF; --c3-ink: #FFFFFF; --c4-ink: #FFFFFF; --c5-ink: var(--ink);
+      --term-bg: var(--ink); --term-border: rgba(255,255,255,.14); --term-text: rgba(255,255,255,.82);
+      --term-info: #7CC4EA; --term-success: #5FD08F; --term-warn: var(--yellow); --term-error: #FF7B76; --term-step: #C9B3FF;
+      --chart-bg: var(--ink); --chart-loss: var(--red); --chart-acc: var(--green); --chart-val: var(--yellow);
+      --overlay: rgba(28,25,23,.55); --scrim: rgba(28,25,23,.45);
+      --touch: 48px; --bar-h: 68px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100%;
-      overscroll-behavior: none;
-      padding-bottom: env(safe-area-inset-bottom, 0);
-    }
+    body { font-family: var(--font-sans); background: var(--paper); color: var(--ink); min-height: 100%; overscroll-behavior: none; }
+    button, input, select { font-family: inherit; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-    /* ── SCREENS ── */
-    .screen { display: none; min-height: 100vh; }
+    /* ─── Screens ─── */
+    .screen { display: none; min-height: 100vh; min-height: 100dvh; }
     .screen.active { display: flex; flex-direction: column; }
 
-    /* ── HOME SCREEN ── */
-    #screen-home {
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      padding-top: calc(env(safe-area-inset-top, 0px) + 24px);
-      gap: 32px;
-    }
-    .home-logo { text-align: center; }
-    .home-logo h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; color: var(--text); }
-    .home-logo h1 span { color: var(--muted); font-weight: 400; }
-    .home-logo p { color: var(--muted); font-size: 14px; margin-top: 6px; }
-    .home-cards { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 360px; }
-    .mode-card {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      cursor: pointer;
-      transition: all 0.15s;
-      user-select: none;
-    }
-    .mode-card:active { transform: scale(0.98); background: var(--bg2); }
-    .mode-card.train { border-color: var(--border); }
-    .mode-card.infer { border-color: var(--border); }
-    .mode-icon { flex-shrink: 0; color: var(--muted); display: flex; align-items: center; }
-    .mode-info h2 { font-size: 17px; font-weight: 600; }
-    .mode-info p { font-size: 13px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
-    .mode-arrow { margin-left: auto; color: var(--muted); display: flex; align-items: center; }
+    /* ─── Brand header (edulab chrome) ─── */
+    .edu-header { position: sticky; top: 0; z-index: 50; width: 100%; background: rgba(255,255,255,.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
+    .edu-header-inner { max-width: 1100px; margin: 0 auto; padding: 6px 16px; display: flex; align-items: center; gap: 10px; }
+    .edu-logo { width: 56px; height: 56px; display: block; margin-right: -6px; }
+    .edu-wordmark { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.02em; color: var(--ink); }
+    .edu-header-inner .lang-btn { margin-left: auto; }
 
-    /* ── SHARED HEADER ── */
-    .top-bar {
-      display: flex;
-      align-items: center;
-      padding: 14px 16px;
-      padding-top: calc(env(safe-area-inset-top, 14px) + 14px);
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      gap: 12px;
-      flex-shrink: 0;
-    }
-    .back-btn {
-      background: none; border: none; color: var(--text); font-size: 22px;
-      cursor: pointer; padding: 4px; line-height: 1; display: flex; align-items: center;
-    }
-    .top-bar h2 { font-size: 17px; font-weight: 600; flex: 1; }
-    .top-badge {
-      font-size: 10px; font-weight: 600; padding: 3px 8px;
-      border-radius: 4px; letter-spacing: 0.5px; text-transform: uppercase;
-    }
-    .badge-train { background: var(--bg3); color: var(--muted); }
-    .badge-infer { background: var(--bg3); color: var(--muted); }
-    .top-nav-btn {
-      background: none; border: 1px solid var(--border); color: var(--muted);
-      font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px;
-      cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap;
-    }
-    .top-nav-btn:active { background: var(--bg3); }
+    /* ─── Home ─── */
+    #screen-home { background: var(--paper); }
+    .home-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 32px 16px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 32px); }
+    .home-logo { text-align: center; max-width: 520px; }
+    .home-logo h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.2rem, 9vw, 2.85rem); letter-spacing: -.025em; line-height: 1.05; color: var(--ink); }
+    .home-logo h1 span { color: var(--ink-3); font-weight: 500; }
+    .home-logo p { color: var(--ink-2); font-size: 1.0625rem; line-height: 1.5; margin-top: 8px; }
+    .home-cards { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 420px; }
+    .mode-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); padding: 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: background .15s; user-select: none; text-align: left; width: 100%; min-height: 84px; color: var(--ink); }
+    .mode-card:active { background: var(--paper-2); }
+    .mode-icon { flex-shrink: 0; width: 48px; height: 48px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; background: var(--yellow-soft); color: var(--yellow-ink); }
+    .mode-card.infer .mode-icon { background: var(--blue-soft); color: var(--blue-ink); }
+    .mode-info h2 { font-family: var(--font-display); font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+    .mode-info p { font-size: 13.5px; color: var(--ink-2); margin-top: 3px; line-height: 1.45; }
+    .mode-arrow { margin-left: auto; color: var(--ink-3); display: flex; align-items: center; }
+    .home-foot { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
 
-    /* ── SCROLL CONTENT ── */
-    .scroll-area { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--bg2); }
+    /* ─── Top bar ─── */
+    .top-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; padding-top: calc(env(safe-area-inset-top, 0px) + 8px); background: rgba(255,255,255,.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); flex-shrink: 0; position: sticky; top: 0; z-index: 5; }
+    .top-bar .edu-logo { width: 44px; height: 44px; margin-right: -4px; }
+    .icon-btn { background: none; border: none; color: var(--ink); cursor: pointer; width: 44px; height: 44px; border-radius: var(--r-pill); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .icon-btn:active { background: var(--paper-2); }
+    .top-bar h2 { font-family: var(--font-display); font-size: 19px; font-weight: 600; letter-spacing: -.01em; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chip { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; padding: 5px 10px; border-radius: var(--r-pill); background: var(--paper-3); color: var(--ink); white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+    .chip.ok { background: var(--green-soft); color: var(--green-ink); }
+    .chip.busy { background: var(--yellow-soft); color: var(--yellow-ink); }
+    .chip.err { background: var(--red-soft); color: var(--red-ink); }
+    .lang-btn { background: var(--paper-2); border: none; color: var(--ink-2); font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: .08em; height: 36px; padding: 0 12px; border-radius: var(--r-pill); cursor: pointer; }
+    .lang-btn:active { background: var(--paper-3); }
 
-    /* ── STEP CARDS ── */
-    .step-card {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      transition: border-color 0.2s;
-    }
-    .step-card.step-active { border-color: var(--text); }
-    .step-card.step-done { border-color: var(--success); }
-    .step-card.step-error { border-color: var(--error); }
-    .step-header {
-      display: flex; align-items: center; gap: 12px;
-      padding: 14px 16px;
-      cursor: pointer;
-      user-select: none;
-    }
-    .step-num {
-      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 600;
-      background: var(--bg3); color: var(--muted);
-      transition: all 0.2s;
-    }
-    .step-active .step-num { background: var(--text); color: white; }
-    .step-done .step-num { background: var(--success); color: white; }
-    .step-error .step-num { background: var(--error); color: white; }
-    .step-title { flex: 1; font-size: 14px; font-weight: 600; }
-    .step-status-badge {
-      font-size: 11px; font-weight: 500; padding: 2px 8px;
-      border-radius: 4px; background: var(--bg3); color: var(--muted);
-    }
-    .step-done .step-status-badge { background: rgba(22,163,74,0.1); color: var(--success); }
-    .step-error .step-status-badge { background: rgba(220,38,38,0.1); color: var(--error); }
-    .step-active .step-status-badge { background: var(--bg3); color: var(--text); }
+    /* ─── Scroll content ─── */
+    .scroll-area { flex: 1; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; padding-bottom: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px) + 20px); background: var(--paper); }
+
+    /* ─── Step cards ─── */
+    .step-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); overflow: hidden; transition: border-color .2s; }
+    .step-card[data-state="active"] { border-color: var(--ink); }
+    .step-card[data-state="done"] { border-color: var(--green); }
+    .step-card[data-state="error"] { border-color: var(--red); }
+    .step-card[data-state="processing"] { border-color: var(--yellow); }
+    .step-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; min-height: var(--touch); cursor: pointer; user-select: none; width: 100%; background: none; border: none; text-align: left; color: inherit; }
+    .step-num { width: 30px; height: 30px; border-radius: var(--r-pill); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; font-weight: 500; background: var(--paper-3); color: var(--ink-2); transition: background .2s; }
+    [data-state="active"] .step-num { background: var(--yellow); color: var(--yellow-ink); }
+    [data-state="done"] .step-num { background: var(--green); color: var(--green-ink); }
+    [data-state="error"] .step-num { background: var(--red); color: var(--red-ink); }
+    [data-state="processing"] .step-num { background: var(--yellow); color: var(--yellow-ink); animation: proc-pulse 1.2s ease-in-out infinite; }
+    @keyframes proc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+    .step-title { flex: 1; font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+    .step-badge { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 4px 9px; border-radius: var(--r-pill); background: var(--paper-3); color: var(--ink-2); }
+    [data-state="done"] .step-badge { background: var(--green-soft); color: var(--green-ink); }
+    [data-state="error"] .step-badge { background: var(--red-soft); color: var(--red-ink); }
+    [data-state="processing"] .step-badge { background: var(--yellow-soft); color: var(--yellow-ink); }
+    [data-state="active"] .step-badge { background: var(--ink); color: var(--paper); }
     .step-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
     .step-body.collapsed { display: none; }
 
-    /* ── CAMERA ── */
-    .cam-wrap {
-      position: relative; width: 100%;
-      aspect-ratio: 4/3;
-      background: #F1F5F9;
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-    }
-    .cam-wrap video {
-      width: 100%; height: 100%;
-      object-fit: cover; display: block;
-    }
-    .cam-overlay {
-      position: absolute; inset: 0;
-      display: flex; align-items: flex-end;
-      padding: 10px;
-      background: linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 40%);
-      pointer-events: none;
-    }
-    .cam-label {
-      font-size: 12px; font-weight: 500; color: white;
-      background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 6px;
-    }
-    .cam-flip-btn {
-      position: absolute; top: 10px; right: 10px;
-      background: rgba(0,0,0,0.4); border: none; color: white;
-      width: 36px; height: 36px; border-radius: 50%;
-      cursor: pointer; z-index: 2;
-      display: flex; align-items: center; justify-content: center;
-    }
+    /* ─── Camera ─── */
+    .cam-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; background: var(--paper-3); border-radius: var(--r-md); overflow: hidden; }
+    .cam-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cam-wrap.mirror video { transform: scaleX(-1); }
+    .cam-guide { position: absolute; inset: 8%; border: 1.5px dashed rgba(255,255,255,.6); border-radius: var(--r-xs); pointer-events: none; }
+    .cam-overlay { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 10px; background: linear-gradient(to top, rgba(28,25,23,.35) 0%, transparent 40%); pointer-events: none; }
+    .cam-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--paper); background: var(--overlay); padding: 5px 10px; border-radius: var(--r-pill); }
+    .cam-fab { position: absolute; top: 8px; right: 8px; background: var(--overlay); border: none; color: var(--paper); width: 44px; height: 44px; border-radius: var(--r-pill); cursor: pointer; z-index: 2; display: flex; align-items: center; justify-content: center; }
+    .cam-rec { position: absolute; top: 12px; left: 12px; display: none; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 12px; color: var(--red-ink); background: var(--red-soft); padding: 5px 10px; border-radius: var(--r-pill); }
+    .cam-wrap.recording .cam-rec { display: inline-flex; }
 
-    /* ── BUTTONS ── */
-    .btn {
-      display: flex; align-items: center; justify-content: center;
-      gap: 8px; padding: 12px 20px; border-radius: 8px;
-      font-size: 14px; font-weight: 600; border: none;
-      cursor: pointer; transition: all 0.15s; user-select: none;
-      min-height: 46px;
-    }
-    .btn:active { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-    .btn-primary { background: var(--text); color: white; }
-    .btn-success { background: var(--success); color: white; }
-    .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
-    .btn-warn { background: var(--text); color: white; }
-    .btn-infer { background: var(--text); color: white; }
-    .btn-sm { padding: 8px 14px; font-size: 13px; min-height: 38px; border-radius: 6px; }
+    /* ─── Buttons ─── */
+    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; border-radius: var(--r-pill); font-family: var(--font-display); font-size: 15px; font-weight: 600; border: none; cursor: pointer; transition: background .15s, transform .12s cubic-bezier(.32,.72,.32,1); user-select: none; -webkit-user-select: none; min-height: var(--touch); touch-action: manipulation; }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    .btn-primary { background: var(--yellow); color: var(--on-primary); box-shadow: var(--shadow-primary); }
+    .btn-primary:hover { background: var(--yellow-600); }
+    .btn-success { background: var(--green); color: var(--green-ink); }
+    .btn-danger { background: var(--red); color: var(--red-ink); }
+    .btn-secondary { background: var(--paper-2); color: var(--ink); }
+    .btn-secondary:hover { background: var(--paper-3); }
+    .btn-sm { padding: 8px 16px; font-size: 14px; min-height: 40px; }
     .btn-row { display: flex; gap: 8px; }
     .btn-row .btn { flex: 1; }
 
-    /* ── CLASS ROWS ── */
-    .class-list { display: flex; flex-direction: column; gap: 6px; }
-    .class-row {
-      display: flex; align-items: center; gap: 10px;
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-    }
-    .class-dot {
-      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-    }
-    .class-name-input {
-      flex: 1; background: none; border: none; color: var(--text);
-      font-size: 14px; font-weight: 600; outline: none; min-width: 0;
-    }
-    .class-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
-    .class-capture-btn {
-      padding: 6px 12px; border-radius: 6px; border: none;
-      font-size: 12px; font-weight: 600; cursor: pointer;
-      color: white; transition: all 0.15s; flex-shrink: 0;
-    }
-    .class-capture-btn:active { transform: scale(0.95); }
-    .class-clear-btn {
-      background: none; border: none; color: var(--muted);
-      cursor: pointer; padding: 4px; line-height: 1;
-      display: flex; align-items: center;
-    }
+    /* ─── Classes ─── */
+    .class-list { display: flex; flex-direction: column; gap: 10px; }
+    .class-card { background: var(--paper-2); border-radius: var(--r-md); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .class-top { display: flex; align-items: center; gap: 8px; }
+    .class-swatch { width: 14px; height: 14px; border-radius: var(--r-pill); background: var(--cls-color, var(--ink-3)); flex-shrink: 0; }
+    .class-name-input { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink); font-family: var(--font-display); font-size: 16px; font-weight: 600; outline: none; height: 44px; padding: 0 12px; }
+    .class-name-input:focus { border-color: var(--ink); box-shadow: var(--focus-ring); }
+    .class-count { font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em; color: var(--ink-2); white-space: nowrap; min-width: 56px; text-align: right; }
+    .class-count.low { color: var(--red); }
+    .class-bottom { display: flex; align-items: stretch; gap: 8px; }
+    .hold-btn { flex: 1; min-height: var(--touch); border: none; border-radius: var(--r-pill); color: var(--cls-ink, var(--paper)); background: var(--cls-color, var(--ink)); font-family: var(--font-display); font-size: 15px; font-weight: 600; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .1s, opacity .15s; }
+    .hold-btn.holding { transform: scale(.97); opacity: .85; }
+    .hold-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .class-menu-btn { width: var(--touch); min-height: var(--touch); border-radius: var(--r-pill); border: none; background: var(--surface); color: var(--ink-2); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-sm); }
+    .thumb-strip { display: flex; gap: 4px; overflow-x: auto; padding: 2px 0; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+    .thumb-strip:empty { display: none; }
+    .thumb-strip img { width: 48px; height: 48px; object-fit: cover; border-radius: var(--r-xs); flex-shrink: 0; background: var(--paper-3); }
 
-    /* ── THUMB STRIPS ── */
-    .thumb-strip {
-      display: flex; gap: 4px; overflow-x: auto;
-      padding: 4px 0; flex-wrap: nowrap;
-    }
-    .thumb-strip canvas, .thumb-strip img {
-      width: 48px; height: 48px; object-fit: cover;
-      border-radius: 4px; flex-shrink: 0;
-    }
-
-    /* ── FORM ROWS ── */
-    .param-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 8px 0; border-bottom: 1px solid var(--border);
-    }
+    /* ─── Params ─── */
+    .param-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); min-height: 48px; }
     .param-row:last-child { border-bottom: none; }
-    .param-label { font-size: 13px; color: var(--muted); flex: 1; }
-    .param-row select, .param-row input[type="number"] {
-      background: var(--bg); border: 1px solid var(--border);
-      color: var(--text); border-radius: 6px; padding: 8px 12px;
-      font-size: 14px; outline: none; -webkit-appearance: none;
-    }
-    .param-row select { min-width: 100px; }
-    .param-row input[type="number"] { width: 80px; }
+    .param-label { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); flex: 1; }
+    .param-row select, .param-row input[type="number"], .name-input { background: var(--surface); border: 1px solid var(--line-2); color: var(--ink); border-radius: var(--r-sm); padding: 0 12px; height: 42px; font-family: var(--font-mono); font-size: 14px; outline: none; -webkit-appearance: none; appearance: none; }
+    .param-row select { min-width: 110px; }
+    .param-row input[type="number"] { width: 90px; }
+    .name-input { width: 100%; font-family: var(--font-sans); font-size: 15px; }
+    .name-input:focus, .param-row select:focus, .param-row input:focus { border-color: var(--ink); box-shadow: var(--focus-ring); }
 
-    /* ── PROGRESS ── */
-    .progress-wrap { background: var(--bg3); border-radius: 4px; height: 6px; overflow: hidden; }
-    .progress-bar { height: 100%; border-radius: 4px; transition: width 0.3s; background: var(--text); }
-    .progress-label { font-size: 12px; color: var(--muted); text-align: center; margin-top: 6px; }
+    /* ─── Progress & chart ─── */
+    .progress-wrap { background: var(--paper-3); border-radius: var(--r-pill); height: 8px; overflow: hidden; }
+    .progress-bar { height: 100%; border-radius: var(--r-pill); transition: width .3s; background: var(--yellow); }
+    .progress-label { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); text-align: center; }
+    .chart-canvas { width: 100%; height: 110px; border-radius: var(--r-md); background: var(--chart-bg); display: block; }
 
-    /* ── CHART ── */
-    .chart-canvas { width: 100%; height: 100px; border-radius: var(--radius-sm); background: var(--bg3); display: block; }
+    /* ─── Result & confusion ─── */
+    .result-box { background: var(--paper-2); border-radius: var(--r-md); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+    .stat-row { display: flex; gap: 8px; }
+    .stat { flex: 1; border-radius: var(--r-md); padding: 12px 12px 10px; background: var(--surface); box-shadow: var(--shadow-sm); min-width: 0; }
+    .stat.primary { background: var(--yellow-soft); color: var(--yellow-ink); box-shadow: none; }
+    .stat b { display: block; font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+    .stat span { font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: inherit; opacity: .8; display: block; margin-top: 4px; }
+    .confusion { display: grid; gap: 4px; font-family: var(--font-mono); font-size: 12px; }
+    .confusion .cell { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; border-radius: var(--r-xs); background: var(--surface); color: var(--ink-3); font-weight: 500; min-width: 0; overflow: hidden; }
+    .confusion .cell.head { background: none; color: var(--ink-2); font-size: 10px; letter-spacing: .04em; text-overflow: ellipsis; white-space: nowrap; display: block; text-align: center; line-height: 2.4; aspect-ratio: auto; }
+    .confusion .cell.diag { background: var(--green-soft); color: var(--green-ink); }
+    .confusion .cell.off { background: var(--red-soft); color: var(--red-ink); }
+    .hint { font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+    .section-label { font-family: var(--font-mono); font-weight: 500; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); }
+    .gap-6 { display: flex; flex-direction: column; gap: 6px; }
+    .notice { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-radius: var(--r-md); font-size: 14px; }
+    .notice.ok { background: var(--green-soft); color: var(--green-ink); }
+    .notice.warn { background: var(--yellow-soft); color: var(--yellow-ink); }
+    .model-info-box { background: var(--paper-2); border-radius: var(--r-md); padding: 12px 14px; font-size: 14px; line-height: 1.8; color: var(--ink-2); }
+    .model-info-box b { color: var(--ink); }
+    .or-sep { display: flex; align-items: center; gap: 10px; color: var(--ink-3); font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    .or-sep::before, .or-sep::after { content: ''; flex: 1; height: 1px; background: var(--line-2); }
 
-    /* ── INFERENCE RESULTS ── */
-    .infer-result-box {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 14px 16px;
-    }
-    .infer-top-label {
-      font-size: 20px; font-weight: 700; text-align: center;
-      padding: 12px; border-radius: var(--radius-sm);
-      margin-bottom: 10px; background: var(--bg3);
-      min-height: 56px; display: flex; align-items: center; justify-content: center;
-    }
+    /* ─── Saved models ─── */
+    .saved-model-row { display: flex; gap: 8px; align-items: center; }
+    .saved-model-row select { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--line-2); color: var(--ink); border-radius: var(--r-sm); padding: 0 12px; height: 44px; font-size: 15px; outline: none; -webkit-appearance: none; appearance: none; }
+    .sq-btn { background: var(--paper-2); border: none; color: var(--ink-2); width: 44px; height: 44px; border-radius: var(--r-pill); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+    .sq-btn.danger { background: var(--red-soft); color: var(--red-ink); }
+
+    /* ─── Inference ─── */
+    .infer-overlay { position: absolute; top: 8px; left: 8px; right: 60px; pointer-events: none; }
+    .pred-raw { font-family: var(--font-mono); font-size: 11px; background: var(--overlay); color: var(--yellow); padding: 5px 9px; border-radius: var(--r-pill); display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .infer-top-label { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: -.02em; text-align: center; padding: 14px; border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow-sm); min-height: 64px; display: flex; align-items: center; justify-content: center; }
+    .infer-top-label.idle { color: var(--ink-3); font-family: var(--font-sans); font-style: italic; font-size: 15px; font-weight: 500; }
     .conf-bar-row { margin-bottom: 8px; }
-    .conf-bar-header {
-      display: flex; justify-content: space-between;
-      font-size: 12px; font-weight: 500; margin-bottom: 4px;
-    }
-    .conf-bar-track { background: var(--bg3); border-radius: 3px; height: 6px; overflow: hidden; }
-    .conf-bar-fill { height: 100%; border-radius: 3px; transition: width 0.2s; }
+    .conf-bar-header { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 12px; margin-bottom: 4px; }
+    .conf-bar-track { background: var(--surface); border-radius: var(--r-pill); height: 8px; overflow: hidden; }
+    .conf-bar-fill { height: 100%; border-radius: var(--r-pill); transition: width .15s; }
 
-    /* ── MODEL INFO ── */
-    .model-info-box {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 12px 14px; font-size: 13px; line-height: 1.8; color: var(--muted);
-    }
-    .model-info-box b { color: var(--text); }
+    /* ─── Terminal ─── */
+    .log-box { background: var(--term-bg); border-radius: var(--r-md); padding: 12px 14px; min-height: 90px; max-height: 40vh; overflow-y: auto; font-size: 11px; font-family: var(--font-mono); line-height: 1.7; color: var(--term-text); }
+    .log-info { color: var(--term-info); } .log-success { color: var(--term-success); } .log-warn { color: var(--term-warn); } .log-error { color: var(--term-error); } .log-step { color: var(--term-step); font-weight: 500; }
 
-    /* ── SAVED MODELS ── */
-    .saved-model-row {
-      display: flex; gap: 8px; align-items: center;
-    }
-    .saved-model-row select {
-      flex: 1; background: var(--bg); border: 1px solid var(--border);
-      color: var(--text); border-radius: 6px; padding: 10px 12px;
-      font-size: 14px; outline: none; -webkit-appearance: none;
-    }
-    .refresh-btn {
-      background: var(--bg); border: 1px solid var(--border); color: var(--muted);
-      width: 42px; height: 42px; border-radius: 6px;
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-      flex-shrink: 0;
-    }
+    /* ─── Sticky bottom bar ─── */
+    .action-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: none; align-items: center; gap: 12px; padding: 10px 16px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); background: rgba(255,255,255,.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--line); min-height: var(--bar-h); }
+    .action-bar.visible { display: flex; }
+    .action-status { flex: 1; min-width: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.35; }
+    .action-status b { display: block; font-family: var(--font-display); color: var(--ink); font-size: 15px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .action-bar .btn { min-width: 150px; }
 
-    /* ── LOG (terminal style) ── */
-    .log-box {
-      background: #1a1b26; border-radius: var(--radius-sm);
-      padding: 12px 14px; min-height: 120px; max-height: 50vh; overflow-y: auto;
-      font-size: 11px; font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Menlo', 'Consolas', monospace;
-      line-height: 1.7; color: #a9b1d6;
-      border: 1px solid #2a2b3d;
-      box-shadow: inset 0 1px 4px rgba(0,0,0,0.3);
-    }
-    .log-box::-webkit-scrollbar { width: 5px; }
-    .log-box::-webkit-scrollbar-track { background: transparent; }
-    .log-box::-webkit-scrollbar-thumb { background: #3b3d57; border-radius: 3px; }
-    .log-info { color: #7aa2f7; }
-    .log-success { color: #9ece6a; }
-    .log-warn { color: #e0af68; }
-    .log-error { color: #f7768e; }
-    .log-step { color: #bb9af7; font-weight: 700; }
-    .log-data { color: #73daca; }
+    /* ─── Toasts ─── */
+    .toast-host { position: fixed; left: 16px; right: 16px; bottom: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px) + 12px); z-index: 20; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+    .toast { background: var(--ink); color: var(--paper); font-size: 14px; padding: 12px 16px; border-radius: var(--r-md); opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; box-shadow: var(--shadow-lg); }
+    .toast.show { opacity: 1; transform: none; }
+    .toast.warn { background: var(--yellow-soft); color: var(--yellow-ink); } .toast.error { background: var(--red-soft); color: var(--red-ink); } .toast.ok { background: var(--green-soft); color: var(--green-ink); }
 
-    /* ── NAME INPUT ── */
-    .name-input {
-      width: 100%; background: var(--bg); border: 1px solid var(--border);
-      color: var(--text); border-radius: 8px; padding: 12px 14px;
-      font-size: 15px; outline: none;
-    }
-    .name-input:focus { border-color: var(--text); }
+    /* ─── Confirm sheet ─── */
+    .sheet-scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 30; display: none; align-items: flex-end; justify-content: center; }
+    .sheet-scrim.open { display: flex; }
+    .sheet { background: var(--surface); width: 100%; max-width: 480px; border-radius: var(--r-xl) var(--r-xl) 0 0; padding: 20px 16px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow-lg); animation: sheet-in .2s ease-out; }
+    @keyframes sheet-in { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+    .sheet h3 { font-family: var(--font-display); font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+    .sheet p { font-size: 14px; color: var(--ink-2); line-height: 1.5; }
 
-    /* ── SEPARATOR ── */
-    .or-sep {
-      display: flex; align-items: center; gap: 10px;
-      color: var(--muted); font-size: 12px;
-    }
-    .or-sep::before, .or-sep::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
+    /* ─── Icons ─── */
+    .lucide { width: 18px; height: 18px; stroke-width: 1.75; }
+    .lucide-sm { width: 16px; height: 16px; stroke-width: 1.75; }
+    .lucide-lg { width: 24px; height: 24px; stroke-width: 1.75; }
 
-    /* ── INFERENCE OVERLAY ── */
-    .infer-cam-wrap { position: relative; width: 100%; aspect-ratio: 4/3;
-      background: #F1F5F9; border-radius: var(--radius-sm); overflow: hidden; }
-    .infer-cam-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .infer-cam-overlay {
-      position: absolute; top: 10px; left: 10px; right: 10px;
-      pointer-events: none;
-    }
-    .pred-overlay-raw {
-      font-size: 12px; font-weight: 600; font-family: monospace;
-      background: rgba(0,0,0,0.65); color: #38bdf8;
-      padding: 6px 10px; border-radius: 8px;
-      backdrop-filter: blur(4px);
-      display: inline-block;
-    }
-
-    /* ── SPINNER ── */
-    .spinner {
-      width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: white; border-radius: 50%;
-      animation: spin 0.6s linear infinite; display: inline-block;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── PROCESSING STATE ── */
-    .step-card.step-processing { border-color: var(--warn); }
-    .step-processing .step-num { background: var(--warn); color: white; animation: proc-pulse 1.2s ease-in-out infinite; }
-    .step-processing .step-status-badge { background: rgba(202,138,4,0.1); color: var(--warn); }
-    @keyframes proc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
-
-    /* ── AUTOSAVE NOTICE ── */
-    .autosave-notice {
-      display: flex; align-items: center; gap: 8px; padding: 10px 12px;
-      background: rgba(22,163,74,0.08); border: 1px solid rgba(22,163,74,0.25);
-      border-radius: var(--radius-sm); font-size: 13px; color: var(--success);
-    }
-
-    /* ── FOOTER ── */
-    .screen-footer {
-      padding: 12px 16px;
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    /* ── MISC ── */
-    .hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
-    .gap-4 { display: flex; flex-direction: column; gap: 4px; }
-    .tag {
-      display: inline-block; font-size: 11px; font-weight: 500;
-      padding: 2px 6px; border-radius: 4px;
-      background: var(--bg3); color: var(--muted);
-    }
-    /* Lucide icon sizing */
-    .lucide { width: 18px; height: 18px; stroke-width: 1.5; }
-    .lucide-sm { width: 16px; height: 16px; stroke-width: 1.5; }
-    .lucide-lg { width: 24px; height: 24px; stroke-width: 1.5; }
+    @media (max-width: 768px) { .action-bar .btn { min-width: 132px; } }
+    @media (min-width: 769px) { .scroll-area { max-width: 640px; width: 100%; margin: 0 auto; } .action-bar { justify-content: center; } .action-bar .action-status { max-width: 400px; } }
   </style>
 </head>
-<body>
+<body data-screen="home" data-base-status="idle" data-train-phase="collect">
 
-<!-- ══════════════════════════════════════════════════════
-     HOME SCREEN
-══════════════════════════════════════════════════════ -->
-<div id="screen-home" class="screen active">
-  <div class="home-logo">
-    <h1>Klocki<span>AI</span></h1>
-    <p>Mobile · Transfer Learning in your browser</p>
-  </div>
-  <div class="home-cards">
-    <div class="mode-card train" onclick="goToTraining()">
-      <div class="mode-icon"><i data-lucide="brain" class="lucide-lg"></i></div>
-      <div class="mode-info">
-        <h2>Training</h2>
-        <p>Capture photos with your camera and teach the AI to recognise your custom classes</p>
-      </div>
-      <div class="mode-arrow"><i data-lucide="chevron-right" class="lucide-sm"></i></div>
+<div id="live" class="sr-only" aria-live="polite"></div>
+<div id="live-alert" class="sr-only" aria-live="assertive"></div>
+
+<!-- ═══ HOME ═══ -->
+<section id="screen-home" class="screen active">
+  <header class="edu-header"><div class="edu-header-inner">
+    <img class="edu-logo" alt="edulab" src="edulab-mark-ink.png">
+    <span class="edu-wordmark">edulab</span>
+    <button class="lang-btn" data-lang-toggle>EN</button>
+  </div></header>
+  <div class="home-main">
+    <div class="home-logo">
+      <h1>Klocki<span>AI</span></h1>
+      <p data-i18n="home_tagline"></p>
     </div>
-    <div class="mode-card infer" onclick="goToInference()">
-      <div class="mode-icon"><i data-lucide="scan-search" class="lucide-lg"></i></div>
-      <div class="mode-info">
-        <h2>Inference</h2>
-        <p>Load a trained model and use your camera for real-time predictions</p>
-      </div>
-      <div class="mode-arrow"><i data-lucide="chevron-right" class="lucide-sm"></i></div>
+    <div class="home-cards">
+      <button class="mode-card train" id="btn-go-train">
+        <div class="mode-icon"><i data-lucide="brain" class="lucide-lg"></i></div>
+        <div class="mode-info">
+          <h2 data-i18n="home_train"></h2>
+          <p data-i18n="home_train_desc"></p>
+        </div>
+        <div class="mode-arrow"><i data-lucide="chevron-right" class="lucide-sm"></i></div>
+      </button>
+      <button class="mode-card infer" id="btn-go-infer">
+        <div class="mode-icon"><i data-lucide="scan-search" class="lucide-lg"></i></div>
+        <div class="mode-info">
+          <h2 data-i18n="home_infer"></h2>
+          <p data-i18n="home_infer_desc"></p>
+        </div>
+        <div class="mode-arrow"><i data-lucide="chevron-right" class="lucide-sm"></i></div>
+      </button>
+    </div>
+    <div class="home-foot">
+      <span class="chip" id="home-base-chip">…</span>
+      <span class="chip" id="home-data-chip">…</span>
     </div>
   </div>
-</div>
+</section>
 
 
-<!-- ══════════════════════════════════════════════════════
-     TRAINING SCREEN
-══════════════════════════════════════════════════════ -->
-<div id="screen-training" class="screen">
+<!-- ═══ TRAINING ═══ -->
+<section id="screen-training" class="screen">
   <div class="top-bar">
-    <button class="back-btn" onclick="goHome()"><i data-lucide="arrow-left" class="lucide"></i></button>
-    <h2>Training</h2>
-    <span class="top-badge badge-train">TRAIN</span>
-    <button class="top-nav-btn" onclick="goToInferenceFromTraining()" title="Test in Inference"><i data-lucide="scan-search" style="width:16px;height:16px"></i> Test</button>
+    <button class="icon-btn" data-go-home aria-label="Back"><i data-lucide="arrow-left" class="lucide"></i></button>
+    <img class="edu-logo" alt="edulab" src="edulab-mark-ink.png">
+    <h2 data-i18n="train_title"></h2>
+    <span class="chip" id="train-base-chip">…</span>
+    <button class="lang-btn" data-lang-toggle>EN</button>
   </div>
 
   <div class="scroll-area" id="training-scroll">
 
-    <!-- STEP 1: Camera & Classes -->
-    <div class="step-card step-active" id="step1-card">
-      <div class="step-header" onclick="toggleStep('step1')">
+    <!-- Card 1: data -->
+    <div class="step-card" id="card-data" data-state="active">
+      <button class="step-header" data-toggle="data">
         <div class="step-num">1</div>
-        <div class="step-title">Camera &amp; Classes</div>
-        <div class="step-status-badge" id="step1-badge">Active</div>
-      </div>
-      <div class="step-body" id="step1-body">
-        <!-- Camera -->
+        <div class="step-title" data-i18n="step_data"></div>
+        <div class="step-badge" id="badge-data"></div>
+      </button>
+      <div class="step-body" id="body-data">
         <div class="cam-wrap" id="train-cam-wrap">
           <video id="train-video" autoplay playsinline muted></video>
-          <button class="cam-flip-btn" onclick="flipCamera()" title="Flip camera"><i data-lucide="refresh-cw" style="width:18px;height:18px;stroke-width:2"></i></button>
-          <div class="cam-overlay">
-            <span class="cam-label" id="train-cam-label">Camera off</span>
-          </div>
+          <div class="cam-guide"></div>
+          <button class="cam-fab" id="btn-flip-train" aria-label="Flip camera"><i data-lucide="refresh-cw" class="lucide"></i></button>
+          <div class="cam-rec"><i data-lucide="circle" style="width:10px;height:10px;fill:currentColor"></i> <span id="rec-count">0</span></div>
+          <div class="cam-overlay"><span class="cam-label" id="train-cam-label"></span></div>
         </div>
+        <button class="btn btn-primary" id="btn-toggle-cam"></button>
 
-        <button class="btn btn-primary" id="btn-toggle-cam" onclick="toggleTrainCamera()">
-          Start Camera
-        </button>
-
-        <!-- Classes -->
-        <div class="gap-4">
-          <div style="font-size:13px; font-weight:700; color:var(--muted);">CLASSES</div>
+        <div class="gap-6">
+          <div class="section-label" data-i18n="classes_label"></div>
           <div class="class-list" id="class-list"></div>
-          <button class="btn btn-secondary btn-sm" onclick="addMobileClass()" id="btn-add-class">
-            + Add Class
-          </button>
+          <button class="btn btn-secondary btn-sm" id="btn-add-class"></button>
         </div>
-
-        <!-- Thumbnails -->
-        <div id="thumb-area"></div>
-
-        <!-- Params -->
-        <div class="param-row">
-          <span class="param-label">Samples / class</span>
-          <input type="number" id="samples-per-class" value="15" min="3" max="100">
+        <p class="hint" data-i18n="hold_hint"></p>
+        <div class="btn-row">
+          <button class="btn btn-secondary btn-sm" id="btn-clear-dataset"></button>
         </div>
-
-        <button class="btn btn-success" onclick="doneStep1()" id="btn-done-step1" disabled>
-          Continue →
-        </button>
       </div>
     </div>
 
-    <!-- STEP 2: Load Base Model -->
-    <div class="step-card" id="step3-card">
-      <div class="step-header" onclick="toggleStep('step3')">
+    <!-- Card 2: train -->
+    <div class="step-card" id="card-train" data-state="">
+      <button class="step-header" data-toggle="train">
         <div class="step-num">2</div>
-        <div class="step-title">Base Model</div>
-        <div class="step-status-badge" id="step3-badge">Waiting</div>
-      </div>
-      <div class="step-body collapsed" id="step3-body">
-        <p class="hint">Download MobileNetV3-Small (~3 MB) — a neural network pre-trained on millions of images. It will extract visual features from your photos.</p>
-        <div class="progress-wrap">
-          <div class="progress-bar" id="model-progress" style="width:0%"></div>
-        </div>
-        <div class="progress-label" id="model-label">—</div>
-        <button class="btn btn-primary" onclick="runMobileLoadBase()" id="btn-load-base">
-          Load Base Model
-        </button>
-      </div>
-    </div>
-
-    <!-- STEP 3: Train -->
-    <div class="step-card" id="step4-card">
-      <div class="step-header" onclick="toggleStep('step4')">
-        <div class="step-num">3</div>
-        <div class="step-title">Train Model</div>
-        <div class="step-status-badge" id="step4-badge">Waiting</div>
-      </div>
-      <div class="step-body collapsed" id="step4-body">
+        <div class="step-title" data-i18n="step_train"></div>
+        <div class="step-badge" id="badge-train"></div>
+      </button>
+      <div class="step-body collapsed" id="body-train">
         <div class="param-row">
-          <span class="param-label">Epochs</span>
-          <input type="number" id="train-epochs" value="20" min="1" max="100">
+          <span class="param-label" data-i18n="param_epochs"></span>
+          <input type="number" id="train-epochs" value="30" min="1" max="200" inputmode="numeric">
         </div>
         <div class="param-row">
-          <span class="param-label">Learning rate</span>
+          <span class="param-label" data-i18n="param_lr"></span>
           <select id="train-lr">
-            <option value="0.001" selected>0.001</option>
             <option value="0.0001">0.0001</option>
+            <option value="0.001" selected>0.001</option>
             <option value="0.01">0.01</option>
           </select>
         </div>
         <div class="param-row">
-          <span class="param-label">Batch size</span>
+          <span class="param-label" data-i18n="param_batch"></span>
           <select id="train-batch">
             <option value="8">8</option>
             <option value="16" selected>16</option>
             <option value="32">32</option>
           </select>
         </div>
-        <div class="progress-wrap" id="train-progress-wrap" style="display:none">
-          <div class="progress-bar" id="train-progress" style="width:0%"></div>
-        </div>
+        <p class="hint" data-i18n="holdout_hint"></p>
+        <div class="progress-wrap" id="train-progress-wrap" style="display:none"><div class="progress-bar" id="train-progress" style="width:0%"></div></div>
         <canvas class="chart-canvas" id="train-chart"></canvas>
-        <div class="progress-label" id="train-label">—</div>
-        <div class="btn-row">
-          <button class="btn btn-warn" onclick="runMobileTraining()" id="btn-train">
-            Train
-          </button>
-          <button class="btn btn-secondary" onclick="stopMobileTraining()" id="btn-stop-train">
-            Stop
-          </button>
+        <div class="progress-label" id="train-label">–</div>
+        <div class="result-box" id="train-result" style="display:none">
+          <div class="stat-row">
+            <div class="stat primary"><b id="stat-val">–</b><span data-i18n="stat_val"></span></div>
+            <div class="stat"><b id="stat-train">–</b><span data-i18n="stat_train"></span></div>
+            <div class="stat"><b id="stat-n">–</b><span data-i18n="stat_n"></span></div>
+          </div>
+          <div class="section-label" data-i18n="confusion_label"></div>
+          <div class="confusion" id="confusion"></div>
+          <p class="hint" data-i18n="confusion_hint"></p>
         </div>
       </div>
     </div>
 
-    <!-- STEP 4: Save -->
-    <div class="step-card" id="step5-card">
-      <div class="step-header" onclick="toggleStep('step5')">
-        <div class="step-num">4</div>
-        <div class="step-title">Save Model</div>
-        <div class="step-status-badge" id="step5-badge">Waiting</div>
-      </div>
-      <div class="step-body collapsed" id="step5-body">
-        <div class="model-info-box" id="save-meta">—</div>
-        <div id="autosave-status" class="autosave-notice" style="display:none">
-          <i data-lucide="check-circle" style="width:16px;height:16px;flex-shrink:0"></i>
-          <span>Auto-saved to this browser</span>
+    <!-- Card 3: save -->
+    <div class="step-card" id="card-save" data-state="">
+      <button class="step-header" data-toggle="save">
+        <div class="step-num">3</div>
+        <div class="step-title" data-i18n="step_save"></div>
+        <div class="step-badge" id="badge-save"></div>
+      </button>
+      <div class="step-body collapsed" id="body-save">
+        <div class="model-info-box" id="save-meta">–</div>
+        <div id="autosave-status" class="notice ok" style="display:none">
+          <i data-lucide="check-circle" class="lucide-sm"></i><span data-i18n="autosaved"></span>
         </div>
-        <div class="gap-4">
-          <label style="font-size:13px;color:var(--muted)">Model name</label>
-          <input type="text" class="name-input" id="save-model-name" value="my-model" placeholder="my-model">
+        <div class="gap-6">
+          <label class="section-label" for="save-model-name" data-i18n="model_name"></label>
+          <input type="text" class="name-input" id="save-model-name" value="my-model" placeholder="my-model" autocomplete="off">
         </div>
-        <button class="btn btn-primary" onclick="runMobileDownload()" id="btn-download">
-          Download as File
-        </button>
-        <button class="btn btn-secondary" onclick="runMobileSaveIDB()" id="btn-save-idb">
-          Re-save to Browser
-        </button>
-        <p class="hint">Download to load this model on other devices.</p>
-        <div class="or-sep">or</div>
-        <button class="btn btn-infer" onclick="goToInferenceFromTraining()" id="btn-test-infer">
-          <i data-lucide="scan-search" style="width:16px;height:16px;vertical-align:-3px"></i> Test in Inference
-        </button>
+        <button class="btn btn-secondary" id="btn-save-idb"></button>
+        <button class="btn btn-primary" id="btn-download"></button>
+        <button class="btn btn-secondary btn-sm" id="btn-download-full"></button>
+        <p class="hint" data-i18n="download_hint"></p>
       </div>
     </div>
 
-    <!-- LOG -->
-    <div class="step-card">
-      <div class="step-header" onclick="toggleStep('train-log')">
+    <!-- Terminal -->
+    <div class="step-card" id="card-train-log">
+      <button class="step-header" data-toggle="train-log">
         <div class="step-num"><i data-lucide="terminal" class="lucide-sm"></i></div>
-        <div class="step-title">Terminal</div>
-      </div>
-      <div class="step-body" id="train-log-body">
-        <div class="log-box" id="train-log"></div>
-      </div>
+        <div class="step-title" data-i18n="terminal"></div>
+      </button>
+      <div class="step-body collapsed" id="body-train-log"><div class="log-box" id="train-log"></div></div>
     </div>
-
   </div>
-</div>
 
+  <div class="action-bar" id="train-bar">
+    <div class="action-status"><b id="train-bar-title"></b><span id="train-bar-sub"></span></div>
+    <button class="btn btn-primary" id="train-bar-btn"></button>
+  </div>
+</section>
 
-<!-- ══════════════════════════════════════════════════════
-     INFERENCE SCREEN
-══════════════════════════════════════════════════════ -->
-<div id="screen-inference" class="screen">
+<!-- ═══ INFERENCE ═══ -->
+<section id="screen-inference" class="screen">
   <div class="top-bar">
-    <button class="back-btn" onclick="goHome()"><i data-lucide="arrow-left" class="lucide"></i></button>
-    <h2>Inference</h2>
-    <span class="top-badge badge-infer">PREDICT</span>
+    <button class="icon-btn" data-go-home aria-label="Back"><i data-lucide="arrow-left" class="lucide"></i></button>
+    <img class="edu-logo" alt="edulab" src="edulab-mark-ink.png">
+    <h2 data-i18n="infer_title"></h2>
+    <span class="chip" id="infer-base-chip">…</span>
+    <button class="lang-btn" data-lang-toggle>EN</button>
   </div>
 
   <div class="scroll-area">
-
-    <!-- STEP A: Load Model -->
-    <div class="step-card step-active" id="stepA-card">
-      <div class="step-header" onclick="toggleStep('stepA')">
+    <!-- Card A: load -->
+    <div class="step-card" id="card-load" data-state="active">
+      <button class="step-header" data-toggle="load">
         <div class="step-num">1</div>
-        <div class="step-title">Load Model</div>
-        <div class="step-status-badge" id="stepA-badge">Active</div>
-      </div>
-      <div class="step-body" id="stepA-body">
-        <p class="hint">Load a model you trained and saved, or upload a downloaded file.</p>
-
-        <!-- From browser IDB -->
-        <div class="gap-4">
-          <div style="font-size:13px; font-weight:700; color:var(--muted);">FROM BROWSER STORAGE</div>
+        <div class="step-title" data-i18n="step_load"></div>
+        <div class="step-badge" id="badge-load"></div>
+      </button>
+      <div class="step-body" id="body-load">
+        <p class="hint" data-i18n="load_hint"></p>
+        <div class="gap-6">
+          <div class="section-label" data-i18n="from_browser"></div>
           <div class="saved-model-row">
-            <select id="idb-model-select">
-              <option value="" disabled selected>No saved models</option>
-            </select>
-            <div class="refresh-btn" onclick="refreshInferIDB()"><i data-lucide="refresh-cw" class="lucide-sm"></i></div>
+            <select id="idb-model-select"><option value="" disabled selected data-i18n="no_saved"></option></select>
+            <button class="sq-btn" id="btn-refresh-models" aria-label="Refresh"><i data-lucide="refresh-cw" class="lucide-sm"></i></button>
+            <button class="sq-btn danger" id="btn-delete-model" aria-label="Delete model"><i data-lucide="trash-2" class="lucide-sm"></i></button>
           </div>
-          <button class="btn btn-infer" onclick="loadFromIDB()">
-            Load from Browser
-          </button>
+          <button class="btn btn-primary" id="btn-load-idb"></button>
         </div>
-
-        <div class="or-sep">or</div>
-
-        <!-- From file -->
-        <div class="gap-4">
-          <div style="font-size:13px; font-weight:700; color:var(--muted);">FROM FILE</div>
-          <input type="file" id="infer-file-input" accept=".json" style="display:none" onchange="loadFromFile()">
-          <button class="btn btn-secondary" onclick="document.getElementById('infer-file-input').click()">
-            Open Model File (.json)
-          </button>
+        <div class="or-sep" data-i18n="or"></div>
+        <div class="gap-6">
+          <div class="section-label" data-i18n="from_file"></div>
+          <input type="file" id="infer-file-input" accept=".json,application/json" style="display:none">
+          <button class="btn btn-secondary" id="btn-open-file"></button>
         </div>
-
-        <!-- Model info -->
         <div class="model-info-box" id="infer-meta" style="display:none"></div>
       </div>
     </div>
 
-    <!-- STEP B: Camera + Predictions -->
-    <div class="step-card" id="stepB-card">
-      <div class="step-header" onclick="toggleStep('stepB')">
+    <!-- Card B: live -->
+    <div class="step-card" id="card-live" data-state="">
+      <button class="step-header" data-toggle="live">
         <div class="step-num">2</div>
-        <div class="step-title">Live Prediction</div>
-        <div class="step-status-badge" id="stepB-badge">Waiting</div>
-      </div>
-      <div class="step-body collapsed" id="stepB-body">
-
-        <div class="infer-cam-wrap" id="infer-cam-wrap">
+        <div class="step-title" data-i18n="step_live"></div>
+        <div class="step-badge" id="badge-live"></div>
+      </button>
+      <div class="step-body collapsed" id="body-live">
+        <div class="cam-wrap" id="infer-cam-wrap">
           <video id="infer-video" autoplay playsinline muted></video>
-          <button class="cam-flip-btn" onclick="flipInferCamera()" title="Flip camera"><i data-lucide="refresh-cw" style="width:18px;height:18px;stroke-width:2"></i></button>
-          <div class="infer-cam-overlay">
-            <div class="pred-overlay-raw" id="pred-overlay-raw">—</div>
-          </div>
+          <button class="cam-fab" id="btn-flip-infer" aria-label="Flip camera"><i data-lucide="refresh-cw" class="lucide"></i></button>
+          <div class="infer-overlay"><div class="pred-raw" id="pred-raw">–</div></div>
         </div>
-
-        <button class="btn btn-infer" onclick="toggleInferCamera()" id="btn-toggle-infer">
-          Start Camera
-        </button>
-
+        <button class="btn btn-primary" id="btn-toggle-infer"></button>
         <div class="param-row">
-          <span class="param-label">Speed</span>
+          <span class="param-label" data-i18n="param_speed"></span>
           <select id="infer-fps">
             <option value="1000">1 FPS</option>
             <option value="333">3 FPS</option>
@@ -685,9 +644,8 @@
             <option value="100">10 FPS</option>
           </select>
         </div>
-
         <div class="param-row">
-          <span class="param-label">Confidence threshold</span>
+          <span class="param-label" data-i18n="param_threshold"></span>
           <select id="infer-threshold">
             <option value="0.5">50%</option>
             <option value="0.7" selected>70%</option>
@@ -695,1115 +653,1370 @@
             <option value="0.9">90%</option>
           </select>
         </div>
-
-        <!-- Interpretation -->
-        <div class="infer-result-box">
-          <div style="font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Interpretation</div>
-          <div class="infer-top-label" id="pred-top-label" style="color:var(--muted); font-style:italic; font-size:16px">
-            Waiting for prediction…
-          </div>
+        <div class="result-box">
+          <div class="section-label" data-i18n="interpretation"></div>
+          <div class="infer-top-label idle" id="pred-top-label" data-i18n="waiting_pred"></div>
           <div id="pred-bars"></div>
         </div>
-
-        <button class="btn btn-secondary" onclick="goToTrainingFromInference()" style="margin-top:8px">
-          <i data-lucide="brain" style="width:16px;height:16px;vertical-align:-3px"></i> Retrain — Add Data or Classes
-        </button>
-
+        <button class="btn btn-secondary" id="btn-retrain"></button>
       </div>
     </div>
 
-    <!-- LOG -->
-    <div class="step-card">
-      <div class="step-header" onclick="toggleStep('infer-log')">
+    <!-- Terminal -->
+    <div class="step-card" id="card-infer-log">
+      <button class="step-header" data-toggle="infer-log">
         <div class="step-num"><i data-lucide="terminal" class="lucide-sm"></i></div>
-        <div class="step-title">Terminal</div>
-      </div>
-      <div class="step-body" id="infer-log-body">
-        <div class="log-box" id="infer-log"></div>
-      </div>
+        <div class="step-title" data-i18n="terminal"></div>
+      </button>
+      <div class="step-body collapsed" id="body-infer-log"><div class="log-box" id="infer-log"></div></div>
     </div>
+  </div>
 
+  <div class="action-bar" id="infer-bar">
+    <div class="action-status"><b id="infer-bar-title"></b><span id="infer-bar-sub"></span></div>
+    <button class="btn btn-primary" id="infer-bar-btn"></button>
+  </div>
+</section>
+
+<div class="toast-host" id="toast-host"></div>
+
+<div class="sheet-scrim" id="sheet-scrim" role="dialog" aria-modal="true">
+  <div class="sheet">
+    <h3 id="sheet-title"></h3>
+    <p id="sheet-body"></p>
+    <div id="sheet-actions" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
 </div>
 
-
 <script>
-// ═══════════════════════════════════════════════
-// CONSTANTS
-// ═══════════════════════════════════════════════
+// ─── Constants ───
 const MODEL_URL = 'https://www.kaggle.com/models/google/mobilenet-v3/frameworks/tfJs/variations/small-100-224-feature-vector/versions/1/model.json?tfjs-format=file';
-const CLASS_COLORS = ['#0369A1','#7C3AED','#D97706','#DC2626','#059669','#DB2777'];
-const SCHEMA_VERSION = 'v1';
+const BASE_IDB_KEY = 'indexeddb://klocki-base-mnv3s';
+const CLF_PREFIX = 'indexeddb://klocki-clf-';
+const LEGACY_PREFIX = 'indexeddb://ml-blocks-';
+const LEGACY_BASE_PREFIX = 'indexeddb://ml-blocks-base-';
+const DB_NAME = 'klocki-mobile';
+const DB_VERSION = 1;
+const LANG_KEY = 'klocki-mobile-lang';
+const SCHEMA_VERSION = 'v2';
+const INPUT_SIZE = 224;
+const THUMB_SIZE = 64;
+const CAPTURE_INTERVAL_MS = 150;
+const EMBED_BATCH = 8;
+const MAX_CLASSES = 6;
+const MAX_SAMPLES_PER_CLASS = 200;
+const MIN_SAMPLES_TO_TRAIN = 2;
+const MIN_RECOMMENDED = 10;
+const HOLDOUT_FRACTION = 0.2;
+const CLASS_COLOR_TOKENS = ['--c0', '--c1', '--c2', '--c3', '--c4', '--c5'];
 
-// ═══════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════
-let classNames = ['Class 1', 'Class 2'];
-let capturedSamples = [[], []];  // per class array of {data, width, height}
-let preparedData = null;         // {xs, ys, numClasses}
+const T = {
+  pl: {
+    home_tagline: 'Mobile · Transfer learning w przeglądarce',
+    home_train: 'Trenowanie', home_train_desc: 'Zrób zdjęcia kamerą i naucz AI rozpoznawać własne klasy',
+    home_infer: 'Rozpoznawanie', home_infer_desc: 'Wczytaj wytrenowany model i rozpoznawaj obraz z kamery na żywo',
+    train_title: 'Trening', infer_title: 'Rozpoznaj',
+    step_data: 'Dane', step_train: 'Trenuj model', step_save: 'Zapisz model', step_load: 'Wczytaj model', step_live: 'Rozpoznawanie na żywo',
+    terminal: 'Terminal',
+    badge_active: 'Aktywny', badge_waiting: 'Czeka', badge_done: 'Gotowe ✓', badge_error: 'Błąd', badge_busy: '…',
+    cam_off: 'Kamera wyłączona', cam_live: 'Na żywo', cam_start: 'Włącz kamerę', cam_stop: 'Wyłącz kamerę', cam_starting: 'Uruchamianie…',
+    classes_label: 'Klasy', add_class: '+ Dodaj klasę', class_default: n => `Klasa ${n}`,
+    hold: 'Przytrzymaj, aby nagrać', holding: 'Nagrywanie…',
+    hold_hint: 'Przytrzymaj przycisk klasy i powoli obracaj telefon lub obiekt. Puść, aby zakończyć. Zalecane co najmniej 10 zdjęć na klasę.',
+    samples: n => `${n} zdj.`, pending: n => `+${n}`,
+    clear_dataset: 'Wyczyść dane',
+    class_menu_title: name => `Klasa „${name}”`, class_menu_body: 'Co zrobić z tą klasą?',
+    clear_samples: 'Usuń zdjęcia', remove_class: 'Usuń klasę', cancel: 'Anuluj',
+    clear_dataset_title: 'Wyczyścić wszystkie dane?', clear_dataset_body: 'Usunie wszystkie klasy i zdjęcia zapisane w tej przeglądarce. Zapisane modele zostaną.',
+    clear_all: 'Wyczyść wszystko',
+    param_epochs: 'Epoki', param_lr: 'Tempo uczenia', param_batch: 'Rozmiar partii',
+    holdout_hint: '20% zdjęć z każdej klasy jest odkładane jako zbiór testowy, którego model nie widzi podczas treningu. Dokładność testowa to prawdziwy wynik.',
+    stat_val: 'dokładność testowa', stat_train: 'dokładność treningowa', stat_n: 'trening / test',
+    confusion_label: 'Macierz pomyłek (zbiór testowy)', confusion_hint: 'Wiersze: prawdziwa klasa. Kolumny: odpowiedź modelu. Zielona przekątna = trafienia.',
+    train: 'Trenuj', stop: 'Zatrzymaj', retrain: 'Trenuj ponownie', test_model: 'Testuj model',
+    train_bar_collect: 'Zbieranie danych', train_bar_need: (c, n) => `Potrzeba ≥ ${c} klas po ≥ ${n} zdjęć`,
+    train_bar_ready: (n, c) => `${n} zdjęć w ${c} klasach – gotowe do treningu`,
+    train_bar_embedding: n => `Przetwarzanie ${n} zdjęć…`,
+    train_bar_training: 'Trenowanie…', train_bar_epoch: (e, n) => `Epoka ${e}/${n}`,
+    train_bar_done: 'Model gotowy', train_bar_done_sub: acc => `Dokładność testowa ${acc}%`,
+    train_bar_base_loading: 'Pobieranie modelu bazowego…',
+    model_name: 'Nazwa modelu', autosaved: 'Zapisano automatycznie w tej przeglądarce',
+    save_idb: 'Zapisz ponownie w przeglądarce', download: 'Pobierz plik modelu', download_full: 'Pobierz pełny pakiet (z modelem bazowym)',
+    download_hint: 'Plik modelu (mały) wymaga internetu przy pierwszym wczytaniu na innym urządzeniu. Pełny pakiet działa offline, ale jest większy.',
+    load_hint: 'Wczytaj zapisany model lub otwórz pobrany plik .json.',
+    from_browser: 'Z tej przeglądarki', from_file: 'Z pliku', no_saved: 'Brak zapisanych modeli', or: 'lub',
+    load_idb: 'Wczytaj z przeglądarki', open_file: 'Otwórz plik modelu (.json)',
+    delete_model_title: name => `Usunąć model „${name}”?`, delete_model_body: 'Tej operacji nie można cofnąć.', delete: 'Usuń',
+    param_speed: 'Szybkość', param_threshold: 'Próg pewności',
+    interpretation: 'Interpretacja', waiting_pred: 'Czekam na predykcję…', below_threshold: 'poniżej progu pewności',
+    retrain_btn: 'Wróć do treningu – dodaj dane lub klasy',
+    infer_bar_load: 'Wczytaj model', infer_bar_load_sub: 'Wybierz model z listy lub z pliku',
+    infer_bar_live: 'Rozpoznawanie', infer_bar_live_sub: 'Włącz kamerę, aby przewidywać',
+    infer_bar_running: 'Rozpoznawanie na żywo',
+    base_idle: 'Model bazowy', base_loading: p => `Model bazowy ${p}%`, base_ready: 'Model bazowy ✓', base_error: 'Model bazowy ✕',
+    base_retry: 'Dotknij, aby spróbować ponownie',
+    data_chip: (n, c) => `${n} zdjęć · ${c} klas`,
+    t_start_camera: 'Najpierw włącz kamerę', t_cam_loading: 'Kamera jeszcze się uruchamia…',
+    t_max_classes: `Maksymalnie ${MAX_CLASSES} klas`, t_min_classes: 'Potrzebne są co najmniej 2 klasy',
+    t_max_samples: n => `Limit ${n} zdjęć na klasę`,
+    t_captured: (n, name) => `Nagrano ${n} zdjęć: ${name}`,
+    t_embedded: n => `Przetworzono ${n} zdjęć`,
+    t_low_samples: name => `Mało zdjęć w klasie „${name}” – dodaj więcej dla lepszego wyniku`,
+    t_base_wait: 'Model bazowy jeszcze się pobiera – zdjęcia zostaną przetworzone, gdy będzie gotowy',
+    t_cam_denied: 'Brak zgody na kamerę. Dotknij ikony kłódki w pasku adresu i zezwól na kamerę.',
+    t_cam_https: 'Kamera wymaga HTTPS lub localhost.',
+    t_cam_error: 'Błąd kamery: ',
+    t_training_done: acc => `Trening zakończony – dokładność testowa ${acc}%`,
+    t_training_stopped: 'Trening zatrzymany', t_training_error: 'Błąd treningu: ',
+    t_saved: name => `Zapisano „${name}”`, t_save_error: 'Błąd zapisu: ', t_autosave_error: 'Autozapis nie powiódł się – użyj „Zapisz ponownie”',
+    t_downloaded: f => `Pobrano ${f}`, t_download_error: 'Błąd pobierania: ',
+    t_no_model: 'Najpierw wczytaj model', t_select_model: 'Wybierz model z listy',
+    t_loaded: name => `Wczytano „${name}”`, t_load_error: 'Błąd wczytywania: ', t_bad_file: 'Nieprawidłowy plik modelu. Użyj pliku .json pobranego z ekranu Trenowanie.',
+    t_deleted: name => `Usunięto „${name}”`,
+    t_dataset_restored: (n, c) => `Przywrócono ${n} zdjęć w ${c} klasach`,
+    t_dataset_cleared: 'Dane wyczyszczone', t_class_removed: name => `Usunięto klasę „${name}”`, t_class_cleared: name => `Usunięto zdjęcia klasy „${name}”`,
+    t_train_first: 'Najpierw wytrenuj model', t_base_error: 'Nie udało się pobrać modelu bazowego: ',
+    t_hidden_stop: 'Kamera zatrzymana, gdy aplikacja była w tle',
+    t_offline_ready: 'Aplikacja gotowa do pracy offline',
+    log_base_cache: 'Model bazowy wczytany z pamięci przeglądarki', log_base_net: 'Pobieranie MobileNetV3-Small…', log_base_saved: 'Model bazowy zapisany w przeglądarce',
+    log_split: (tr, te) => `Podział: ${tr} treningowych / ${te} testowych`,
+    log_epoch: (e, l, a, v) => `Epoka ${e}: loss=${l}, acc=${a}%, val=${v}%`,
+    legacy: 'starszy',
+    aria_back: 'Wstecz',
+  },
+  en: {
+    home_tagline: 'Mobile · Transfer learning in your browser',
+    home_train: 'Training', home_train_desc: 'Capture photos with your camera and teach the AI your own classes',
+    home_infer: 'Inference', home_infer_desc: 'Load a trained model and recognise the camera image live',
+    train_title: 'Training', infer_title: 'Inference',
+    step_data: 'Data', step_train: 'Train model', step_save: 'Save model', step_load: 'Load model', step_live: 'Live prediction',
+    terminal: 'Terminal',
+    badge_active: 'Active', badge_waiting: 'Waiting', badge_done: 'Done ✓', badge_error: 'Error', badge_busy: '…',
+    cam_off: 'Camera off', cam_live: 'Live', cam_start: 'Start camera', cam_stop: 'Stop camera', cam_starting: 'Starting…',
+    classes_label: 'Classes', add_class: '+ Add class', class_default: n => `Class ${n}`,
+    hold: 'Hold to record', holding: 'Recording…',
+    hold_hint: 'Hold a class button and slowly move the phone or the object. Release to stop. At least 10 photos per class recommended.',
+    samples: n => `${n} photos`, pending: n => `+${n}`,
+    clear_dataset: 'Clear dataset',
+    class_menu_title: name => `Class “${name}”`, class_menu_body: 'What do you want to do with this class?',
+    clear_samples: 'Delete photos', remove_class: 'Remove class', cancel: 'Cancel',
+    clear_dataset_title: 'Clear all data?', clear_dataset_body: 'Removes every class and photo stored in this browser. Saved models are kept.',
+    clear_all: 'Clear everything',
+    param_epochs: 'Epochs', param_lr: 'Learning rate', param_batch: 'Batch size',
+    holdout_hint: '20% of each class is held out as a test set the model never sees during training. Test accuracy is the honest score.',
+    stat_val: 'test accuracy', stat_train: 'train accuracy', stat_n: 'train / test',
+    confusion_label: 'Confusion matrix (test set)', confusion_hint: 'Rows: true class. Columns: model answer. Green diagonal = hits.',
+    train: 'Train', stop: 'Stop', retrain: 'Train again', test_model: 'Test model',
+    train_bar_collect: 'Collecting data', train_bar_need: (c, n) => `Need ≥ ${c} classes with ≥ ${n} photos`,
+    train_bar_ready: (n, c) => `${n} photos in ${c} classes – ready to train`,
+    train_bar_embedding: n => `Processing ${n} photos…`,
+    train_bar_training: 'Training…', train_bar_epoch: (e, n) => `Epoch ${e}/${n}`,
+    train_bar_done: 'Model ready', train_bar_done_sub: acc => `Test accuracy ${acc}%`,
+    train_bar_base_loading: 'Downloading base model…',
+    model_name: 'Model name', autosaved: 'Auto-saved in this browser',
+    save_idb: 'Re-save to browser', download: 'Download model file', download_full: 'Download full bundle (with base model)',
+    download_hint: 'The model file (small) needs internet the first time it is loaded on another device. The full bundle works offline but is larger.',
+    load_hint: 'Load a saved model or open a downloaded .json file.',
+    from_browser: 'From this browser', from_file: 'From file', no_saved: 'No saved models', or: 'or',
+    load_idb: 'Load from browser', open_file: 'Open model file (.json)',
+    delete_model_title: name => `Delete model “${name}”?`, delete_model_body: 'This cannot be undone.', delete: 'Delete',
+    param_speed: 'Speed', param_threshold: 'Confidence threshold',
+    interpretation: 'Interpretation', waiting_pred: 'Waiting for prediction…', below_threshold: 'below confidence threshold',
+    retrain_btn: 'Back to training – add data or classes',
+    infer_bar_load: 'Load a model', infer_bar_load_sub: 'Pick a model from the list or a file',
+    infer_bar_live: 'Inference', infer_bar_live_sub: 'Start the camera to predict',
+    infer_bar_running: 'Predicting live',
+    base_idle: 'Base model', base_loading: p => `Base model ${p}%`, base_ready: 'Base model ✓', base_error: 'Base model ✕',
+    base_retry: 'Tap to retry',
+    data_chip: (n, c) => `${n} photos · ${c} classes`,
+    t_start_camera: 'Start the camera first', t_cam_loading: 'Camera is still starting…',
+    t_max_classes: `Maximum ${MAX_CLASSES} classes`, t_min_classes: 'At least 2 classes are required',
+    t_max_samples: n => `Limit of ${n} photos per class`,
+    t_captured: (n, name) => `Recorded ${n} photos: ${name}`,
+    t_embedded: n => `Processed ${n} photos`,
+    t_low_samples: name => `Few photos in “${name}” – add more for a better result`,
+    t_base_wait: 'Base model still downloading – photos will be processed when it is ready',
+    t_cam_denied: 'Camera permission denied. Tap the lock icon in the address bar and allow the camera.',
+    t_cam_https: 'Camera requires HTTPS or localhost.',
+    t_cam_error: 'Camera error: ',
+    t_training_done: acc => `Training complete – test accuracy ${acc}%`,
+    t_training_stopped: 'Training stopped', t_training_error: 'Training error: ',
+    t_saved: name => `Saved “${name}”`, t_save_error: 'Save error: ', t_autosave_error: 'Auto-save failed – use “Re-save”',
+    t_downloaded: f => `Downloaded ${f}`, t_download_error: 'Download error: ',
+    t_no_model: 'Load a model first', t_select_model: 'Select a model from the list',
+    t_loaded: name => `Loaded “${name}”`, t_load_error: 'Load error: ', t_bad_file: 'Invalid model file. Use a .json downloaded from the Training screen.',
+    t_deleted: name => `Deleted “${name}”`,
+    t_dataset_restored: (n, c) => `Restored ${n} photos in ${c} classes`,
+    t_dataset_cleared: 'Dataset cleared', t_class_removed: name => `Removed class “${name}”`, t_class_cleared: name => `Deleted photos of “${name}”`,
+    t_train_first: 'Train a model first', t_base_error: 'Could not download the base model: ',
+    t_hidden_stop: 'Camera stopped while the app was in the background',
+    t_offline_ready: 'App ready for offline use',
+    log_base_cache: 'Base model loaded from browser storage', log_base_net: 'Downloading MobileNetV3-Small…', log_base_saved: 'Base model saved in browser',
+    log_split: (tr, te) => `Split: ${tr} train / ${te} test`,
+    log_epoch: (e, l, a, v) => `Epoch ${e}: loss=${l}, acc=${a}%, val=${v}%`,
+    legacy: 'legacy',
+    aria_back: 'Back',
+  }
+};
+
+// ─── State ───
+let lang = 'pl';
+let classes = [];          // [{ id, name }]
+let samples = {};          // classId -> [{ id, feat: Float32Array, thumbUrl }]
+let pending = [];          // [{ classId, img: ImageData, thumbBlob: Blob }]
+let embedding = false;
 let baseModel = null;
+let baseLoading = null;
+let baseStatus = 'idle';   // idle | loading | ready | error
+let baseProgress = 0;
+let featSize = 0;
 let trainedModel = null;
 let modelMetadata = null;
+let trainPhase = 'collect'; // collect | training | done
 let trainingCancelled = false;
-let lossHistory = [], accHistory = [];
+let lossHistory = [], accHistory = [], valHistory = [];
+let trainStream = null, trainFacingMode = 'environment';
+let inferStream = null, inferFacingMode = 'environment';
+let inferRunning = false;
+let inferModel = null, inferMeta = null;
+let holdTimer = null, holdClassId = null, holdCount = 0;
+let wakeLock = null;
+let db = null;
+let sheetResolve = null;
+let currentScreen = 'home';
 
-let trainStream = null;
-let trainFacingMode = 'environment'; // prefer back camera on mobile
+// ─── DOM refs ───
+const $ = id => document.getElementById(id);
+const bodyEl = document.body;
+const trainVideo = $('train-video');
+const inferVideo = $('infer-video');
+const trainCamWrap = $('train-cam-wrap');
+const inferCamWrap = $('infer-cam-wrap');
+const classListEl = $('class-list');
+const trainBar = $('train-bar');
+const inferBar = $('infer-bar');
+const toastHost = $('toast-host');
+const sheetScrim = $('sheet-scrim');
+const cropCanvas = document.createElement('canvas');
+cropCanvas.width = INPUT_SIZE; cropCanvas.height = INPUT_SIZE;
+const cropCtx = cropCanvas.getContext('2d', { willReadFrequently: true });
+const thumbCanvas = document.createElement('canvas');
+thumbCanvas.width = THUMB_SIZE; thumbCanvas.height = THUMB_SIZE;
+const thumbCtx = thumbCanvas.getContext('2d');
 
-let inferStream = null;
-let inferFacingMode = 'environment';
-let inferInterval = null;
-let inferModel = null;
-let inferMeta = null;
-
-// ═══════════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════════
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+// ─── Helpers: i18n ───
+function t(key, ...args) {
+  const v = (T[lang] && T[lang][key]) ?? T.en[key] ?? key;
+  return typeof v === 'function' ? v(...args) : v;
 }
-function goHome() {
-  stopTrainCamera();
-  stopInferCamera();
-  showScreen('screen-home');
-}
-function goToTraining() {
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-lang-toggle]').forEach(b => { b.textContent = lang === 'pl' ? 'EN' : 'PL'; });
+  document.querySelectorAll('[data-go-home]').forEach(b => b.setAttribute('aria-label', t('aria_back')));
+  $('btn-add-class').textContent = t('add_class');
+  $('btn-clear-dataset').textContent = t('clear_dataset');
+  $('btn-save-idb').textContent = t('save_idb');
+  $('btn-download').textContent = t('download');
+  $('btn-download-full').textContent = t('download_full');
+  $('btn-load-idb').textContent = t('load_idb');
+  $('btn-open-file').textContent = t('open_file');
+  $('btn-retrain').textContent = t('retrain_btn');
+  renderCameraButtons();
+  renderBaseChips();
   renderClassList();
-  showScreen('screen-training');
+  renderBars();
+  renderBadges();
+  renderDataChip();
 }
-function goToInference() {
-  refreshInferIDB();
-  showScreen('screen-inference');
-}
-function goToTrainingFromInference() {
-  stopInferCamera();
-  // Reopen step 1 so the user can add classes/samples
-  setStepState('step1', 'active');
-  openStep('step1');
-  // Base model step: keep done if already loaded, otherwise reset to waiting
-  setStepState('step3', baseModel ? 'done' : '');
-  closeStep('step3');
-  // Reset train and save steps
-  setStepState('step4', '');
-  closeStep('step4');
-  setStepState('step5', '');
-  closeStep('step5');
-  renderClassList();
-  showScreen('screen-training');
-  tlog('step', 'Returned to training — add more data or classes and retrain');
-}
-function goToInferenceFromTraining() {
-  stopTrainCamera();
-  if (trainedModel) {
-    inferModel = trainedModel;
-    inferMeta = modelMetadata;
-    refreshInferIDB();
-    showScreen('screen-inference');
-    ilog('step', 'Testing with current model — start camera to predict');
-  } else if (inferModel) {
-    refreshInferIDB();
-    showScreen('screen-inference');
-    ilog('step', 'Switching to inference');
-  } else {
-    tlog('warn', 'Train a model first before testing inference');
-  }
+function toggleLang() {
+  lang = lang === 'pl' ? 'en' : 'pl';
+  try { localStorage.setItem(LANG_KEY, lang); } catch (_) {}
+  applyLang();
 }
 
-// ═══════════════════════════════════════════════
-// STEP TOGGLE
-// ═══════════════════════════════════════════════
-function toggleStep(stepId) {
-  const body = document.getElementById(stepId + '-body');
-  if (body) body.classList.toggle('collapsed');
+// ─── Helpers: feedback ───
+function announce(msg, assertive) {
+  const el = $(assertive ? 'live-alert' : 'live');
+  el.textContent = '';
+  setTimeout(() => { el.textContent = msg; }, 20);
 }
-function openStep(stepId) {
-  const body = document.getElementById(stepId + '-body');
-  if (body) body.classList.remove('collapsed');
+function toast(msg, type = 'info', ms = 2600) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  toastHost.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 250); }, ms);
+  announce(msg, type === 'error');
 }
-function closeStep(stepId) {
-  const body = document.getElementById(stepId + '-body');
-  if (body) body.classList.add('collapsed');
-}
-function setStepState(stepId, state) {
-  // state: 'active' | 'processing' | 'done' | 'error' | ''
-  const card = document.getElementById(stepId + '-card');
-  const badge = document.getElementById(stepId + '-badge');
-  if (!card) return;
-  card.className = 'step-card' + (state ? ' step-' + state : '');
-  if (badge) {
-    badge.textContent = state === 'active' ? 'Active'
-      : state === 'processing' ? '…'
-      : state === 'done' ? 'Done ✓'
-      : state === 'error' ? 'Error'
-      : 'Waiting';
-  }
-}
-function setStepBadge(stepId, text) {
-  const badge = document.getElementById(stepId + '-badge');
-  if (badge) badge.textContent = text;
-}
-
-// ═══════════════════════════════════════════════
-// LOGGING
-// ═══════════════════════════════════════════════
-function mlog(type, msg, screen) {
+function log(screen, type, msg) {
+  const box = $(screen + '-log');
+  if (!box) return;
   const el = document.createElement('div');
   el.className = 'log-' + type;
   const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   el.textContent = '[' + ts + '] ' + msg;
-  const scr = screen || 'train';
-  const box = document.getElementById(scr + '-log');
-  if (box) {
-    box.appendChild(el);
-    box.scrollTop = box.scrollHeight;
-  }
-  // Auto-expand log section if collapsed
-  const body = document.getElementById(scr + '-log-body');
-  if (body && body.classList.contains('collapsed')) body.classList.remove('collapsed');
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
 }
-function tlog(type, msg) { mlog(type, msg, 'train'); }
-function ilog(type, msg) { mlog(type, msg, 'infer'); }
+const tlog = (type, msg) => log('train', type, msg);
+const ilog = (type, msg) => log('infer', type, msg);
+function haptic(ms = 8) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (_) {} }
+function refreshIcons() { if (typeof lucide !== 'undefined') lucide.createIcons(); }
+function cssToken(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function classColor(i) { return `var(${CLASS_COLOR_TOKENS[i % CLASS_COLOR_TOKENS.length]})`; }
+function classInk(i) { return `var(${CLASS_COLOR_TOKENS[i % CLASS_COLOR_TOKENS.length]}-ink)`; }
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function uid() { return (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)); }
+function mulberry32(seed) {
+  return function () {
+    let s = (seed += 0x6D2B79F5);
+    s = Math.imul(s ^ (s >>> 15), s | 1);
+    s ^= s + Math.imul(s ^ (s >>> 7), s | 61);
+    return ((s ^ (s >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
-// ═══════════════════════════════════════════════
-// CLASSES
-// ═══════════════════════════════════════════════
+// ─── Helpers: confirm sheet ───
+function confirmSheet({ title, body, actions }) {
+  return new Promise(resolve => {
+    sheetResolve = resolve;
+    $('sheet-title').textContent = title;
+    $('sheet-body').textContent = body || '';
+    const host = $('sheet-actions');
+    host.innerHTML = '';
+    actions.forEach(a => {
+      const b = document.createElement('button');
+      b.className = 'btn ' + (a.kind === 'danger' ? 'btn-danger' : a.kind === 'primary' ? 'btn-primary' : 'btn-secondary');
+      b.textContent = a.label;
+      b.addEventListener('click', () => closeSheet(a.value));
+      host.appendChild(b);
+    });
+    const c = document.createElement('button');
+    c.className = 'btn btn-secondary'; c.textContent = t('cancel');
+    c.addEventListener('click', () => closeSheet(null));
+    host.appendChild(c);
+    sheetScrim.classList.add('open');
+  });
+}
+function closeSheet(value) {
+  sheetScrim.classList.remove('open');
+  if (sheetResolve) { const r = sheetResolve; sheetResolve = null; r(value); }
+}
+
+// ─── Helpers: wake lock ───
+async function acquireWakeLock() {
+  try {
+    if ('wakeLock' in navigator && !wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch (_) { wakeLock = null; }
+}
+function releaseWakeLock() {
+  if (wakeLock) { try { wakeLock.release(); } catch (_) {} wakeLock = null; }
+}
+function updateWakeLock() {
+  if (trainStream || inferStream || trainPhase === 'training') acquireWakeLock(); else releaseWakeLock();
+}
+
+// ─── Helpers: IndexedDB (dataset + model metadata) ───
+function openDB() {
+  if (db) return Promise.resolve(db);
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const d = req.result;
+      if (!d.objectStoreNames.contains('samples')) {
+        const s = d.createObjectStore('samples', { keyPath: 'id' });
+        s.createIndex('classId', 'classId', { unique: false });
+      }
+      if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'key' });
+    };
+    req.onsuccess = () => { db = req.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+function idbTx(store, mode, fn) {
+  return openDB().then(d => new Promise((resolve, reject) => {
+    const tx = d.transaction(store, mode);
+    const os = tx.objectStore(store);
+    let result;
+    try { result = fn(os); } catch (e) { reject(e); return; }
+    tx.oncomplete = () => resolve(result && result.result !== undefined ? result.result : result);
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  }));
+}
+const idbPut = (store, value) => idbTx(store, 'readwrite', os => os.put(value));
+const idbDel = (store, key) => idbTx(store, 'readwrite', os => os.delete(key));
+const idbGet = (store, key) => idbTx(store, 'readonly', os => os.get(key));
+const idbAll = (store) => idbTx(store, 'readonly', os => os.getAll());
+const idbClear = (store) => idbTx(store, 'readwrite', os => os.clear());
+function idbDeleteByClass(classId) {
+  return idbTx('samples', 'readwrite', os => {
+    const idx = os.index('classId');
+    const req = idx.openKeyCursor(IDBKeyRange.only(classId));
+    req.onsuccess = () => { const c = req.result; if (c) { os.delete(c.primaryKey); c.continue(); } };
+    return null;
+  });
+}
+function persistClasses() { return idbPut('meta', { key: 'classes', value: classes }).catch(() => {}); }
+async function restoreDataset() {
+  try {
+    const cls = await idbGet('meta', 'classes');
+    const rows = await idbAll('samples');
+    if (cls && Array.isArray(cls.value) && cls.value.length) {
+      classes = cls.value;
+      classes.forEach(c => { samples[c.id] = []; });
+      const known = new Set(classes.map(c => c.id));
+      let n = 0;
+      for (const r of rows) {
+        if (!known.has(r.classId)) { idbDel('samples', r.id).catch(() => {}); continue; }
+        samples[r.classId].push({ id: r.id, feat: new Float32Array(r.feat), thumbUrl: r.thumb ? URL.createObjectURL(r.thumb) : '' });
+        n++;
+      }
+      if (rows.length && rows[0].feat) featSize = new Float32Array(rows[0].feat).length;
+      if (n) toast(t('t_dataset_restored', n, classes.length), 'ok');
+      return;
+    }
+  } catch (e) { tlog('warn', 'IndexedDB: ' + e.message); }
+  if (!classes.length) {
+    classes = [{ id: uid(), name: t('class_default', 1) }, { id: uid(), name: t('class_default', 2) }];
+    classes.forEach(c => { samples[c.id] = []; });
+    persistClasses();
+  }
+}
+
+// ─── Helpers: image capture ───
+function videoReady(vid) { return vid && vid.srcObject && vid.readyState >= 2 && vid.videoWidth > 0; }
+function cropSquare(vid, ctx, size) {
+  const vw = vid.videoWidth, vh = vid.videoHeight;
+  const s = Math.min(vw, vh);
+  const sx = (vw - s) / 2, sy = (vh - s) / 2;
+  ctx.drawImage(vid, sx, sy, s, s, 0, 0, size, size);
+}
+function makeThumb(fromCanvas) {
+  return new Promise(resolve => {
+    thumbCtx.drawImage(fromCanvas, 0, 0, THUMB_SIZE, THUMB_SIZE);
+    thumbCanvas.toBlob(b => resolve(b), 'image/jpeg', 0.8);
+  });
+}
+
+// ─── Base model ───
+function setBaseStatus(status, progress) {
+  baseStatus = status;
+  if (progress !== undefined) baseProgress = progress;
+  bodyEl.dataset.baseStatus = status;
+  renderBaseChips();
+  renderBars();
+}
+function ensureBaseModel() {
+  if (baseModel) return Promise.resolve(baseModel);
+  if (baseLoading) return baseLoading;
+  setBaseStatus('loading', 0);
+  baseLoading = (async () => {
+    try {
+      try {
+        baseModel = await tf.loadGraphModel(BASE_IDB_KEY);
+        tlog('info', t('log_base_cache'));
+        setBaseStatus('loading', 100);
+      } catch (_) {
+        tlog('step', t('log_base_net'));
+        baseModel = await tf.loadGraphModel(MODEL_URL, { onProgress: f => setBaseStatus('loading', Math.round(f * 100)) });
+        try { await baseModel.save(BASE_IDB_KEY); tlog('success', t('log_base_saved')); } catch (e) { tlog('warn', 'Base cache: ' + e.message); }
+      }
+      const warm = tf.tidy(() => baseModel.predict(tf.zeros([1, INPUT_SIZE, INPUT_SIZE, 3])));
+      featSize = warm.shape[1];
+      warm.dispose();
+      setBaseStatus('ready', 100);
+      embedPending();
+      return baseModel;
+    } catch (e) {
+      baseLoading = null;
+      setBaseStatus('error');
+      tlog('error', t('t_base_error') + e.message);
+      toast(t('t_base_error') + e.message, 'error', 4000);
+      throw e;
+    }
+  })();
+  return baseLoading;
+}
+
+// ─── Embedding (features at capture time) ───
+async function embedPending() {
+  if (embedding || !baseModel || !pending.length) return;
+  embedding = true;
+  renderBars();
+  let done = 0;
+  try {
+    while (pending.length) {
+      const batch = pending.splice(0, EMBED_BATCH);
+      const feats = tf.tidy(() => {
+        const imgs = batch.map(p => tf.browser.fromPixels(p.img).toFloat().div(255));
+        return baseModel.predict(tf.stack(imgs));
+      });
+      const data = await feats.data();
+      const fs = feats.shape[1];
+      feats.dispose();
+      featSize = fs;
+      for (let i = 0; i < batch.length; i++) {
+        const p = batch[i];
+        if (!samples[p.classId]) continue; // class removed while pending
+        const feat = data.slice(i * fs, (i + 1) * fs);
+        const s = { id: uid(), feat, thumbUrl: p.thumbBlob ? URL.createObjectURL(p.thumbBlob) : '' };
+        samples[p.classId].push(s);
+        idbPut('samples', { id: s.id, classId: p.classId, feat: feat.buffer, thumb: p.thumbBlob }).catch(e => tlog('warn', 'IDB: ' + e.message));
+        done++;
+      }
+      renderClassList();
+      await tf.nextFrame();
+    }
+  } catch (e) {
+    tlog('error', 'Embedding: ' + e.message);
+  } finally {
+    embedding = false;
+    renderClassList();
+    renderBars();
+    renderDataChip();
+    if (done) tlog('info', t('t_embedded', done));
+    if (pending.length) embedPending();
+  }
+}
+
+// ─── Render ───
+function stepBadge(state) {
+  return state === 'active' ? t('badge_active') : state === 'done' ? t('badge_done') : state === 'error' ? t('badge_error') : state === 'processing' ? t('badge_busy') : t('badge_waiting');
+}
+function setStep(id, state, badgeText) {
+  const card = $('card-' + id);
+  if (!card) return;
+  card.dataset.state = state || '';
+  const b = $('badge-' + id);
+  if (b) b.textContent = badgeText || stepBadge(state);
+}
+function renderBadges() {
+  ['data', 'train', 'save', 'load', 'live'].forEach(id => {
+    const card = $('card-' + id);
+    const b = $('badge-' + id);
+    if (card && b && !b.dataset.custom) b.textContent = stepBadge(card.dataset.state);
+  });
+}
+function openStep(id, open = true) { const b = $('body-' + id); if (b) b.classList.toggle('collapsed', !open); }
+function scrollToCard(id) { const c = $('card-' + id); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+
+function renderBaseChips() {
+  const txt = baseStatus === 'ready' ? t('base_ready') : baseStatus === 'loading' ? t('base_loading', baseProgress) : baseStatus === 'error' ? t('base_error') : t('base_idle');
+  const cls = 'chip ' + (baseStatus === 'ready' ? 'ok' : baseStatus === 'loading' ? 'busy' : baseStatus === 'error' ? 'err' : '');
+  ['home-base-chip', 'train-base-chip', 'infer-base-chip'].forEach(id => {
+    const el = $(id); if (!el) return;
+    el.textContent = txt; el.className = cls;
+    el.title = baseStatus === 'error' ? t('base_retry') : '';
+    el.style.cursor = baseStatus === 'error' ? 'pointer' : '';
+  });
+}
+function totalSamples() { return classes.reduce((s, c) => s + (samples[c.id] || []).length, 0); }
+function renderDataChip() {
+  const el = $('home-data-chip'); if (!el) return;
+  el.textContent = t('data_chip', totalSamples(), classes.length);
+}
+function renderCameraButtons() {
+  const tb = $('btn-toggle-cam');
+  tb.textContent = trainStream ? t('cam_stop') : t('cam_start');
+  tb.className = 'btn ' + (trainStream ? 'btn-secondary' : 'btn-primary');
+  $('train-cam-label').textContent = trainStream ? t('cam_live') : t('cam_off');
+  trainCamWrap.classList.toggle('mirror', trainFacingMode === 'user' && !!trainStream);
+  const ib = $('btn-toggle-infer');
+  ib.textContent = inferStream ? t('cam_stop') : t('cam_start');
+  ib.className = 'btn ' + (inferStream ? 'btn-secondary' : 'btn-primary');
+  inferCamWrap.classList.toggle('mirror', inferFacingMode === 'user' && !!inferStream);
+}
+function pendingCount(classId) { return pending.reduce((n, p) => n + (p.classId === classId ? 1 : 0), 0); }
 function renderClassList() {
-  const list = document.getElementById('class-list');
-  if (!list) return;
-  list.innerHTML = '';
-  classNames.forEach((name, i) => {
-    const row = document.createElement('div');
-    row.className = 'class-row';
-    row.innerHTML = `
-      <div class="class-dot" style="background:${CLASS_COLORS[i]}"></div>
-      <input class="class-name-input" value="${name}" data-idx="${i}"
-        oninput="classNames[${i}]=this.value">
-      <span class="class-count" id="count-${i}">${(capturedSamples[i]||[]).length} samples</span>
-      <button class="class-capture-btn" style="background:${CLASS_COLORS[i]}"
-        onclick="captureForClass(${i})" id="cap-btn-${i}">Capture</button>
-      <button class="class-clear-btn" onclick="clearClass(${i})" title="Clear samples"><i data-lucide="trash-2" class="lucide-sm"></i></button>
-      ${classNames.length > 2 ? `<button class="class-clear-btn" onclick="removeMobileClass(${i})" title="Remove class"><i data-lucide="x" class="lucide-sm"></i></button>` : ''}
-    `;
-    list.appendChild(row);
-    // Add thumb strip
-    const strip = document.createElement('div');
-    strip.className = 'thumb-strip';
-    strip.id = 'thumbs-' + i;
-    list.appendChild(strip);
-    renderThumbs(i);
+  const focused = document.activeElement && document.activeElement.classList.contains('class-name-input') ? document.activeElement.dataset.id : null;
+  const scrolls = {};
+  classListEl.querySelectorAll('.thumb-strip').forEach(s => { scrolls[s.dataset.id] = s.scrollLeft; });
+  classListEl.innerHTML = '';
+  classes.forEach((c, i) => {
+    const list = samples[c.id] || [];
+    const pend = pendingCount(c.id);
+    const card = document.createElement('div');
+    card.className = 'class-card';
+    card.style.setProperty('--cls-color', classColor(i));
+    card.style.setProperty('--cls-ink', classInk(i));
+    card.dataset.classId = c.id;
+    card.dataset.count = list.length;
+    card.dataset.pending = pend;
+    const low = list.length + pend < MIN_RECOMMENDED;
+    card.innerHTML = `
+      <div class="class-top">
+        <span class="class-swatch" aria-hidden="true"></span>
+        <input class="class-name-input" value="${escapeHtml(c.name)}" data-id="${c.id}" aria-label="${escapeHtml(t('classes_label'))}" autocomplete="off">
+        <span class="class-count ${low ? 'low' : ''}" data-count-for="${c.id}">${t('samples', list.length)}${pend ? ' ' + t('pending', pend) : ''}</span>
+      </div>
+      <div class="class-bottom">
+        <button class="hold-btn ${holdClassId === c.id ? 'holding' : ''}" data-hold="${c.id}" aria-label="${escapeHtml(t('hold'))}: ${escapeHtml(c.name)}">
+          <i data-lucide="camera" class="lucide"></i><span>${holdClassId === c.id ? t('holding') : t('hold')}</span>
+        </button>
+        <button class="class-menu-btn" data-menu="${c.id}" aria-label="${escapeHtml(c.name)}"><i data-lucide="more-vertical" class="lucide"></i></button>
+      </div>
+      <div class="thumb-strip" data-id="${c.id}"></div>`;
+    const strip = card.querySelector('.thumb-strip');
+    list.slice(-12).forEach(s => { if (s.thumbUrl) { const im = document.createElement('img'); im.src = s.thumbUrl; im.alt = ''; strip.appendChild(im); } });
+    classListEl.appendChild(card);
+    if (scrolls[c.id] !== undefined) strip.scrollLeft = scrolls[c.id]; else strip.scrollLeft = strip.scrollWidth;
   });
-  updateContinueBtn();
-  if (typeof lucide !== 'undefined') lucide.createIcons();
+  refreshIcons();
+  if (focused) { const el = classListEl.querySelector(`.class-name-input[data-id="${focused}"]`); if (el) el.focus(); }
+  $('btn-add-class').disabled = classes.length >= MAX_CLASSES;
 }
-
-function addMobileClass() {
-  if (classNames.length >= CLASS_COLORS.length) {
-    tlog('warn', 'Maximum 6 classes');
-    return;
+function updateCountLabel(classId) {
+  const el = classListEl.querySelector(`[data-count-for="${classId}"]`);
+  const list = samples[classId] || [];
+  const pend = pendingCount(classId);
+  if (el) { el.textContent = t('samples', list.length) + (pend ? ' ' + t('pending', pend) : ''); el.classList.toggle('low', list.length + pend < MIN_RECOMMENDED); }
+  const card = classListEl.querySelector(`[data-class-id="${classId}"]`);
+  if (card) { card.dataset.count = list.length; card.dataset.pending = pend; }
+}
+function readyToTrain() {
+  return classes.length >= 2 && classes.every(c => (samples[c.id] || []).length >= MIN_SAMPLES_TO_TRAIN);
+}
+function setTrainPhase(p) { trainPhase = p; bodyEl.dataset.trainPhase = p; renderBars(); updateWakeLock(); }
+function renderBars() {
+  // Training bar
+  const tb = $('train-bar-btn'), tt = $('train-bar-title'), ts = $('train-bar-sub');
+  trainBar.classList.toggle('visible', currentScreen === 'training');
+  inferBar.classList.toggle('visible', currentScreen === 'inference');
+  if (trainPhase === 'training') {
+    tt.textContent = t('train_bar_training'); ts.textContent = tb.dataset.epoch || '';
+    tb.textContent = t('stop'); tb.className = 'btn btn-danger'; tb.disabled = false; tb.dataset.action = 'stop';
+  } else if (trainPhase === 'done') {
+    tt.textContent = t('train_bar_done'); ts.textContent = modelMetadata ? t('train_bar_done_sub', (modelMetadata.valAccuracy * 100).toFixed(0)) : '';
+    tb.textContent = t('test_model'); tb.className = 'btn btn-success'; tb.disabled = false; tb.dataset.action = 'test';
+  } else {
+    const ready = readyToTrain();
+    const n = totalSamples();
+    tt.textContent = t('train_bar_collect');
+    if (embedding || pending.length) ts.textContent = t('train_bar_embedding', pending.length);
+    else if (baseStatus !== 'ready' && n) ts.textContent = t('train_bar_base_loading');
+    else ts.textContent = ready ? t('train_bar_ready', n, classes.length) : t('train_bar_need', 2, MIN_SAMPLES_TO_TRAIN);
+    tb.textContent = trainedModel ? t('retrain') : t('train'); tb.className = 'btn btn-primary';
+    tb.disabled = !(ready && baseStatus === 'ready' && !embedding && !pending.length); tb.dataset.action = 'train';
   }
-  classNames.push('Class ' + (classNames.length + 1));
-  capturedSamples.push([]);
+  // Inference bar
+  const ib = $('infer-bar-btn'), it = $('infer-bar-title'), is = $('infer-bar-sub');
+  if (!inferModel) {
+    it.textContent = t('infer_bar_load'); is.textContent = t('infer_bar_load_sub');
+    ib.textContent = t('load_idb'); ib.className = 'btn btn-primary'; ib.dataset.action = 'load';
+    ib.disabled = !$('idb-model-select').value;
+  } else if (inferStream) {
+    it.textContent = t('infer_bar_running'); is.textContent = (inferMeta && inferMeta.classLabels || []).join(', ');
+    ib.textContent = t('cam_stop'); ib.className = 'btn btn-secondary'; ib.dataset.action = 'stopcam'; ib.disabled = false;
+  } else {
+    it.textContent = t('infer_bar_live'); is.textContent = t('infer_bar_live_sub');
+    ib.textContent = t('cam_start'); ib.className = 'btn btn-primary'; ib.dataset.action = 'startcam'; ib.disabled = false;
+  }
+}
+
+// ─── Navigation ───
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('screen-' + id).classList.add('active');
+  currentScreen = id;
+  bodyEl.dataset.screen = id;
+  window.scrollTo(0, 0);
+  renderBars();
+}
+function goHome() { stopTrainCamera(); stopInferCamera(); showScreen('home'); renderDataChip(); }
+function goToTraining() { renderClassList(); showScreen('training'); ensureBaseModel().catch(() => {}); }
+function goToInference() { refreshModelList(); showScreen('inference'); ensureBaseModel().catch(() => {}); }
+function goToTrainingFromInference() {
+  stopInferCamera();
+  setStep('data', 'active'); openStep('data', true);
+  showScreen('training');
   renderClassList();
+  tlog('step', 'Back to training');
+}
+function goToInferenceFromTraining() {
+  stopTrainCamera();
+  if (trainedModel) {
+    inferModel = trainedModel; inferMeta = modelMetadata;
+    showInferMeta(inferMeta);
+    setStep('load', 'done'); setStep('live', 'active'); openStep('load', false); openStep('live', true);
+    refreshModelList();
+    showScreen('inference');
+    ilog('step', 'Testing current model');
+  } else {
+    toast(t('t_train_first'), 'warn');
+  }
 }
 
-function removeMobileClass(idx) {
-  if (classNames.length <= 2) { tlog('warn', 'Minimum 2 classes required'); return; }
-  classNames.splice(idx, 1);
-  capturedSamples.splice(idx, 1);
-  renderClassList();
-  tlog('info', 'Removed class');
-}
-
-function clearClass(idx) {
-  capturedSamples[idx] = [];
-  renderThumbs(idx);
-  updateCountLabel(idx);
-  updateContinueBtn();
-  tlog('info', 'Cleared samples for "' + classNames[idx] + '"');
-}
-
-function updateCountLabel(idx) {
-  const el = document.getElementById('count-' + idx);
-  if (el) el.textContent = (capturedSamples[idx]||[]).length + ' samples';
-}
-
-function updateContinueBtn() {
-  const btn = document.getElementById('btn-done-step1');
-  if (!btn) return;
-  const hasEnough = classNames.length >= 2 &&
-    capturedSamples.every((s, i) => i >= classNames.length || s.length >= 2) &&
-    capturedSamples.slice(0, classNames.length).every(s => s.length >= 2);
-  btn.disabled = !hasEnough;
-}
-
-function renderThumbs(idx) {
-  const strip = document.getElementById('thumbs-' + idx);
-  if (!strip) return;
-  strip.innerHTML = '';
-  const samples = capturedSamples[idx] || [];
-  samples.slice(-6).forEach(s => {
-    const cv = document.createElement('canvas');
-    cv.width = s.width; cv.height = s.height;
-    cv.getContext('2d').putImageData(
-      new ImageData(new Uint8ClampedArray(s.data), s.width, s.height), 0, 0
-    );
-    cv.style.borderTop = '3px solid ' + CLASS_COLORS[idx];
-    strip.appendChild(cv);
-  });
-}
-
-// ═══════════════════════════════════════════════
-// CAMERA — TRAINING
-// ═══════════════════════════════════════════════
+// ─── Camera ───
 async function getCameraStream(facingMode) {
-  // Guard: check API availability
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    const isInsecure = location.protocol === 'http:' && !['localhost','127.0.0.1'].includes(location.hostname);
-    if (isInsecure) throw new Error('Camera requires HTTPS. Open via https:// or localhost.');
-    throw new Error('Browser does not support camera API');
+    const insecure = location.protocol === 'http:' && !['localhost', '127.0.0.1'].includes(location.hostname);
+    throw new Error(insecure ? t('t_cam_https') : 'getUserMedia unavailable');
   }
-
-  // Try simplest constraint FIRST (best compatibility, preserves user gesture)
-  // More complex constraints tried only if the simple one fails for non-permission reasons
   const fm = facingMode || 'environment';
-  const constraints = [
-    { video: { facingMode: { exact: fm } } },
+  const attempts = [
+    { video: { facingMode: { exact: fm }, width: { ideal: 640 }, height: { ideal: 480 } } },
     { video: { facingMode: fm } },
     { video: true },
   ];
   let lastErr;
-  for (const c of constraints) {
-    try {
-      return await navigator.mediaDevices.getUserMedia(c);
-    } catch (e) {
-      lastErr = e;
-      // Permission errors won't be fixed by different constraints — bail immediately
-      if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError' || e.name === 'SecurityError') throw e;
-    }
+  for (const c of attempts) {
+    try { return await navigator.mediaDevices.getUserMedia(c); }
+    catch (e) { lastErr = e; if (['NotAllowedError', 'PermissionDeniedError', 'SecurityError'].includes(e.name)) throw e; }
   }
-  throw lastErr || new Error('No camera found');
+  throw lastErr || new Error('No camera');
 }
-
-function toggleTrainCamera() {
-  if (trainStream) { stopTrainCamera(); } else { startTrainCamera(); }
+function cameraErrorToast(err, screen) {
+  const msg = ['NotAllowedError', 'PermissionDeniedError'].includes(err.name) ? t('t_cam_denied')
+    : err.name === 'SecurityError' ? t('t_cam_https') : t('t_cam_error') + err.message;
+  toast(msg, 'error', 4000);
+  log(screen, 'error', 'Camera: ' + err.name + ' ' + err.message);
 }
-
 async function startTrainCamera() {
-  const btn = document.getElementById('btn-toggle-cam');
-  const label = document.getElementById('train-cam-label');
-  btn.innerHTML = '<span class="spinner"></span> Starting…';
-  btn.disabled = true;
+  const btn = $('btn-toggle-cam');
+  btn.disabled = true; btn.textContent = t('cam_starting');
   try {
-    if (trainStream) trainStream.getTracks().forEach(t => t.stop());
+    if (trainStream) trainStream.getTracks().forEach(tr => tr.stop());
     trainStream = await getCameraStream(trainFacingMode);
-    const vid = document.getElementById('train-video');
-    vid.srcObject = trainStream;
-    vid.play().catch(() => {});
-    label.textContent = 'Live';
-    btn.innerHTML = '⏹ Stop Camera';
-    btn.disabled = false;
-    btn.className = 'btn btn-secondary';
-    tlog('success', 'Camera started');
+    trainVideo.srcObject = trainStream;
+    trainVideo.play().catch(() => {});
+    tlog('success', 'Camera on');
   } catch (err) {
-    tlog('error', 'Camera error: ' + err.name + ': ' + err.message);
-    btn.innerHTML = '📷 Start Camera';
-    btn.className = 'btn btn-primary';
+    trainStream = null;
+    cameraErrorToast(err, 'train');
+  } finally {
     btn.disabled = false;
-    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      tlog('warn', 'Camera permission denied. Check browser settings: tap the lock/info icon in the address bar and allow Camera.');
-    } else if (err.name === 'SecurityError') {
-      tlog('warn', 'Camera blocked by security policy. Make sure you are using HTTPS or localhost.');
-    } else if (location.protocol === 'file:') {
-      tlog('warn', 'Open via http://localhost (not file://)');
-    }
+    renderCameraButtons();
+    updateWakeLock();
   }
 }
-
 function stopTrainCamera() {
-  if (trainStream) { trainStream.getTracks().forEach(t => t.stop()); trainStream = null; }
-  const vid = document.getElementById('train-video');
-  if (vid) vid.srcObject = null;
-  const btn = document.getElementById('btn-toggle-cam');
-  if (btn) { btn.innerHTML = '📷 Start Camera'; btn.disabled = false; btn.className = 'btn btn-primary'; }
-  const label = document.getElementById('train-cam-label');
-  if (label) label.textContent = 'Camera off';
+  stopHold();
+  if (trainStream) { trainStream.getTracks().forEach(tr => tr.stop()); trainStream = null; }
+  trainVideo.srcObject = null;
+  renderCameraButtons();
+  updateWakeLock();
 }
-
-async function flipCamera() {
+async function flipTrainCamera() {
   trainFacingMode = trainFacingMode === 'environment' ? 'user' : 'environment';
-  if (trainStream) {
-    stopTrainCamera();
-    await startTrainCamera();
-  }
+  if (trainStream) { stopTrainCamera(); await startTrainCamera(); }
 }
-
-let capturingClass = -1;
-
-function captureForClass(classIdx) {
-  if (capturingClass !== -1) return; // already capturing
-  const vid = document.getElementById('train-video');
-  if (!vid || !vid.srcObject) {
-    tlog('warn', 'Start camera first!');
-    return;
-  }
-  if (vid.readyState < 2 || vid.videoWidth === 0) {
-    tlog('warn', 'Camera still loading, please wait…');
-    return;
-  }
-  const spc = parseInt(document.getElementById('samples-per-class')?.value || '15');
-  const res = 224;
-  const off = document.createElement('canvas');
-  off.width = res; off.height = res;
-  const ctx = off.getContext('2d');
-  if (!capturedSamples[classIdx]) capturedSamples[classIdx] = [];
-  let captured = 0;
-  capturingClass = classIdx;
-  const btn = document.getElementById('cap-btn-' + classIdx);
-  if (btn) btn.innerHTML = '⏳ …';
-
-  function grab() {
-    if (captured >= spc || !trainStream) {
-      capturingClass = -1;
-      if (btn) btn.innerHTML = '📸 Capture';
-      tlog('success', `Captured ${captured} samples for "${classNames[classIdx]}"`);
-      renderThumbs(classIdx);
-      updateCountLabel(classIdx);
-      updateContinueBtn();
-      return;
-    }
-    ctx.drawImage(vid, 0, 0, res, res);
-    const imgData = ctx.getImageData(0, 0, res, res);
-    capturedSamples[classIdx].push({ data: imgData.data.buffer.slice(0), width: res, height: res });
-    captured++;
-    if (btn) btn.innerHTML = `⏳ ${captured}/${spc}`;
-    setTimeout(grab, 180);
-  }
-  grab();
-}
-
-async function doneStep1() {
-  const totalSamples = capturedSamples.slice(0, classNames.length).reduce((s,a)=>s+a.length, 0);
-  tlog('step', `Step 1 done — ${totalSamples} total samples across ${classNames.length} classes`);
-  const btn = document.getElementById('btn-done-step1');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Augmenting…';
-  setStepState('step1', 'processing');
-  await runMobilePrepare(pct => {
-    btn.innerHTML = `<span class="spinner"></span> Augmenting… ${pct}%`;
-    setStepBadge('step1', `${pct}%`);
-  });
-  setStepState('step1', 'done');
-  btn.innerHTML = 'Continue →';
-  closeStep('step1');
-  if (baseModel) {
-    // Skip re-download — base model already in memory
-    tlog('info', 'Base model already loaded, skipping download');
-    setStepState('step3', 'done');
-    advanceToStep4();
-  } else {
-    setStepState('step3', 'active');
-    openStep('step3');
-    document.getElementById('step3-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-}
-
-// ═══════════════════════════════════════════════
-// AUGMENTATION WEB WORKER
-// ═══════════════════════════════════════════════
-const WORKER_CODE = `
-self.onmessage = function(e) {
-  const { samples, labels, multiplier, augType } = e.data;
-  const result = [];
-  const resultLabels = [];
-  for (let i = 0; i < samples.length; i++) {
-    result.push(samples[i]);
-    resultLabels.push(labels[i]);
-  }
-  const target = samples.length * multiplier;
-  let idx = 0;
-  while (result.length < target) {
-    const src = samples[idx % samples.length];
-    const lbl = labels[idx % labels.length];
-    const w = src.width, h = src.height;
-    const buf = new Uint8ClampedArray(src.data.slice(0));
-    if (augType !== 'none') {
-      const bj = 0.7 + Math.random() * 0.6;
-      for (let i = 0; i < buf.length; i += 4) {
-        buf[i] = Math.min(255, buf[i]*bj);
-        buf[i+1] = Math.min(255, buf[i+1]*bj);
-        buf[i+2] = Math.min(255, buf[i+2]*bj);
-      }
-      if (Math.random() > 0.5) {
-        for (let row = 0; row < h; row++) {
-          for (let col = 0; col < Math.floor(w/2); col++) {
-            const a = (row*w+col)*4, b = (row*w+(w-1-col))*4;
-            for (let c = 0; c < 4; c++) {
-              const tmp = buf[a+c]; buf[a+c] = buf[b+c]; buf[b+c] = tmp;
-            }
-          }
-        }
-      }
-    }
-    result.push({ data: buf.buffer, width: w, height: h });
-    resultLabels.push(lbl);
-    idx++;
-    if (result.length % 20 === 0) {
-      self.postMessage({ type: 'progress', pct: Math.round(result.length / target * 100) });
-    }
-  }
-  self.postMessage({ type: 'done', result, labels: resultLabels }, result.map(r => r.data));
-};
-`;
-
-// ═══════════════════════════════════════════════
-// STEP 2: PREPARE DATA
-// ═══════════════════════════════════════════════
-async function runMobilePrepare(onProgress) {
-  const allSamples = capturedSamples.slice(0, classNames.length);
-  const total = allSamples.reduce((s,a)=>s+a.length,0);
-  if (total === 0) { tlog('warn', 'No samples! Capture images first.'); return; }
-  tlog('step', 'Preparing data (2x augmentation)…');
-
-  const augType = 'all';
-  const multiplier = 2;
-
-  // Flatten
-  const flatSamples = [];
-  const flatLabels = [];
-  for (let cls = 0; cls < classNames.length; cls++) {
-    for (const s of (capturedSamples[cls]||[])) {
-      flatSamples.push(s);
-      flatLabels.push(cls);
-    }
-  }
-
-  const blob = new Blob([WORKER_CODE], { type: 'application/javascript' });
-  const workerURL = URL.createObjectURL(blob);
-  const worker = new Worker(workerURL);
-
-  await new Promise((resolve, reject) => {
-    worker.onmessage = e => {
-      if (e.data.type === 'progress') {
-        if (onProgress) onProgress(e.data.pct);
-      } else if (e.data.type === 'done') {
-        preparedData = { xs: e.data.result, ys: e.data.labels, numClasses: classNames.length };
-        const n = e.data.result.length;
-        tlog('success', `Data ready — ${n} samples (${classNames.length} classes)`);
-        worker.terminate();
-        URL.revokeObjectURL(workerURL);
-        resolve();
-      }
-    };
-    worker.onerror = e => {
-      tlog('error', 'Data preparation failed: ' + (e.message || 'unknown error'));
-      worker.terminate();
-      URL.revokeObjectURL(workerURL);
-      reject(new Error(e.message));
-    };
-    // Clone buffers before transfer — transferring originals detaches them from
-    // capturedSamples, breaking renderThumbs and any subsequent retrain.
-    const transferSamples = flatSamples.map(s => ({ data: s.data.slice(0), width: s.width, height: s.height }));
-    worker.postMessage(
-      { samples: transferSamples, labels: flatLabels, multiplier, augType },
-      transferSamples.map(s => s.data)
-    );
-  });
-}
-
-// ═══════════════════════════════════════════════
-// STEP 3: LOAD BASE MODEL
-// ═══════════════════════════════════════════════
-async function runMobileLoadBase() {
-  if (baseModel) {
-    tlog('info', 'Base model already loaded');
-    advanceToStep4();
-    return;
-  }
-  const btn = document.getElementById('btn-load-base');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Loading…';
-  setStepState('step3', 'active');
-  tlog('step', 'Loading MobileNetV3-Small…');
-
+async function startInferCamera() {
+  if (!inferModel) { toast(t('t_no_model'), 'warn'); return; }
+  const btn = $('btn-toggle-infer');
+  btn.disabled = true; btn.textContent = t('cam_starting');
   try {
-    baseModel = await tf.loadGraphModel(MODEL_URL, {
-      onProgress: frac => {
-        const pct = Math.round(frac * 100);
-        document.getElementById('model-progress').style.width = pct + '%';
-        document.getElementById('model-label').textContent = pct + '%';
-      }
-    });
-    document.getElementById('model-progress').style.width = '100%';
-    document.getElementById('model-label').textContent = 'MobileNetV3-Small loaded ✓';
-    tlog('success', 'Base model loaded ✓');
-    setStepState('step3', 'done');
-    advanceToStep4();
+    if (inferStream) inferStream.getTracks().forEach(tr => tr.stop());
+    inferStream = await getCameraStream(inferFacingMode);
+    inferVideo.srcObject = inferStream;
+    inferVideo.play().catch(() => {});
+    ilog('success', 'Camera on, predicting');
+    await ensureBaseModel();
+    inferRunning = true;
+    inferTick();
   } catch (err) {
-    tlog('error', 'Failed to load model: ' + err.message);
-    setStepState('step3', 'error');
+    inferStream = null;
+    cameraErrorToast(err, 'infer');
+  } finally {
     btn.disabled = false;
-    btn.innerHTML = '⬇️ Load Base Model';
+    renderCameraButtons();
+    renderBars();
+    updateWakeLock();
   }
 }
-
-function advanceToStep4() {
-  setStepState('step4', 'active');
-  openStep('step4');
-  closeStep('step3');
-  document.getElementById('step4-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+function stopInferCamera() {
+  inferRunning = false;
+  if (inferStream) { inferStream.getTracks().forEach(tr => tr.stop()); inferStream = null; }
+  inferVideo.srcObject = null;
+  $('pred-raw').textContent = '–';
+  renderCameraButtons();
+  renderBars();
+  updateWakeLock();
+}
+async function flipInferCamera() {
+  inferFacingMode = inferFacingMode === 'environment' ? 'user' : 'environment';
+  if (inferStream) { stopInferCamera(); await startInferCamera(); }
 }
 
-// ═══════════════════════════════════════════════
-// STEP 4: TRAINING
-// ═══════════════════════════════════════════════
-function drawMobileChart() {
-  const cv = document.getElementById('train-chart');
-  if (!cv) return;
-  const ctx = cv.getContext('2d');
-  const W = cv.offsetWidth || 300;
-  const H = 100;
-  cv.width = W; cv.height = H;
-  ctx.fillStyle = '#1E293B';
-  ctx.fillRect(0, 0, W, H);
+// ─── Capture: press and hold ───
+function startHold(classId) {
+  if (holdClassId) return;
+  if (!trainStream) { toast(t('t_start_camera'), 'warn'); return; }
+  if (!videoReady(trainVideo)) { toast(t('t_cam_loading'), 'warn'); return; }
+  if (trainPhase === 'training') return;
+  holdClassId = classId; holdCount = 0;
+  trainCamWrap.classList.add('recording');
+  $('rec-count').textContent = '0';
+  const btn = classListEl.querySelector(`[data-hold="${classId}"]`);
+  if (btn) { btn.classList.add('holding'); btn.querySelector('span').textContent = t('holding'); }
+  if (baseStatus !== 'ready') { toast(t('t_base_wait'), 'info'); ensureBaseModel().catch(() => {}); }
+  grabFrame();
+  holdTimer = setInterval(grabFrame, CAPTURE_INTERVAL_MS);
+}
+async function grabFrame() {
+  const classId = holdClassId;
+  if (!classId || !videoReady(trainVideo)) return;
+  const have = (samples[classId] || []).length + pendingCount(classId);
+  if (have >= MAX_SAMPLES_PER_CLASS) { toast(t('t_max_samples', MAX_SAMPLES_PER_CLASS), 'warn'); stopHold(); return; }
+  cropSquare(trainVideo, cropCtx, INPUT_SIZE);
+  const img = cropCtx.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE);
+  const entry = { classId, img, thumbBlob: null };
+  pending.push(entry);
+  holdCount++;
+  $('rec-count').textContent = holdCount;
+  haptic(8);
+  updateCountLabel(classId);
+  entry.thumbBlob = await makeThumb(cropCanvas);
+}
+function stopHold() {
+  if (!holdClassId) return;
+  clearInterval(holdTimer); holdTimer = null;
+  const classId = holdClassId; holdClassId = null;
+  trainCamWrap.classList.remove('recording');
+  const btn = classListEl.querySelector(`[data-hold="${classId}"]`);
+  if (btn) { btn.classList.remove('holding'); btn.querySelector('span').textContent = t('hold'); }
+  const cls = classes.find(c => c.id === classId);
+  if (holdCount) {
+    haptic(20);
+    tlog('info', t('t_captured', holdCount, cls ? cls.name : '?'));
+    if (trainPhase === 'done') setTrainPhase('collect');
+  }
+  renderBars();
+  setTimeout(embedPending, 60);
+}
 
-  function drawLine(data, color) {
-    if (data.length < 2) return;
-    const max = Math.max(...data, 1);
-    const min = Math.min(...data, 0);
-    const range = max - min || 1;
-    ctx.beginPath();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2.5;
-    data.forEach((v, i) => {
-      const x = (i / (data.length - 1)) * (W - 20) + 10;
-      const y = H - 10 - ((v - min) / range) * (H - 20);
+// ─── Classes ───
+function addClass() {
+  if (classes.length >= MAX_CLASSES) { toast(t('t_max_classes'), 'warn'); return; }
+  const c = { id: uid(), name: t('class_default', classes.length + 1) };
+  classes.push(c); samples[c.id] = [];
+  persistClasses();
+  renderClassList(); renderBars();
+  const input = classListEl.querySelector(`.class-name-input[data-id="${c.id}"]`);
+  if (input) { input.focus(); input.select(); }
+}
+async function classMenu(classId) {
+  const cls = classes.find(c => c.id === classId); if (!cls) return;
+  const actions = [{ label: t('clear_samples'), value: 'clear', kind: 'danger' }];
+  if (classes.length > 2) actions.push({ label: t('remove_class'), value: 'remove', kind: 'danger' });
+  const r = await confirmSheet({ title: t('class_menu_title', cls.name), body: t('class_menu_body'), actions });
+  if (r === 'clear') {
+    (samples[classId] || []).forEach(s => { if (s.thumbUrl) URL.revokeObjectURL(s.thumbUrl); });
+    samples[classId] = [];
+    pending = pending.filter(p => p.classId !== classId);
+    await idbDeleteByClass(classId).catch(() => {});
+    toast(t('t_class_cleared', cls.name), 'ok');
+  } else if (r === 'remove') {
+    if (classes.length <= 2) { toast(t('t_min_classes'), 'warn'); return; }
+    (samples[classId] || []).forEach(s => { if (s.thumbUrl) URL.revokeObjectURL(s.thumbUrl); });
+    delete samples[classId];
+    pending = pending.filter(p => p.classId !== classId);
+    classes = classes.filter(c => c.id !== classId);
+    await idbDeleteByClass(classId).catch(() => {});
+    persistClasses();
+    toast(t('t_class_removed', cls.name), 'ok');
+  } else return;
+  if (trainPhase === 'done') setTrainPhase('collect');
+  renderClassList(); renderBars(); renderDataChip();
+}
+async function clearDataset() {
+  const r = await confirmSheet({ title: t('clear_dataset_title'), body: t('clear_dataset_body'), actions: [{ label: t('clear_all'), value: 'yes', kind: 'danger' }] });
+  if (r !== 'yes') return;
+  Object.values(samples).flat().forEach(s => { if (s.thumbUrl) URL.revokeObjectURL(s.thumbUrl); });
+  pending = [];
+  classes = [{ id: uid(), name: t('class_default', 1) }, { id: uid(), name: t('class_default', 2) }];
+  samples = {}; classes.forEach(c => { samples[c.id] = []; });
+  await idbClear('samples').catch(() => {});
+  persistClasses();
+  if (trainPhase === 'done') setTrainPhase('collect');
+  renderClassList(); renderBars(); renderDataChip();
+  toast(t('t_dataset_cleared'), 'ok');
+}
+
+// ─── Training ───
+function holdoutSplit() {
+  const train = [], test = [];
+  classes.forEach((c, ci) => {
+    const list = samples[c.id] || [];
+    const n = list.length;
+    const order = list.map((_, i) => i);
+    const rng = mulberry32(n * 1000 + ci);
+    for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+    const nTest = n >= 2 ? Math.max(1, Math.round(n * HOLDOUT_FRACTION)) : 0;
+    order.forEach((idx, k) => (k < nTest ? test : train).push({ feat: list[idx].feat, label: ci }));
+  });
+  return { train, test };
+}
+function toTensors(rows, numClasses) {
+  const n = rows.length;
+  const x = new Float32Array(n * featSize);
+  const y = new Int32Array(n);
+  rows.forEach((r, i) => { x.set(r.feat, i * featSize); y[i] = r.label; });
+  const xs = tf.tensor2d(x, [n, featSize]);
+  const ys = tf.oneHot(tf.tensor1d(y, 'int32'), numClasses);
+  return { xs, ys, y };
+}
+function drawChart() {
+  const cv = $('train-chart'); if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.offsetWidth || 300, H = 110;
+  cv.width = W; cv.height = H;
+  ctx.fillStyle = cssToken('--chart-bg'); ctx.fillRect(0, 0, W, H);
+  const series = [
+    { data: lossHistory, color: cssToken('--chart-loss'), label: 'loss', min: 0, max: Math.max(...lossHistory, 1) },
+    { data: accHistory, color: cssToken('--chart-acc'), label: 'acc', min: 0, max: 1 },
+    { data: valHistory, color: cssToken('--chart-val'), label: 'val', min: 0, max: 1 },
+  ];
+  series.forEach(s => {
+    if (s.data.length < 2) return;
+    const range = s.max - s.min || 1;
+    ctx.beginPath(); ctx.strokeStyle = s.color; ctx.lineWidth = 2;
+    s.data.forEach((v, i) => {
+      const x = (i / (s.data.length - 1)) * (W - 20) + 10;
+      const y = H - 10 - ((v - s.min) / range) * (H - 24);
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.stroke();
-    const lv = data[data.length - 1];
-    const lx = W - 14;
-    const ly = H - 10 - ((lv - min) / range) * (H - 20);
-    ctx.fillStyle = color;
-    ctx.font = '10px monospace';
-    ctx.fillText(lv.toFixed(3), lx - 32, Math.max(12, ly - 4));
-  }
-  drawLine(lossHistory, '#EF4444');
-  drawLine(accHistory, '#22C55E');
-  ctx.font = '10px monospace';
-  ctx.fillStyle = '#EF4444'; ctx.fillText('loss', 8, 12);
-  ctx.fillStyle = '#22C55E'; ctx.fillText('acc', 44, 12);
+  });
+  ctx.font = "10px 'Roboto Mono', ui-monospace, monospace";
+  let x = 8;
+  series.forEach(s => {
+    const last = s.data.length ? s.data[s.data.length - 1] : null;
+    const txt = s.label + (last === null ? '' : ' ' + (s.label === 'loss' ? last.toFixed(3) : (last * 100).toFixed(0) + '%'));
+    ctx.fillStyle = s.color; ctx.fillText(txt, x, 12); x += ctx.measureText(txt).width + 12;
+  });
 }
-
-async function runMobileTraining() {
-  if (!preparedData) { tlog('warn', 'No data! Run Prepare Data first.'); return; }
-  if (!baseModel) { tlog('warn', 'Load base model first!'); return; }
+function renderConfusion(matrix, labels) {
+  const host = $('confusion');
+  const n = labels.length;
+  host.style.gridTemplateColumns = `minmax(0, 1.4fr) repeat(${n}, minmax(0, 1fr))`;
+  const cells = ['<div class="cell head"></div>'];
+  labels.forEach(l => cells.push(`<div class="cell head" title="${escapeHtml(l)}">${escapeHtml(l)}</div>`));
+  matrix.forEach((row, i) => {
+    cells.push(`<div class="cell head" title="${escapeHtml(labels[i])}">${escapeHtml(labels[i])}</div>`);
+    row.forEach((v, j) => cells.push(`<div class="cell ${i === j ? (v ? 'diag' : '') : (v ? 'off' : '')}">${v}</div>`));
+  });
+  host.innerHTML = cells.join('');
+}
+async function runTraining() {
+  if (trainPhase === 'training') return;
+  if (!readyToTrain()) { toast(t('train_bar_need', 2, MIN_SAMPLES_TO_TRAIN), 'warn'); return; }
+  if (!baseModel) { toast(t('train_bar_base_loading'), 'warn'); ensureBaseModel().catch(() => {}); return; }
+  stopHold();
+  classes.forEach(c => { if ((samples[c.id] || []).length < MIN_RECOMMENDED) toast(t('t_low_samples', c.name), 'warn', 3500); });
 
   trainingCancelled = false;
-  lossHistory = []; accHistory = [];
-  const epochs = parseInt(document.getElementById('train-epochs').value || '20');
-  const lr = parseFloat(document.getElementById('train-lr').value || '0.001');
-  const batchSize = parseInt(document.getElementById('train-batch').value || '16');
-  const numClasses = preparedData.numClasses;
-  const { xs: rawXs, ys: rawYs } = preparedData;
+  lossHistory = []; accHistory = []; valHistory = [];
+  const epochs = Math.max(1, Math.min(200, parseInt($('train-epochs').value || '30', 10)));
+  const lr = parseFloat($('train-lr').value || '0.001');
+  const batchSize = parseInt($('train-batch').value || '16', 10);
+  const numClasses = classes.length;
+  const labels = classes.map(c => c.name);
 
-  const btn = document.getElementById('btn-train');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Extracting…';
-  setStepState('step4', 'processing');
-  setStepBadge('step4', 'Extracting…');
-  tlog('step', `Training — ${epochs} epochs, ${rawXs.length} samples`);
-  await tf.nextFrame(); // flush paint before heavy work
+  setTrainPhase('training');
+  setStep('data', 'done'); openStep('data', false);
+  setStep('train', 'processing'); openStep('train', true); scrollToCard('train');
+  $('train-result').style.display = 'none';
+  const progWrap = $('train-progress-wrap'), progBar = $('train-progress');
+  progWrap.style.display = ''; progBar.style.width = '0%';
+  const barBtn = $('train-bar-btn');
+  const { train, test } = holdoutSplit();
+  tlog('step', `Training: ${epochs} epochs, lr ${lr}, batch ${batchSize}`);
+  tlog('info', t('log_split', train.length, test.length));
+  await tf.nextFrame();
 
-  let featsTensor = null;
-  let ysTensor = null;
-
-  const progWrap = document.getElementById('train-progress-wrap');
-  const progBar = document.getElementById('train-progress');
-  progWrap.style.display = '';
-  progBar.style.width = '0%';
-
+  let tr = null, te = null, classifier = null;
   try {
-    // Batch feature extraction — 8 samples per predict call (~8× fewer GPU round-trips)
-    document.getElementById('train-label').textContent = 'Extracting features…';
-    const allFeats = [];
-    const reuseCanvas = document.createElement('canvas');
-    reuseCanvas.width = 224; reuseCanvas.height = 224;
-    const reuseCtx = reuseCanvas.getContext('2d');
-    const FEAT_BATCH = 8;
-
-    for (let i = 0; i < rawXs.length; i += FEAT_BATCH) {
-      if (trainingCancelled) throw new Error('cancelled');
-      const batchEnd = Math.min(i + FEAT_BATCH, rawXs.length);
-      const batchFeat = tf.tidy(() => {
-        const imgs = [];
-        for (let j = i; j < batchEnd; j++) {
-          const s = rawXs[j];
-          reuseCtx.putImageData(
-            new ImageData(new Uint8ClampedArray(s.data), s.width, s.height), 0, 0
-          );
-          // images are already 224×224 — skip resizeBilinear
-          imgs.push(tf.browser.fromPixels(reuseCanvas).toFloat().div(255));
-        }
-        return baseModel.predict(tf.stack(imgs));
-      });
-      allFeats.push(batchFeat);
-      const pct = Math.round((batchEnd / rawXs.length) * 50);
-      progBar.style.width = pct + '%';
-      document.getElementById('train-label').textContent = `Features: ${batchEnd}/${rawXs.length}`;
-      setStepBadge('step4', `Features ${batchEnd}/${rawXs.length}`);
-      await tf.nextFrame();
-    }
-
-    featsTensor = tf.concat(allFeats, 0);
-    allFeats.forEach(f => f.dispose());
-    const featSize = featsTensor.shape[1];
-
-    const idxTensor = tf.tensor1d(rawYs, 'int32');
-    ysTensor = tf.oneHot(idxTensor, numClasses);
-    idxTensor.dispose();
-
-    tlog('info', `Features: ${rawXs.length}×${featSize}`);
-
-    // Build classifier
-    const classifier = tf.sequential({
+    tr = toTensors(train, numClasses);
+    te = test.length ? toTensors(test, numClasses) : null;
+    classifier = tf.sequential({
       layers: [
         tf.layers.dense({ inputShape: [featSize], units: 128, activation: 'relu' }),
         tf.layers.dropout({ rate: 0.3 }),
-        tf.layers.dense({ units: numClasses, activation: 'softmax' })
+        tf.layers.dense({ units: numClasses, activation: 'softmax' }),
       ]
     });
-    classifier.compile({
-      optimizer: tf.train.adam(lr),
-      loss: 'categoricalCrossentropy',
-      metrics: ['accuracy']
-    });
-
-    const startTime = Date.now();
-    await classifier.fit(featsTensor, ysTensor, {
+    classifier.compile({ optimizer: tf.train.adam(lr), loss: 'categoricalCrossentropy', metrics: ['accuracy'] });
+    const t0 = Date.now();
+    await classifier.fit(tr.xs, tr.ys, {
       epochs, batchSize, shuffle: true,
+      validationData: te ? [te.xs, te.ys] : undefined,
       callbacks: {
         onEpochBegin: async (epoch) => {
           if (trainingCancelled) throw new Error('cancelled');
-          setStepBadge('step4', `Epoch ${epoch+1}/${epochs}`);
-          btn.innerHTML = `<span class="spinner"></span> Epoch ${epoch+1}/${epochs}`;
+          barBtn.dataset.epoch = t('train_bar_epoch', epoch + 1, epochs);
+          $('train-bar-sub').textContent = barBtn.dataset.epoch;
+          setStep('train', 'processing', t('train_bar_epoch', epoch + 1, epochs));
         },
         onEpochEnd: async (epoch, logs) => {
-          const acc = logs.acc || logs.accuracy || 0;
-          lossHistory.push(logs.loss);
-          accHistory.push(acc);
-          drawMobileChart();
-          const elapsed = (Date.now() - startTime) / 1000;
+          const acc = logs.acc ?? logs.accuracy ?? 0;
+          const val = logs.val_acc ?? logs.val_accuracy ?? acc;
+          lossHistory.push(logs.loss); accHistory.push(acc); valHistory.push(val);
+          drawChart();
+          const elapsed = (Date.now() - t0) / 1000;
           const eta = Math.round((epochs - epoch - 1) * elapsed / (epoch + 1));
-          const pct = 50 + Math.round(((epoch + 1) / epochs) * 50);
-          progBar.style.width = pct + '%';
-          document.getElementById('train-label').textContent =
-            `Epoch ${epoch+1}/${epochs} | acc: ${(acc*100).toFixed(1)}% | ETA: ${eta}s`;
-          tlog('info', `Epoch ${epoch+1}: loss=${logs.loss.toFixed(4)}, acc=${(acc*100).toFixed(1)}%`);
+          progBar.style.width = Math.round(((epoch + 1) / epochs) * 100) + '%';
+          $('train-label').textContent = `${t('train_bar_epoch', epoch + 1, epochs)} · val ${(val * 100).toFixed(0)}% · ETA ${eta}s`;
+          tlog('info', t('log_epoch', epoch + 1, logs.loss.toFixed(4), (acc * 100).toFixed(1), (val * 100).toFixed(1)));
           await tf.nextFrame();
         }
       }
     });
 
-    const finalAcc = accHistory[accHistory.length - 1] || 0;
+    // Evaluate on the held-out set
+    const matrix = Array.from({ length: numClasses }, () => Array(numClasses).fill(0));
+    let valAcc = accHistory[accHistory.length - 1] || 0;
+    if (te) {
+      const predIdx = tf.tidy(() => classifier.predict(te.xs).argMax(1));
+      const preds = await predIdx.data(); predIdx.dispose();
+      let hits = 0;
+      for (let i = 0; i < preds.length; i++) { matrix[te.y[i]][preds[i]]++; if (preds[i] === te.y[i]) hits++; }
+      valAcc = preds.length ? hits / preds.length : 0;
+    }
+    const trainAcc = accHistory[accHistory.length - 1] || 0;
     modelMetadata = {
-      schemaVersion: SCHEMA_VERSION,
-      classLabels: classNames.slice(0, numClasses),
-      inputSize: 224,
-      trainingAccuracy: finalAcc,
-      baseModel: 'MobileNetV3-Small',
-      timestamp: new Date().toISOString()
+      schemaVersion: SCHEMA_VERSION, classLabels: labels, inputSize: INPUT_SIZE, featSize,
+      trainAccuracy: trainAcc, valAccuracy: valAcc, trainingAccuracy: valAcc,
+      nTrain: train.length, nTest: test.length, confusion: matrix,
+      baseModel: 'MobileNetV3-Small', baseModelUrl: MODEL_URL, timestamp: new Date().toISOString(),
     };
-    trainedModel = classifier;
+    if (trainedModel && trainedModel !== inferModel) { try { trainedModel.dispose(); } catch (_) {} }
+    trainedModel = classifier; classifier = null;
+    trainedModel.userDefinedMetadata = modelMetadata;
 
-    tlog('success', `Training complete — accuracy: ${(finalAcc*100).toFixed(1)}%`);
-    document.getElementById('train-label').textContent =
-      `Done ✓ — ${(finalAcc*100).toFixed(1)}% accuracy`;
-
-    setStepState('step4', 'done');
-    document.getElementById('save-meta').innerHTML =
-      `<b>Classes:</b> ${modelMetadata.classLabels.join(', ')}<br>
-       <b>Accuracy:</b> ${(finalAcc*100).toFixed(1)}%<br>
-       <b>Trained:</b> ${new Date(modelMetadata.timestamp).toLocaleString()}`;
-
-    // Auto-save to browser before showing save step
-    const saveName = document.getElementById('save-model-name').value.trim() || 'my-model';
-    setStepState('step5', 'processing');
-    setStepBadge('step5', 'Saving…');
-    openStep('step5');
-    closeStep('step4');
-    document.getElementById('step5-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    try {
-      classifier.userDefinedMetadata = modelMetadata;
-      await classifier.save('indexeddb://ml-blocks-' + saveName);
-      await baseModel.save('indexeddb://ml-blocks-base-' + saveName);
-      localStorage.setItem('ml-blocks-meta-' + saveName, JSON.stringify(modelMetadata));
-      tlog('success', `Auto-saved as "${saveName}" ✓`);
-      const autoEl = document.getElementById('autosave-status');
-      if (autoEl) { autoEl.style.display = ''; if (typeof lucide !== 'undefined') lucide.createIcons(); }
-      setStepState('step5', 'done');
-    } catch (saveErr) {
-      tlog('warn', `Auto-save failed: ${saveErr.message} — use Re-save to Browser`);
-      setStepState('step5', 'active');
-    }
-
+    $('stat-val').textContent = (valAcc * 100).toFixed(0) + '%';
+    $('stat-train').textContent = (trainAcc * 100).toFixed(0) + '%';
+    $('stat-n').textContent = `${train.length} / ${test.length}`;
+    renderConfusion(matrix, labels);
+    $('train-result').style.display = '';
+    $('train-label').textContent = t('train_bar_done_sub', (valAcc * 100).toFixed(0));
+    setStep('train', 'done');
+    tlog('success', t('t_training_done', (valAcc * 100).toFixed(1)));
+    toast(t('t_training_done', (valAcc * 100).toFixed(0)), 'ok');
+    setTrainPhase('done');
+    await autoSave();
   } catch (err) {
-    if (err.message === 'cancelled') {
-      tlog('warn', 'Training stopped');
-      setStepState('step4', '');
-    } else {
-      tlog('error', 'Training error: ' + err.message);
-      setStepState('step4', 'error');
-    }
+    if (err.message === 'cancelled') { tlog('warn', t('t_training_stopped')); toast(t('t_training_stopped'), 'warn'); setStep('train', ''); }
+    else { tlog('error', t('t_training_error') + err.message); toast(t('t_training_error') + err.message, 'error', 4000); setStep('train', 'error'); }
+    if (classifier) { try { classifier.dispose(); } catch (_) {} }
+    setTrainPhase('collect');
   } finally {
-    if (featsTensor) featsTensor.dispose();
-    if (ysTensor) ysTensor.dispose();
-    btn.disabled = false;
-    btn.innerHTML = 'Train';
+    if (tr) { tr.xs.dispose(); tr.ys.dispose(); }
+    if (te) { te.xs.dispose(); te.ys.dispose(); }
+    delete barBtn.dataset.epoch;
+    renderBars();
   }
 }
+function stopTraining() { trainingCancelled = true; }
 
-function stopMobileTraining() {
-  trainingCancelled = true;
-  tlog('warn', 'Stopping after current epoch…');
+// ─── Save / export ───
+function modelName() { return ($('save-model-name').value.trim() || 'my-model').replace(/[^\w.-]+/g, '-'); }
+async function saveToIDB(name) {
+  trainedModel.userDefinedMetadata = modelMetadata;
+  await trainedModel.save(CLF_PREFIX + name);
+  await idbPut('meta', { key: 'model:' + name, value: modelMetadata });
 }
-
-// ═══════════════════════════════════════════════
-// SAVE / DOWNLOAD HELPERS
-// ═══════════════════════════════════════════════
+async function autoSave() {
+  const name = modelName();
+  setStep('save', 'processing'); openStep('save', true);
+  $('save-meta').innerHTML = metaHtml(modelMetadata);
+  try {
+    await saveToIDB(name);
+    tlog('success', t('t_saved', name));
+    $('autosave-status').style.display = ''; refreshIcons();
+    setStep('save', 'done');
+  } catch (e) {
+    tlog('warn', t('t_autosave_error') + ' (' + e.message + ')');
+    toast(t('t_autosave_error'), 'warn');
+    setStep('save', 'active');
+  }
+}
+async function resaveToIDB() {
+  if (!trainedModel) { toast(t('t_train_first'), 'warn'); return; }
+  const btn = $('btn-save-idb'); btn.disabled = true;
+  try { const name = modelName(); await saveToIDB(name); toast(t('t_saved', name), 'ok'); tlog('success', t('t_saved', name)); $('autosave-status').style.display = ''; refreshIcons(); setStep('save', 'done'); }
+  catch (e) { toast(t('t_save_error') + e.message, 'error'); }
+  finally { btn.disabled = false; }
+}
 function arrayBufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  const CHUNK = 0x8000;
-  const parts = [];
-  for (let i = 0; i < bytes.length; i += CHUNK)
-    parts.push(String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK)));
+  const bytes = new Uint8Array(buffer); const CHUNK = 0x8000; const parts = [];
+  for (let i = 0; i < bytes.length; i += CHUNK) parts.push(String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK)));
   return btoa(parts.join(''));
 }
 function base64ToArrayBuffer(b64) {
-  const binary = atob(b64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const bin = atob(b64); const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes.buffer;
 }
 function normalizeWeightData(wd) {
-  if (Array.isArray(wd)) {
-    const total = wd.reduce((s, b) => s + b.byteLength, 0);
-    const merged = new Uint8Array(total);
-    let off = 0;
-    for (const buf of wd) { merged.set(new Uint8Array(buf), off); off += buf.byteLength; }
-    return merged.buffer;
-  }
+  if (Array.isArray(wd)) { const total = wd.reduce((s, b) => s + b.byteLength, 0); const m = new Uint8Array(total); let o = 0; for (const b of wd) { m.set(new Uint8Array(b), o); o += b.byteLength; } return m.buffer; }
   if (wd instanceof ArrayBuffer) return wd;
   if (typeof wd.slice === 'function') return wd.slice(0);
   return new Uint8Array(wd).buffer;
 }
 async function captureArtifacts(model) {
   let a = null;
-  await model.save({ save: async (artifacts) => { a = artifacts; return { modelArtifactsInfo: { dateSaved: new Date() } }; } });
-  const wd = normalizeWeightData(a.weightData);
-  return { modelTopology: a.modelTopology, weightSpecs: a.weightSpecs, weightData: arrayBufferToBase64(wd), format: a.format };
+  await model.save({ save: async (art) => { a = art; return { modelArtifactsInfo: { dateSaved: new Date() } }; } });
+  return { modelTopology: a.modelTopology, weightSpecs: a.weightSpecs, weightData: arrayBufferToBase64(normalizeWeightData(a.weightData)), format: a.format };
 }
-
-// ═══════════════════════════════════════════════
-// STEP 5: SAVE
-// ═══════════════════════════════════════════════
-async function runMobileSaveIDB() {
-  if (!trainedModel) { tlog('warn', 'No trained model yet!'); return; }
-  const name = document.getElementById('save-model-name').value.trim() || 'my-model';
-  const btn = document.getElementById('btn-save-idb');
+async function downloadModel(full) {
+  if (!trainedModel) { toast(t('t_train_first'), 'warn'); return; }
+  const btn = full ? $('btn-download-full') : $('btn-download');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Saving…';
   try {
     trainedModel.userDefinedMetadata = modelMetadata;
-    await trainedModel.save('indexeddb://ml-blocks-' + name);
-    await baseModel.save('indexeddb://ml-blocks-base-' + name);
-    localStorage.setItem('ml-blocks-meta-' + name, JSON.stringify(modelMetadata));
-    tlog('success', `Saved as "${name}" ✓`);
-    const autoEl = document.getElementById('autosave-status');
-    if (autoEl) { autoEl.style.display = ''; if (typeof lucide !== 'undefined') lucide.createIcons(); }
-    setStepState('step5', 'done');
-  } catch (err) {
-    tlog('error', 'Save error: ' + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = 'Re-save to Browser';
-  }
-}
-
-async function runMobileDownload() {
-  if (!trainedModel || !baseModel) { tlog('warn', 'Nothing to download yet!'); return; }
-  const btn = document.getElementById('btn-download');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Bundling…';
-  tlog('step', 'Preparing download…');
-  try {
-    trainedModel.userDefinedMetadata = modelMetadata;
-    const [classifierArt, baseArt] = await Promise.all([
-      captureArtifacts(trainedModel),
-      captureArtifacts(baseModel),
-    ]);
-    const bundle = {
-      schemaVersion: SCHEMA_VERSION,
-      metadata: modelMetadata,
-      classifier: classifierArt,
-      base: baseArt,
-    };
+    const bundle = { schemaVersion: SCHEMA_VERSION, metadata: modelMetadata, classifier: await captureArtifacts(trainedModel) };
+    if (full) bundle.base = await captureArtifacts(await ensureBaseModel());
     const blob = new Blob([JSON.stringify(bundle)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    const fname = (document.getElementById('save-model-name').value.trim() || 'klocki-model') + '.json';
-    a.download = fname;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    tlog('success', 'Downloaded: ' + fname);
-  } catch (err) {
-    tlog('error', 'Download error: ' + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = 'Download as File';
-  }
+    const fname = modelName() + (full ? '-full' : '') + '.json';
+    a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    tlog('success', t('t_downloaded', fname)); toast(t('t_downloaded', fname), 'ok');
+  } catch (e) { toast(t('t_download_error') + e.message, 'error'); }
+  finally { btn.disabled = false; }
 }
 
-// ═══════════════════════════════════════════════
-// INFERENCE — LOAD MODEL
-// ═══════════════════════════════════════════════
-async function refreshInferIDB() {
-  const sel = document.getElementById('idb-model-select');
-  if (!sel) return;
+// ─── Inference: model list / load ───
+function metaHtml(meta) {
+  const acc = meta.valAccuracy ?? meta.trainingAccuracy;
+  return `<b>${escapeHtml(t('classes_label'))}:</b> ${escapeHtml((meta.classLabels || []).join(', ') || '–')}<br>` +
+    `<b>${escapeHtml(t('stat_val'))}:</b> ${acc !== undefined ? (acc * 100).toFixed(1) + '%' : '–'}<br>` +
+    `<b>${escapeHtml(meta.timestamp ? new Date(meta.timestamp).toLocaleString() : '–')}</b>`;
+}
+function showInferMeta(meta) { const box = $('infer-meta'); box.style.display = ''; box.innerHTML = metaHtml(meta || {}); }
+async function refreshModelList() {
+  const sel = $('idb-model-select');
   try {
     const models = await tf.io.listModels();
     const names = Object.keys(models)
-      .filter(k => k.startsWith('indexeddb://ml-blocks-') && !k.startsWith('indexeddb://ml-blocks-base-'))
-      .map(k => k.replace('indexeddb://ml-blocks-', ''));
+      .filter(k => k.startsWith(CLF_PREFIX) || (k.startsWith(LEGACY_PREFIX) && !k.startsWith(LEGACY_BASE_PREFIX)))
+      .map(k => k.startsWith(CLF_PREFIX) ? { key: k, name: k.slice(CLF_PREFIX.length), legacy: false } : { key: k, name: k.slice(LEGACY_PREFIX.length), legacy: true });
     sel.innerHTML = names.length
-      ? names.map(n => `<option value="${n}">${n}</option>`).join('')
-      : '<option value="" disabled selected>No saved models</option>';
-  } catch (e) {
-    sel.innerHTML = '<option value="" disabled selected>No saved models</option>';
-  }
+      ? names.map(m => `<option value="${escapeHtml(m.key)}">${escapeHtml(m.name)}${m.legacy ? ' (' + t('legacy') + ')' : ''}</option>`).join('')
+      : `<option value="" disabled selected>${escapeHtml(t('no_saved'))}</option>`;
+  } catch (_) { sel.innerHTML = `<option value="" disabled selected>${escapeHtml(t('no_saved'))}</option>`; }
+  renderBars();
 }
-
+function selectedModelInfo() {
+  const key = $('idb-model-select').value; if (!key) return null;
+  const legacy = key.startsWith(LEGACY_PREFIX);
+  return { key, legacy, name: legacy ? key.slice(LEGACY_PREFIX.length) : key.slice(CLF_PREFIX.length) };
+}
 async function loadFromIDB() {
-  const sel = document.getElementById('idb-model-select');
-  const name = sel?.value;
-  if (!name) { ilog('warn', 'Select a model first'); return; }
-  const btn = document.querySelector('#stepA-body .btn-infer');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Loading…';
-  ilog('step', 'Loading "' + name + '" from browser…');
+  const info = selectedModelInfo();
+  if (!info) { toast(t('t_select_model'), 'warn'); return; }
+  const btn = $('btn-load-idb'); btn.disabled = true;
+  ilog('step', 'Loading ' + info.name);
   try {
-    inferModel = await tf.loadLayersModel('indexeddb://ml-blocks-' + name);
-    try {
-      baseModel = await tf.loadGraphModel('indexeddb://ml-blocks-base-' + name);
-      ilog('info', 'Base model loaded ✓');
-    } catch (_) {
-      ilog('warn', 'Base model not found in browser — try downloading again');
-    }
-    const metaStr = localStorage.getItem('ml-blocks-meta-' + name);
-    const meta = metaStr ? JSON.parse(metaStr) : {};
-    inferMeta = meta;
+    const model = await tf.loadLayersModel(info.key);
+    let meta = null;
+    if (info.legacy) { try { meta = JSON.parse(localStorage.getItem('ml-blocks-meta-' + info.name) || 'null'); } catch (_) {} }
+    else { const row = await idbGet('meta', 'model:' + info.name); meta = row ? row.value : null; }
+    if (!meta) meta = model.userDefinedMetadata || {};
+    if (inferModel && inferModel !== trainedModel) { try { inferModel.dispose(); } catch (_) {} }
+    inferModel = model; inferMeta = meta;
     showInferMeta(meta);
-    ilog('success', 'Model loaded — classes: ' + (meta.classLabels || []).join(', '));
-    advanceToStepB();
-  } catch (err) {
-    ilog('error', 'Load error: ' + err.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '📂 Load from Browser';
-  }
+    ilog('success', t('t_loaded', info.name));
+    toast(t('t_loaded', info.name), 'ok');
+    advanceToLive();
+    ensureBaseModel().catch(() => {});
+  } catch (e) { ilog('error', t('t_load_error') + e.message); toast(t('t_load_error') + e.message, 'error', 4000); }
+  finally { btn.disabled = false; renderBars(); }
 }
-
+async function deleteSelectedModel() {
+  const info = selectedModelInfo();
+  if (!info) { toast(t('t_select_model'), 'warn'); return; }
+  const r = await confirmSheet({ title: t('delete_model_title', info.name), body: t('delete_model_body'), actions: [{ label: t('delete'), value: 'yes', kind: 'danger' }] });
+  if (r !== 'yes') return;
+  try {
+    await tf.io.removeModel(info.key);
+    if (info.legacy) { try { await tf.io.removeModel(LEGACY_BASE_PREFIX + info.name); } catch (_) {} localStorage.removeItem('ml-blocks-meta-' + info.name); }
+    else await idbDel('meta', 'model:' + info.name).catch(() => {});
+    toast(t('t_deleted', info.name), 'ok'); ilog('info', t('t_deleted', info.name));
+  } catch (e) { toast(t('t_load_error') + e.message, 'error'); }
+  refreshModelList();
+}
 async function loadFromFile() {
-  const fileInput = document.getElementById('infer-file-input');
-  const file = fileInput?.files?.[0];
+  const input = $('infer-file-input');
+  const file = input.files && input.files[0];
   if (!file) return;
-  ilog('step', 'Loading from file: ' + file.name);
+  ilog('step', 'Loading file ' + file.name);
   try {
-    const text = await file.text();
-    const parsed = JSON.parse(text);
-    if (parsed.base && parsed.classifier) {
-      inferModel = await tf.loadLayersModel({
-        load: async () => ({
-          modelTopology: parsed.classifier.modelTopology,
-          weightSpecs: parsed.classifier.weightSpecs,
-          weightData: base64ToArrayBuffer(parsed.classifier.weightData),
-          format: parsed.classifier.format,
-        })
+    const parsed = JSON.parse(await file.text());
+    if (!parsed.classifier) throw new Error(t('t_bad_file'));
+    const model = await tf.loadLayersModel({ load: async () => ({
+      modelTopology: parsed.classifier.modelTopology, weightSpecs: parsed.classifier.weightSpecs,
+      weightData: base64ToArrayBuffer(parsed.classifier.weightData), format: parsed.classifier.format,
+    }) });
+    if (parsed.base && !baseModel) {
+      baseModel = await tf.loadGraphModel({ load: async () => ({
+        modelTopology: parsed.base.modelTopology, weightSpecs: parsed.base.weightSpecs,
+        weightData: base64ToArrayBuffer(parsed.base.weightData), format: parsed.base.format,
+      }) });
+      const warm = tf.tidy(() => baseModel.predict(tf.zeros([1, INPUT_SIZE, INPUT_SIZE, 3]))); featSize = warm.shape[1]; warm.dispose();
+      setBaseStatus('ready', 100);
+      try { await baseModel.save(BASE_IDB_KEY); } catch (_) {}
+    }
+    if (inferModel && inferModel !== trainedModel) { try { inferModel.dispose(); } catch (_) {} }
+    inferModel = model; inferMeta = parsed.metadata || model.userDefinedMetadata || {};
+    showInferMeta(inferMeta);
+    ilog('success', t('t_loaded', file.name)); toast(t('t_loaded', file.name), 'ok');
+    advanceToLive();
+    ensureBaseModel().catch(() => {});
+  } catch (e) { ilog('error', t('t_load_error') + e.message); toast(t('t_load_error') + e.message, 'error', 4000); }
+  input.value = '';
+  renderBars();
+}
+function advanceToLive() {
+  setStep('load', 'done'); setStep('live', 'active');
+  openStep('load', false); openStep('live', true);
+  scrollToCard('live');
+  $('pred-bars').innerHTML = '';
+  const top = $('pred-top-label'); top.textContent = t('waiting_pred'); top.className = 'infer-top-label idle'; top.style.color = '';
+}
+
+// ─── Inference: self-scheduling loop ───
+async function inferTick() {
+  if (!inferRunning) return;
+  const started = performance.now();
+  if (inferModel && baseModel && videoReady(inferVideo)) {
+    try {
+      cropSquare(inferVideo, cropCtx, INPUT_SIZE);
+      const probsT = tf.tidy(() => {
+        const x = tf.browser.fromPixels(cropCanvas).toFloat().div(255).expandDims(0);
+        return inferModel.predict(baseModel.predict(x));
       });
-      baseModel = await tf.loadGraphModel({
-        load: async () => ({
-          modelTopology: parsed.base.modelTopology,
-          weightSpecs: parsed.base.weightSpecs,
-          weightData: base64ToArrayBuffer(parsed.base.weightData),
-          format: parsed.base.format,
-        })
-      });
-      ilog('success', 'Bundled model loaded from file ✓');
-      inferMeta = parsed.metadata || {};
-      showInferMeta(inferMeta);
-      advanceToStepB();
-    } else {
-      ilog('error', 'Invalid model file. Use a .json file downloaded from Training.');
-    }
-  } catch (err) {
-    ilog('error', 'File load error: ' + err.message);
+      const probs = Array.from(await probsT.data()); probsT.dispose();
+      renderPrediction(probs);
+    } catch (e) { ilog('warn', 'Predict: ' + e.message); }
   }
-  fileInput.value = '';
+  if (!inferRunning) return;
+  const interval = parseInt($('infer-fps').value || '200', 10);
+  const wait = Math.max(0, interval - (performance.now() - started));
+  setTimeout(inferTick, wait);
 }
-
-function showInferMeta(meta) {
-  const box = document.getElementById('infer-meta');
-  if (!box) return;
-  box.style.display = '';
-  box.innerHTML =
-    `<b>Classes:</b> ${(meta.classLabels || []).join(', ') || '—'}<br>` +
-    `<b>Accuracy:</b> ${meta.trainingAccuracy ? (meta.trainingAccuracy*100).toFixed(1)+'%' : '—'}<br>` +
-    `<b>Trained:</b> ${meta.timestamp ? new Date(meta.timestamp).toLocaleString() : '—'}`;
-}
-
-function advanceToStepB() {
-  setStepState('stepA', 'done');
-  setStepState('stepB', 'active');
-  openStep('stepB');
-  closeStep('stepA');
-  document.getElementById('stepB-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// ═══════════════════════════════════════════════
-// INFERENCE — CAMERA
-// ═══════════════════════════════════════════════
-async function startInferCamera() {
-  if (!inferModel || !baseModel) {
-    ilog('warn', 'Load a model first!');
-    return;
+function renderPrediction(probs) {
+  const labels = (inferMeta && inferMeta.classLabels) || classes.map(c => c.name);
+  const thresh = parseFloat($('infer-threshold').value || '0.7');
+  let maxIdx = 0; for (let i = 1; i < probs.length; i++) if (probs[i] > probs[maxIdx]) maxIdx = i;
+  const conf = probs[maxIdx];
+  $('pred-raw').textContent = probs.map(p => p.toFixed(3)).join('  ');
+  const top = $('pred-top-label');
+  if (conf >= thresh) { top.textContent = `${labels[maxIdx] || maxIdx} · ${(conf * 100).toFixed(0)}%`; top.className = 'infer-top-label'; top.style.color = classColor(maxIdx); }
+  else { top.textContent = t('below_threshold'); top.className = 'infer-top-label idle'; top.style.color = ''; }
+  top.dataset.label = conf >= thresh ? (labels[maxIdx] || String(maxIdx)) : '';
+  top.dataset.confidence = conf.toFixed(3);
+  const bars = $('pred-bars');
+  if (bars.childElementCount !== probs.length) {
+    bars.innerHTML = probs.map((_, i) => `<div class="conf-bar-row"><div class="conf-bar-header"><span style="color:${classColor(i)}">${escapeHtml(labels[i] || ('Class ' + i))}</span><span class="pct" style="color:var(--muted)"></span></div><div class="conf-bar-track"><div class="conf-bar-fill" style="background:${classColor(i)};width:0%"></div></div></div>`).join('');
   }
-  const btn = document.getElementById('btn-toggle-infer');
-  btn.innerHTML = '<span class="spinner"></span> Starting…';
-  btn.disabled = true;
-  try {
-    if (inferStream) inferStream.getTracks().forEach(t => t.stop());
-    inferStream = await getCameraStream(inferFacingMode);
-    const vid = document.getElementById('infer-video');
-    vid.srcObject = inferStream;
-    vid.play().catch(() => {});
-    btn.innerHTML = '⏹ Stop Camera';
-    btn.className = 'btn btn-secondary';
-    btn.disabled = false;
-    ilog('success', 'Camera started — predicting…');
-    setStepState('stepB', 'active');
-    // Start inference loop
-    const fpsEl = document.getElementById('infer-fps');
-    const interval = fpsEl ? parseInt(fpsEl.value) : 200;
-    if (inferInterval) clearInterval(inferInterval);
-    inferInterval = setInterval(runMobileInference, interval);
-  } catch (err) {
-    ilog('error', 'Camera error: ' + err.name + ': ' + err.message);
-    btn.innerHTML = '📷 Start Camera';
-    btn.className = 'btn btn-infer';
-    btn.disabled = false;
-    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      ilog('warn', 'Camera permission denied. Check browser settings: tap the lock/info icon in the address bar and allow Camera.');
-    } else if (err.name === 'SecurityError') {
-      ilog('warn', 'Camera blocked by security policy. Make sure you are using HTTPS or localhost.');
-    }
-  }
+  probs.forEach((p, i) => {
+    const row = bars.children[i]; if (!row) return;
+    row.querySelector('.pct').textContent = (p * 100).toFixed(1) + '%';
+    row.querySelector('.conf-bar-fill').style.width = (p * 100).toFixed(1) + '%';
+  });
 }
 
-function toggleInferCamera() {
-  if (inferStream) { stopInferCamera(); } else { startInferCamera(); }
-}
+// ─── Listeners ───
+$('btn-go-train').addEventListener('click', goToTraining);
+$('btn-go-infer').addEventListener('click', goToInference);
+document.querySelectorAll('[data-go-home]').forEach(b => b.addEventListener('click', goHome));
+document.querySelectorAll('[data-lang-toggle]').forEach(b => b.addEventListener('click', toggleLang));
+document.querySelectorAll('[data-toggle]').forEach(b => b.addEventListener('click', () => { const body = $('body-' + b.dataset.toggle); if (body) body.classList.toggle('collapsed'); }));
+['home-base-chip', 'train-base-chip', 'infer-base-chip'].forEach(id => $(id).addEventListener('click', () => { if (baseStatus === 'error' || baseStatus === 'idle') ensureBaseModel().catch(() => {}); }));
 
-function stopInferCamera() {
-  if (inferInterval) { clearInterval(inferInterval); inferInterval = null; }
-  if (inferStream) { inferStream.getTracks().forEach(t => t.stop()); inferStream = null; }
-  const vid = document.getElementById('infer-video');
-  if (vid) vid.srcObject = null;
-  const btn = document.getElementById('btn-toggle-infer');
-  if (btn) { btn.innerHTML = '📷 Start Camera'; btn.disabled = false; btn.className = 'btn btn-infer'; }
-  document.getElementById('pred-overlay-raw').textContent = '—';
-  setStepState('stepB', 'active');
-}
+$('btn-toggle-cam').addEventListener('click', () => trainStream ? stopTrainCamera() : startTrainCamera());
+$('btn-flip-train').addEventListener('click', flipTrainCamera);
+$('btn-add-class').addEventListener('click', addClass);
+$('btn-clear-dataset').addEventListener('click', clearDataset);
 
-async function flipInferCamera() {
-  inferFacingMode = inferFacingMode === 'environment' ? 'user' : 'environment';
-  if (inferStream) {
-    stopInferCamera();
-    await startInferCamera();
-  }
-}
-
-async function runMobileInference() {
-  if (!inferModel || !baseModel) return;
-  const vid = document.getElementById('infer-video');
-  if (!vid || !vid.srcObject || vid.readyState < 2) return;
-
-  try {
-    const tensor = tf.tidy(() =>
-      tf.browser.fromPixels(vid)
-        .resizeBilinear([224, 224])
-        .toFloat().div(255)
-        .expandDims(0)
-    );
-    const features = baseModel.predict(tensor);
-    const predTensor = inferModel.predict(features);
-    const predictions = await predTensor.data();
-    predTensor.dispose();
-    features.dispose();
-    tensor.dispose();
-
-    const labels = (inferMeta?.classLabels) || classNames;
-    const best = Array.from(predictions);
-    const maxIdx = best.indexOf(Math.max(...best));
-    const confidence = best[maxIdx];
-    const thresh = parseFloat(document.getElementById('infer-threshold').value || '0.7');
-
-    // Overlay — raw probabilities
-    const overlayRaw = document.getElementById('pred-overlay-raw');
-    overlayRaw.textContent = Array.from(predictions).map(p => p.toFixed(4)).join('  ');
-
-    // Top label
-    const topLabel = document.getElementById('pred-top-label');
-    if (confidence >= thresh) {
-      topLabel.textContent = labels[maxIdx] + ' — ' + (confidence*100).toFixed(1) + '%';
-      topLabel.style.color = CLASS_COLORS[maxIdx % CLASS_COLORS.length];
-      topLabel.style.fontStyle = '';
-    } else {
-      topLabel.textContent = 'below confidence threshold';
-      topLabel.style.color = 'var(--muted)';
-      topLabel.style.fontStyle = 'italic';
-    }
-
-    // Bars
-    const barsEl = document.getElementById('pred-bars');
-    if (barsEl) {
-      barsEl.innerHTML = Array.from(predictions).map((p, i) => {
-        const pct = (p * 100).toFixed(1);
-        const color = CLASS_COLORS[i % CLASS_COLORS.length];
-        const lbl = labels[i] || ('Class ' + i);
-        return `<div class="conf-bar-row">
-  <div class="conf-bar-header">
-    <span style="color:${color}">${lbl}</span>
-    <span style="color:var(--muted)">${pct}%</span>
-  </div>
-  <div class="conf-bar-track">
-    <div class="conf-bar-fill" style="background:${color};width:${pct}%"></div>
-  </div>
-</div>`;
-      }).join('');
-    }
-  } catch (_) { /* silent during inference loop */ }
-}
-
-// ═══════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  renderClassList();
-  if (typeof lucide !== 'undefined') lucide.createIcons();
+classListEl.addEventListener('input', e => {
+  const inp = e.target.closest('.class-name-input'); if (!inp) return;
+  const c = classes.find(x => x.id === inp.dataset.id); if (c) { c.name = inp.value; persistClasses(); }
 });
+classListEl.addEventListener('pointerdown', e => {
+  const btn = e.target.closest('.hold-btn'); if (!btn) return;
+  e.preventDefault();
+  try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+  startHold(btn.dataset.hold);
+});
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => classListEl.addEventListener(ev, e => { if (e.target.closest('.hold-btn')) stopHold(); }));
+classListEl.addEventListener('contextmenu', e => { if (e.target.closest('.hold-btn')) e.preventDefault(); });
+classListEl.addEventListener('keydown', e => {
+  const btn = e.target.closest('.hold-btn'); if (!btn) return;
+  if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); startHold(btn.dataset.hold); }
+});
+classListEl.addEventListener('keyup', e => { if (e.target.closest('.hold-btn') && (e.key === ' ' || e.key === 'Enter')) stopHold(); });
+classListEl.addEventListener('click', e => {
+  const m = e.target.closest('.class-menu-btn'); if (m) classMenu(m.dataset.menu);
+});
+window.addEventListener('blur', stopHold);
+
+$('train-bar-btn').addEventListener('click', () => {
+  const a = $('train-bar-btn').dataset.action;
+  if (a === 'train') runTraining(); else if (a === 'stop') stopTraining(); else if (a === 'test') goToInferenceFromTraining();
+});
+$('btn-save-idb').addEventListener('click', resaveToIDB);
+$('btn-download').addEventListener('click', () => downloadModel(false));
+$('btn-download-full').addEventListener('click', () => downloadModel(true));
+
+$('btn-refresh-models').addEventListener('click', refreshModelList);
+$('btn-delete-model').addEventListener('click', deleteSelectedModel);
+$('btn-load-idb').addEventListener('click', loadFromIDB);
+$('idb-model-select').addEventListener('change', renderBars);
+$('btn-open-file').addEventListener('click', () => $('infer-file-input').click());
+$('infer-file-input').addEventListener('change', loadFromFile);
+$('btn-toggle-infer').addEventListener('click', () => inferStream ? stopInferCamera() : startInferCamera());
+$('btn-flip-infer').addEventListener('click', flipInferCamera);
+$('btn-retrain').addEventListener('click', goToTrainingFromInference);
+$('infer-bar-btn').addEventListener('click', () => {
+  const a = $('infer-bar-btn').dataset.action;
+  if (a === 'load') loadFromIDB(); else if (a === 'startcam') startInferCamera(); else if (a === 'stopcam') stopInferCamera();
+});
+
+sheetScrim.addEventListener('click', e => { if (e.target === sheetScrim) closeSheet(null); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (sheetScrim.classList.contains('open')) closeSheet(null); else if (currentScreen !== 'home') goHome(); }
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    const had = trainStream || inferStream;
+    stopHold(); stopTrainCamera(); stopInferCamera();
+    if (had) { log(currentScreen === 'inference' ? 'infer' : 'train', 'warn', t('t_hidden_stop')); }
+  } else { updateWakeLock(); }
+});
+window.addEventListener('resize', () => { if (lossHistory.length) drawChart(); });
+
+// ─── Init ───
+(async function init() {
+  lang = (navigator.language || 'pl').toLowerCase().startsWith('pl') ? 'pl' : 'en';
+  try { const stored = localStorage.getItem(LANG_KEY); if (stored === 'pl' || stored === 'en') lang = stored; } catch (_) {}
+  await restoreDataset();
+  applyLang();
+  refreshIcons();
+  ensureBaseModel().catch(() => {});
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const w = reg.installing;
+        if (w) w.addEventListener('statechange', () => { if (w.state === 'installed' && !navigator.serviceWorker.controller) toast(t('t_offline_ready'), 'ok'); });
+      });
+    }).catch(() => {});
+  }
+  // DOM contract for automated checks
+  window.KLOCKI = {
+    get state() { return { screen: currentScreen, baseStatus, trainPhase, classes: classes.map(c => ({ id: c.id, name: c.name, n: (samples[c.id] || []).length })), pending: pending.length, featSize, hasModel: !!trainedModel, meta: modelMetadata }; },
+    startHold, stopHold, runTraining, ensureBaseModel, embedPending, refreshModelList, loadFromIDB,
+  };
+  bodyEl.dataset.ready = '1';
+})();
 </script>
 </body>
 </html>
