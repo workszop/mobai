@@ -41,11 +41,12 @@ self.addEventListener('fetch', event => {
   const isFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
   if (!isShell && !isCdn && !isFont) return; // model downloads etc. go straight to the network
 
-  if (isShell && (req.mode === 'navigate' || url.pathname.endsWith('index.html') || url.pathname.endsWith('/'))) {
-    // Network first for the page itself, so updates land; cache is the offline fallback.
+  const isFontCss = url.hostname === 'fonts.googleapis.com';
+  if ((isShell && (req.mode === 'navigate' || url.pathname.endsWith('index.html') || url.pathname.endsWith('/'))) || isFontCss) {
+    // Network first for the page and the fonts CSS, so updates land and a bad response is never pinned; cache is the offline fallback.
     event.respondWith(
-      fetch(req).then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); return res; })
-        .catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
+      (isFontCss ? fetch(req.url, { mode: 'cors' }) : fetch(req)).then(res => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; })
+        .catch(() => caches.match(req).then(r => r || (isFontCss ? Response.error() : caches.match('./index.html'))))
     );
     return;
   }

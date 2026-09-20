@@ -236,8 +236,8 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
     .home-logo h1 span { color: var(--ink-3); font-weight: 500; }
     .home-logo p { color: var(--ink-2); font-size: 1rem; line-height: 1.5; margin-top: 6px; }
     .home-cards { flex: 1; display: grid; grid-template-rows: 1fr 1fr; gap: 14px; width: 100%; min-height: 0; }
-    .mode-card { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr; grid-template-areas: 'icon arrow' 'info info'; align-items: start; gap: 12px; padding: 20px; min-height: 180px; border: none; border-radius: var(--r-xl); cursor: pointer; transition: transform .12s cubic-bezier(.32,.72,.32,1); user-select: none; text-align: left; width: 100%; }
-    .mode-card:active { transform: scale(.985); }
+    .mode-card { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr; grid-template-areas: 'icon arrow' 'info info'; align-items: start; gap: 12px; padding: 20px; min-height: 180px; border: none; border-radius: var(--r-xl); cursor: pointer; transition: opacity .15s; user-select: none; text-align: left; width: 100%; }
+    .mode-card:active { opacity: .85; }
     .mode-card:focus-visible { outline: none; box-shadow: var(--focus-ring); }
     .mode-icon { grid-area: icon; width: 56px; height: 56px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; }
     .mode-icon .lucide-lg { width: 28px; height: 28px; }
@@ -900,8 +900,7 @@ let inferStream = null, inferFacingMode = 'environment';
 let inferRunning = false;
 let inferGen = 0;          // bumps on every stop, so stale inferTick timers exit
 let baseGen = 0;           // bumps when a bundled base supersedes an in-flight download
-let clearGen = {};         // classId -> number, bumped when a class is cleared/removed
-let inFlight = {};         // classId -> frames spliced out of `pending` and being embedded
+let listDirty = false;     // a class-list rebuild was skipped during a hold
 let inferModel = null, inferMeta = null;
 let holdTimer = null, holdClassId = null, holdCount = 0;
 let wakeLock = null;
@@ -1092,10 +1091,13 @@ function idbDeleteByClass(classId) {
 function persistClasses() { return idbPut('meta', { key: 'classes', value: classes }).catch(() => {}); }
 let persistTimer = null;
 function persistClassesSoon() { clearTimeout(persistTimer); persistTimer = setTimeout(persistClasses, PERSIST_DEBOUNCE_MS); }
+function flushPersistClasses() { if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; persistClasses(); } }
 async function restoreDataset() {
+  let readOk = false;
   try {
     const cls = await idbGet('meta', 'classes');
     const rows = await idbAll('samples');
+    readOk = true;
     if (cls && Array.isArray(cls.value) && cls.value.length) {
       classes = cls.value;
       classes.forEach(c => { samples[c.id] = []; });
@@ -1114,7 +1116,7 @@ async function restoreDataset() {
   if (!classes.length) {
     classes = [{ id: uid(), name: t('class_default', 1) }, { id: uid(), name: t('class_default', 2) }];
     classes.forEach(c => { samples[c.id] = []; });
-    persistClasses();
+    if (readOk) persistClasses(); // after a failed read the stored list may still exist; do not overwrite it
   }
 }
 
@@ -1162,6 +1164,7 @@ function ensureBaseModel() {
       installBase(model);
       return baseModel;
     } catch (e) {
+      if (model && model !== baseModel) { try { model.dispose(); } catch (_) {} }
       if (gen !== baseGen) return baseModel;
       baseLoading = null;
       setBaseStatus('error');
@@ -1174,11 +1177,11 @@ function ensureBaseModel() {
 }
 // Makes `model` the active base: warms it up, marks ready, and embeds any queued frames.
 function installBase(model) {
-  baseModel = model;
-  baseLoading = null;
-  const warm = tf.tidy(() => baseModel.predict(tf.zeros([1, INPUT_SIZE, INPUT_SIZE, 3])));
+  const warm = tf.tidy(() => model.predict(tf.zeros([1, INPUT_SIZE, INPUT_SIZE, 3])));
   featSize = warm.shape[1];
   warm.dispose();
+  baseModel = model; // only a model that survived warm-up becomes the active base
+  baseLoading = null;
   setBaseStatus('ready', 100);
   embedPending();
 }
@@ -1191,9 +1194,7 @@ async function embedPending() {
   let done = 0;
   try {
     while (pending.length) {
-      const batch = pending.splice(0, EMBED_BATCH);
-      batch.forEach(p => { inFlight[p.classId] = (inFlight[p.classId] || 0) + 1; });
-      const gens = batch.map(p => clearGen[p.classId] || 0);
+      const batch = pending.slice(0, EMBED_BATCH); // stays in `pending` until committed, so counts and clears see it
       const feats = tf.tidy(() => {
         const imgs = batch.map(p => tf.browser.fromPixels(p.img).toFloat().div(255));
         return baseModel.predict(tf.stack(imgs));
@@ -1206,7 +1207,7 @@ async function embedPending() {
       const touched = new Set();
       for (let i = 0; i < batch.length; i++) {
         const p = batch[i];
-        if (!samples[p.classId] || (clearGen[p.classId] || 0) !== gens[i]) continue; // class removed or cleared while in flight
+        if (!samples[p.classId] || !pending.includes(p)) continue; // class removed or cleared while in flight
         const feat = data.slice(i * fs, (i + 1) * fs);
         const s = { id: uid(), feat, thumbUrl: p.thumbBlob ? URL.createObjectURL(p.thumbBlob) : '' };
         samples[p.classId].push(s);
@@ -1215,7 +1216,7 @@ async function embedPending() {
         touched.add(p.classId);
         done++;
       }
-      batch.forEach(p => { inFlight[p.classId] = Math.max(0, (inFlight[p.classId] || 0) - 1); });
+      pending = pending.filter(p => !batch.includes(p));
       if (rows.length) idbPutMany('samples', rows).catch(e => tlog('warn', 'IDB: ' + e.message));
       touched.forEach(updateCountLabel);
       await tf.nextFrame();
@@ -1223,7 +1224,6 @@ async function embedPending() {
   } catch (e) {
     tlog('error', 'Embedding: ' + e.message);
   } finally {
-    inFlight = {};
     embedding = false;
     classes.forEach(c => updateCountLabel(c.id));
     renderBars();
@@ -1280,9 +1280,9 @@ function renderCameraButtons() {
   ib.className = 'btn ' + (inferStream ? 'btn-secondary' : 'btn-primary');
   inferCamWrap.classList.toggle('mirror', inferFacingMode === 'user' && !!inferStream);
 }
-function pendingCount(classId) { return pending.reduce((n, p) => n + (p.classId === classId ? 1 : 0), 0) + (inFlight[classId] || 0); }
+function pendingCount(classId) { return pending.reduce((n, p) => n + (p.classId === classId ? 1 : 0), 0); }
 function renderClassList() {
-  if (holdClassId) { classes.forEach(c => updateCountLabel(c.id)); return; } // rebuilding would detach the captured hold button
+  if (holdClassId) { listDirty = true; classes.forEach(c => updateCountLabel(c.id)); return; } // rebuilding would detach the captured hold button
   const focused = document.activeElement && document.activeElement.classList.contains('class-name-input') ? document.activeElement.dataset.id : null;
   const scrolls = {};
   classListEl.querySelectorAll('.thumb-strip').forEach(s => { scrolls[s.dataset.id] = s.scrollLeft; });
@@ -1327,7 +1327,6 @@ function appendThumb(classId, url) {
   const im = document.createElement('img'); im.src = url; im.alt = '';
   strip.appendChild(im);
   while (strip.childElementCount > THUMB_STRIP_MAX) strip.removeChild(strip.firstChild);
-  strip.scrollLeft = strip.scrollWidth;
 }
 function updateCountLabel(classId) {
   const el = classListEl.querySelector(`[data-count-for="${classId}"]`);
@@ -1336,6 +1335,8 @@ function updateCountLabel(classId) {
   if (el) { el.textContent = t('samples', list.length) + (pend ? ' ' + t('pending', pend) : ''); el.classList.toggle('low', list.length + pend < MIN_RECOMMENDED); }
   const card = classListEl.querySelector(`[data-class-id="${classId}"]`);
   if (card) { card.dataset.count = list.length; card.dataset.pending = pend; }
+  const strip = classListEl.querySelector(`.thumb-strip[data-id="${classId}"]`);
+  if (strip) strip.scrollLeft = strip.scrollWidth;
 }
 function readyToTrain() {
   return classes.length >= 2 && classes.every(c => (samples[c.id] || []).length >= MIN_SAMPLES_TO_TRAIN);
@@ -1548,7 +1549,13 @@ function stopHold() {
     tlog('info', t('t_captured', holdCount, cls ? cls.name : '?'));
     if (trainPhase === 'done') setTrainPhase('collect');
   }
-  renderClassList();
+  updateCountLabel(classId);
+  if (listDirty) {
+    listDirty = false;
+    const hadFocus = document.activeElement === btn;
+    renderClassList();
+    if (hadFocus) { const nb = classListEl.querySelector(`[data-hold="${classId}"]`); if (nb) nb.focus(); }
+  }
   renderBars();
   setTimeout(embedPending, 60);
 }
@@ -1571,7 +1578,6 @@ async function classMenu(classId) {
   if (r === 'clear') {
     (samples[classId] || []).forEach(s => { if (s.thumbUrl) URL.revokeObjectURL(s.thumbUrl); });
     samples[classId] = [];
-    clearGen[classId] = (clearGen[classId] || 0) + 1;
     pending = pending.filter(p => p.classId !== classId);
     await idbDeleteByClass(classId).catch(() => {});
     toast(t('t_class_cleared', cls.name), 'ok');
@@ -1579,7 +1585,6 @@ async function classMenu(classId) {
     if (classes.length <= 2) { toast(t('t_min_classes'), 'warn'); return; }
     (samples[classId] || []).forEach(s => { if (s.thumbUrl) URL.revokeObjectURL(s.thumbUrl); });
     delete samples[classId];
-    clearGen[classId] = (clearGen[classId] || 0) + 1;
     pending = pending.filter(p => p.classId !== classId);
     classes = classes.filter(c => c.id !== classId);
     await idbDeleteByClass(classId).catch(() => {});
@@ -2010,6 +2015,7 @@ classListEl.addEventListener('input', e => {
   const inp = e.target.closest('.class-name-input'); if (!inp) return;
   const c = classes.find(x => x.id === inp.dataset.id); if (c) { c.name = inp.value; persistClassesSoon(); }
 });
+classListEl.addEventListener('change', e => { if (e.target.closest('.class-name-input')) flushPersistClasses(); });
 classListEl.addEventListener('pointerdown', e => {
   const btn = e.target.closest('.hold-btn'); if (!btn) return;
   e.preventDefault();
@@ -2056,6 +2062,7 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
+    flushPersistClasses();
     const had = trainStream || inferStream;
     stopHold(); stopTrainCamera(); stopInferCamera();
     if (had) { log(currentScreen === 'inference' ? 'infer' : 'train', 'warn', t('t_hidden_stop')); }
@@ -2082,7 +2089,7 @@ window.addEventListener('resize', () => { if (lossHistory.length) drawChart(); }
   }
   // DOM contract for automated checks
   window.KLOCKI = {
-    get state() { return { screen: currentScreen, baseStatus, trainPhase, classes: classes.map(c => ({ id: c.id, name: c.name, n: (samples[c.id] || []).length })), pending: pending.length, featSize, hasModel: !!trainedModel, meta: modelMetadata }; },
+    get state() { return { screen: currentScreen, baseStatus, trainPhase, classes: classes.map(c => ({ id: c.id, name: c.name, n: (samples[c.id] || []).length })), pending: pending.length, embedding, featSize, hasModel: !!trainedModel, meta: modelMetadata }; },
     startHold, stopHold, runTraining, ensureBaseModel, embedPending, refreshModelList, loadFromIDB,
   };
   bodyEl.dataset.ready = '1';
