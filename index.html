@@ -19,7 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@1.47.0/dist/umd/lucide.min.js"></script>
   <style>
 /* ============================================================
-   edulab — Colors & Type foundation
+   edulab - Colors & Type foundation
    Fonts loaded from Google Fonts (CDN). See README "Visual
    Foundations" for substitution notes.
    ============================================================ */
@@ -36,13 +36,13 @@
      RAW COLOR TOKENS
      ============================================================ */
 
-  /* Paper — page background is white; the sand steps are wells/alternating sections */
+  /* Paper - page background is white; the sand steps are wells/alternating sections */
   --paper:    #FFFFFF;   /* page background (white)    */
   --paper-2:  #FBF7E6;   /* alternating section        */
   --paper-3:  #F5EDCB;   /* deepest sand / wells       */
   --surface:  #FFFFFF;   /* cards & sheets             */
 
-  /* Ink — warm near-black text & lines */
+  /* Ink - warm near-black text & lines */
   --ink:      #1C1917;   /* primary text               */
   --ink-2:    #57534E;   /* secondary text             */
   --ink-3:    #948C82;   /* muted / placeholder        */
@@ -56,37 +56,37 @@
      (no green text on green); the saturated colour itself goes only on
      white or black. */
 
-  /* Yellow — primary (buttons, progress, values on dark panels) */
+  /* Yellow - primary (buttons, progress, values on dark panels) */
   --yellow:      #FFD500;
   --yellow-600:  #F0C800;  /* hover / press          */
   --yellow-soft: #FFD500;  /* chip / panel fill      */
   --yellow-ink:  #1C1917;  /* text on yellow         */
 
-  /* Blue — secondary (panels, chips, correct / selected state) */
+  /* Blue - secondary (panels, chips, correct / selected state) */
   --blue:      #1E8FC2;
   --blue-600:  #177AA8;
   --blue-soft: #1E8FC2;
   --blue-ink:  #FFFFFF;
 
-  /* Green — secondary support (chips, success) */
+  /* Green - secondary support (chips, success) */
   --green:      #00A651;
   --green-600:  #009444;
   --green-soft: #00A651;
   --green-ink:  #FFFFFF;
 
-  /* Red — danger / important / wrong (use sparingly) */
+  /* Red - danger / important / wrong (use sparingly) */
   --red:      #E5322D;
   --red-600:  #C92823;
   --red-soft: #E5322D;
   --red-ink:  #FFFFFF;
 
-  /* Legacy role aliases — older edulab apps use these names */
+  /* Legacy role aliases - older edulab apps use these names */
   --marigold: var(--yellow); --marigold-600: var(--yellow-600); --marigold-soft: var(--yellow-soft); --marigold-ink: var(--yellow-ink);
   --teal:     var(--blue);   --teal-600:     var(--blue-600);   --teal-soft:     var(--blue-soft);   --teal-ink:     var(--blue-ink);
   --sky:      var(--green);                                     --sky-soft:      var(--green-soft);  --sky-ink:      var(--green-ink);
   --coral:    var(--red);    --coral-600:    var(--red-600);    --coral-soft:    var(--red-soft);    --coral-ink:    var(--red-ink);
 
-  /* Play palette — subject/category colours in the kids app */
+  /* Play palette - subject/category colours in the kids app */
   --play-sun:    #FFD500;
   --play-grass:  #00A651;
   --play-berry:  #C6478B;
@@ -118,7 +118,7 @@
   /* ---- Radii (friendly, generous) ---- */
   --r-xs: 6px; --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
 
-  /* ---- Elevation — warm, low, soft ---- */
+  /* ---- Elevation - warm, low, soft ---- */
   --shadow-sm: 0 1px 2px rgba(33,30,26,.06), 0 1px 1px rgba(33,30,26,.04);
   --shadow-md: 0 4px 16px rgba(33,30,26,.08), 0 1px 3px rgba(33,30,26,.05);
   --shadow-lg: 0 16px 40px rgba(33,30,26,.12), 0 3px 8px rgba(33,30,26,.06);
@@ -176,7 +176,7 @@
 .edu-small  { font-family: var(--font-sans); font-size: var(--body-sm); line-height: 1.5; color: var(--ink-2); }
 .edu-caption{ font-family: var(--font-sans); font-size: var(--caption); line-height: 1.45; color: var(--ink-3); }
 
-/* Overline — mono, tracked; functional labels only (never above page/section titles) */
+/* Overline - mono, tracked; functional labels only (never above page/section titles) */
 .edu-overline {
   font-family: var(--font-mono);
   font-weight: 500; font-size: var(--overline);
@@ -207,6 +207,8 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
       --term-info: #7CC4EA; --term-success: #5FD08F; --term-warn: var(--yellow); --term-error: #FF7B76; --term-step: #C9B3FF;
       --chart-bg: var(--ink); --chart-loss: var(--red); --chart-acc: var(--green); --chart-val: var(--yellow);
       --overlay: rgba(28,25,23,.55); --scrim: rgba(28,25,23,.45);
+      --chrome-bg: color-mix(in srgb, var(--paper) 85%, transparent); --chrome-bg-strong: color-mix(in srgb, var(--paper) 90%, transparent);
+      --guide-line: color-mix(in srgb, var(--paper) 60%, transparent); --cam-shade: color-mix(in srgb, var(--ink) 35%, transparent);
       --touch: 48px; --bar-h: 68px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -220,7 +222,7 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
     .screen.active { display: flex; flex-direction: column; }
 
     /* ─── Brand header (edulab chrome) ─── */
-    .edu-header { position: sticky; top: 0; z-index: 50; width: 100%; background: rgba(255,255,255,.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
+    .edu-header { position: sticky; top: 0; z-index: 50; width: 100%; background: var(--chrome-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
     .edu-header-inner { max-width: 1100px; margin: 0 auto; padding: 6px 16px; display: flex; align-items: center; gap: 10px; }
     .edu-logo { width: 56px; height: 56px; display: block; margin-right: -6px; }
     .edu-wordmark { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.02em; color: var(--ink); }
@@ -228,23 +230,37 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
 
     /* ─── Home ─── */
     #screen-home { background: var(--paper); }
-    .home-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 32px 16px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 32px); }
-    .home-logo { text-align: center; max-width: 520px; }
-    .home-logo h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.2rem, 9vw, 2.85rem); letter-spacing: -.025em; line-height: 1.05; color: var(--ink); }
+    .home-main { flex: 1; display: flex; flex-direction: column; gap: 18px; width: 100%; max-width: 900px; margin: 0 auto; padding: 22px 16px 0; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
+    .home-logo { max-width: 560px; }
+    .home-logo h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.1rem, 8vw, 2.75rem); letter-spacing: -.025em; line-height: 1.05; color: var(--ink); }
     .home-logo h1 span { color: var(--ink-3); font-weight: 500; }
-    .home-logo p { color: var(--ink-2); font-size: 1.0625rem; line-height: 1.5; margin-top: 8px; }
-    .home-cards { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 420px; }
-    .mode-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); padding: 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: background .15s; user-select: none; text-align: left; width: 100%; min-height: 84px; color: var(--ink); }
-    .mode-card:active { background: var(--paper-2); }
-    .mode-icon { flex-shrink: 0; width: 48px; height: 48px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; background: var(--yellow-soft); color: var(--yellow-ink); }
-    .mode-card.infer .mode-icon { background: var(--blue-soft); color: var(--blue-ink); }
-    .mode-info h2 { font-family: var(--font-display); font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
-    .mode-info p { font-size: 13.5px; color: var(--ink-2); margin-top: 3px; line-height: 1.45; }
-    .mode-arrow { margin-left: auto; color: var(--ink-3); display: flex; align-items: center; }
-    .home-foot { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
+    .home-logo p { color: var(--ink-2); font-size: 1rem; line-height: 1.5; margin-top: 6px; }
+    .home-cards { flex: 1; display: grid; grid-template-rows: 1fr 1fr; gap: 14px; width: 100%; min-height: 0; }
+    .mode-card { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr; grid-template-areas: 'icon arrow' 'info info'; align-items: start; gap: 12px; padding: 20px; min-height: 180px; border: none; border-radius: var(--r-xl); cursor: pointer; transition: transform .12s cubic-bezier(.32,.72,.32,1); user-select: none; text-align: left; width: 100%; }
+    .mode-card:active { transform: scale(.985); }
+    .mode-card:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+    .mode-icon { grid-area: icon; width: 56px; height: 56px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; }
+    .mode-icon .lucide-lg { width: 28px; height: 28px; }
+    .mode-arrow { grid-area: arrow; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--r-pill); }
+    .mode-info { grid-area: info; align-self: end; }
+    .mode-info h2 { font-family: var(--font-display); font-size: clamp(22px, 6vw, 28px); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+    .mode-info p { font-size: 14px; margin-top: 6px; line-height: 1.45; max-width: 34ch; opacity: .82; }
+    .mode-card.train { background: var(--yellow-soft); color: var(--yellow-ink); }
+    .mode-card.train .mode-icon { background: var(--ink); color: var(--yellow); }
+    .mode-card.train .mode-arrow { background: color-mix(in srgb, var(--ink) 12%, transparent); color: var(--ink); }
+    .mode-card.infer { background: var(--blue-soft); color: var(--blue-ink); }
+    .mode-card.infer .mode-icon { background: var(--paper); color: var(--blue); }
+    .mode-card.infer .mode-arrow { background: color-mix(in srgb, var(--paper) 22%, transparent); color: var(--blue-ink); }
+    .home-foot { margin-top: auto; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; padding-top: 6px; }
+    .home-foot .chip, .home-foot .chip.ok, .home-foot .chip.busy, .home-foot .chip.err { background: transparent; border: 1px solid var(--line); color: var(--ink-3); font-size: 10px; padding: 3px 9px; font-weight: 400; letter-spacing: .05em; }
+    .home-foot .chip::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); opacity: .5; }
+    .home-foot .chip.ok::before { background: var(--green); opacity: 1; }
+    .home-foot .chip.busy::before { background: var(--yellow); opacity: 1; }
+    .home-foot .chip.err::before { background: var(--red); opacity: 1; }
+    @media (min-width: 769px) { .home-cards { grid-template-rows: none; grid-template-columns: 1fr 1fr; max-height: 420px; } .home-main { justify-content: center; gap: 28px; } .mode-card { min-height: 260px; padding: 26px; } }
 
     /* ─── Top bar ─── */
-    .top-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; padding-top: calc(env(safe-area-inset-top, 0px) + 8px); background: rgba(255,255,255,.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); flex-shrink: 0; position: sticky; top: 0; z-index: 5; }
+    .top-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; padding-top: calc(env(safe-area-inset-top, 0px) + 8px); background: var(--chrome-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); flex-shrink: 0; position: sticky; top: 0; z-index: 5; }
     .top-bar .edu-logo { width: 44px; height: 44px; margin-right: -4px; }
     .icon-btn { background: none; border: none; color: var(--ink); cursor: pointer; width: 44px; height: 44px; border-radius: var(--r-pill); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .icon-btn:active { background: var(--paper-2); }
@@ -285,8 +301,8 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
     .cam-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; background: var(--paper-3); border-radius: var(--r-md); overflow: hidden; }
     .cam-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
     .cam-wrap.mirror video { transform: scaleX(-1); }
-    .cam-guide { position: absolute; inset: 8%; border: 1.5px dashed rgba(255,255,255,.6); border-radius: var(--r-xs); pointer-events: none; }
-    .cam-overlay { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 10px; background: linear-gradient(to top, rgba(28,25,23,.35) 0%, transparent 40%); pointer-events: none; }
+    .cam-guide { position: absolute; inset: 8%; border: 1.5px dashed var(--guide-line); border-radius: var(--r-xs); pointer-events: none; }
+    .cam-overlay { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 10px; background: linear-gradient(to top, var(--cam-shade) 0%, transparent 40%); pointer-events: none; }
     .cam-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--paper); background: var(--overlay); padding: 5px 10px; border-radius: var(--r-pill); }
     .cam-fab { position: absolute; top: 8px; right: 8px; background: var(--overlay); border: none; color: var(--paper); width: 44px; height: 44px; border-radius: var(--r-pill); cursor: pointer; z-index: 2; display: flex; align-items: center; justify-content: center; }
     .cam-rec { position: absolute; top: 12px; left: 12px; display: none; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 12px; color: var(--red-ink); background: var(--red-soft); padding: 5px 10px; border-radius: var(--r-pill); }
@@ -385,7 +401,7 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
     .log-info { color: var(--term-info); } .log-success { color: var(--term-success); } .log-warn { color: var(--term-warn); } .log-error { color: var(--term-error); } .log-step { color: var(--term-step); font-weight: 500; }
 
     /* ─── Sticky bottom bar ─── */
-    .action-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: none; align-items: center; gap: 12px; padding: 10px 16px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); background: rgba(255,255,255,.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--line); min-height: var(--bar-h); }
+    .action-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: none; align-items: center; gap: 12px; padding: 10px 16px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); background: var(--chrome-bg-strong); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--line); min-height: var(--bar-h); }
     .action-bar.visible { display: flex; }
     .action-status { flex: 1; min-width: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.35; }
     .action-status b { display: block; font-family: var(--font-display); color: var(--ink); font-size: 15px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -701,6 +717,7 @@ const LANG_KEY = 'klocki-mobile-lang';
 const SCHEMA_VERSION = 'v2';
 const INPUT_SIZE = 224;
 const THUMB_SIZE = 64;
+const THUMB_STRIP_MAX = 12;
 const CAPTURE_INTERVAL_MS = 150;
 const EMBED_BATCH = 8;
 const MAX_CLASSES = 6;
@@ -708,6 +725,9 @@ const MAX_SAMPLES_PER_CLASS = 200;
 const MIN_SAMPLES_TO_TRAIN = 2;
 const MIN_RECOMMENDED = 10;
 const HOLDOUT_FRACTION = 0.2;
+const MAX_PENDING = 200;          // raw 224px frames waiting for the base model (~200 KB each)
+const IDB_OPEN_TIMEOUT_MS = 8000;
+const PERSIST_DEBOUNCE_MS = 400;
 const CLASS_COLOR_TOKENS = ['--c0', '--c1', '--c2', '--c3', '--c4', '--c5'];
 
 const T = {
@@ -775,7 +795,7 @@ const T = {
     t_deleted: name => `Usunięto „${name}”`,
     t_dataset_restored: (n, c) => `Przywrócono ${n} zdjęć w ${c} klasach`,
     t_dataset_cleared: 'Dane wyczyszczone', t_class_removed: name => `Usunięto klasę „${name}”`, t_class_cleared: name => `Usunięto zdjęcia klasy „${name}”`,
-    t_train_first: 'Najpierw wytrenuj model', t_base_error: 'Nie udało się pobrać modelu bazowego: ',
+    t_pending_full: 'Poczekaj, aż model bazowy przetworzy zebrane zdjęcia', t_train_first: 'Najpierw wytrenuj model', t_base_error: 'Nie udało się pobrać modelu bazowego: ',
     t_hidden_stop: 'Kamera zatrzymana, gdy aplikacja była w tle',
     t_offline_ready: 'Aplikacja gotowa do pracy offline',
     log_base_cache: 'Model bazowy wczytany z pamięci przeglądarki', log_base_net: 'Pobieranie MobileNetV3-Small…', log_base_saved: 'Model bazowy zapisany w przeglądarce',
@@ -848,7 +868,7 @@ const T = {
     t_deleted: name => `Deleted “${name}”`,
     t_dataset_restored: (n, c) => `Restored ${n} photos in ${c} classes`,
     t_dataset_cleared: 'Dataset cleared', t_class_removed: name => `Removed class “${name}”`, t_class_cleared: name => `Deleted photos of “${name}”`,
-    t_train_first: 'Train a model first', t_base_error: 'Could not download the base model: ',
+    t_pending_full: 'Wait for the base model to process the captured photos', t_train_first: 'Train a model first', t_base_error: 'Could not download the base model: ',
     t_hidden_stop: 'Camera stopped while the app was in the background',
     t_offline_ready: 'App ready for offline use',
     log_base_cache: 'Base model loaded from browser storage', log_base_net: 'Downloading MobileNetV3-Small…', log_base_saved: 'Base model saved in browser',
@@ -878,6 +898,10 @@ let lossHistory = [], accHistory = [], valHistory = [];
 let trainStream = null, trainFacingMode = 'environment';
 let inferStream = null, inferFacingMode = 'environment';
 let inferRunning = false;
+let inferGen = 0;          // bumps on every stop, so stale inferTick timers exit
+let baseGen = 0;           // bumps when a bundled base supersedes an in-flight download
+let clearGen = {};         // classId -> number, bumped when a class is cleared/removed
+let inFlight = {};         // classId -> frames spliced out of `pending` and being embedded
 let inferModel = null, inferMeta = null;
 let holdTimer = null, holdClassId = null, holdCount = 0;
 let wakeLock = null;
@@ -1034,17 +1058,20 @@ function openDB() {
       }
       if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'key' });
     };
-    req.onsuccess = () => { db = req.result; resolve(db); };
-    req.onerror = () => reject(req.error);
+    const timer = setTimeout(() => reject(new Error('IndexedDB open timed out')), IDB_OPEN_TIMEOUT_MS);
+    req.onsuccess = () => { clearTimeout(timer); db = req.result; resolve(db); };
+    req.onerror = () => { clearTimeout(timer); reject(req.error); };
+    req.onblocked = () => { clearTimeout(timer); reject(new Error('IndexedDB blocked by another tab')); };
   });
 }
+const idbPutMany = (store, values) => idbTx(store, 'readwrite', os => { values.forEach(v => os.put(v)); return null; });
 function idbTx(store, mode, fn) {
   return openDB().then(d => new Promise((resolve, reject) => {
     const tx = d.transaction(store, mode);
     const os = tx.objectStore(store);
     let result;
     try { result = fn(os); } catch (e) { reject(e); return; }
-    tx.oncomplete = () => resolve(result && result.result !== undefined ? result.result : result);
+    tx.oncomplete = () => resolve(result instanceof IDBRequest ? result.result : result);
     tx.onerror = () => reject(tx.error);
     tx.onabort = () => reject(tx.error);
   }));
@@ -1063,6 +1090,8 @@ function idbDeleteByClass(classId) {
   });
 }
 function persistClasses() { return idbPut('meta', { key: 'classes', value: classes }).catch(() => {}); }
+let persistTimer = null;
+function persistClassesSoon() { clearTimeout(persistTimer); persistTimer = setTimeout(persistClasses, PERSIST_DEBOUNCE_MS); }
 async function restoreDataset() {
   try {
     const cls = await idbGet('meta', 'classes');
@@ -1113,27 +1142,27 @@ function setBaseStatus(status, progress) {
   renderBars();
 }
 function ensureBaseModel() {
-  if (baseModel) return Promise.resolve(baseModel);
+  if (baseModel) { if (baseStatus !== 'ready') setBaseStatus('ready', 100); return Promise.resolve(baseModel); }
   if (baseLoading) return baseLoading;
+  const gen = ++baseGen;
   setBaseStatus('loading', 0);
   baseLoading = (async () => {
+    let model = null;
     try {
       try {
-        baseModel = await tf.loadGraphModel(BASE_IDB_KEY);
+        model = await tf.loadGraphModel(BASE_IDB_KEY);
         tlog('info', t('log_base_cache'));
-        setBaseStatus('loading', 100);
+        if (gen === baseGen) setBaseStatus('loading', 100);
       } catch (_) {
         tlog('step', t('log_base_net'));
-        baseModel = await tf.loadGraphModel(MODEL_URL, { onProgress: f => setBaseStatus('loading', Math.round(f * 100)) });
-        try { await baseModel.save(BASE_IDB_KEY); tlog('success', t('log_base_saved')); } catch (e) { tlog('warn', 'Base cache: ' + e.message); }
+        model = await tf.loadGraphModel(MODEL_URL, { onProgress: f => { if (gen === baseGen) setBaseStatus('loading', Math.round(f * 100)); } });
+        try { await model.save(BASE_IDB_KEY); tlog('success', t('log_base_saved')); } catch (e) { tlog('warn', 'Base cache: ' + e.message); }
       }
-      const warm = tf.tidy(() => baseModel.predict(tf.zeros([1, INPUT_SIZE, INPUT_SIZE, 3])));
-      featSize = warm.shape[1];
-      warm.dispose();
-      setBaseStatus('ready', 100);
-      embedPending();
+      if (gen !== baseGen) { try { model.dispose(); } catch (_) {} return baseModel; } // a bundled base was installed meanwhile
+      installBase(model);
       return baseModel;
     } catch (e) {
+      if (gen !== baseGen) return baseModel;
       baseLoading = null;
       setBaseStatus('error');
       tlog('error', t('t_base_error') + e.message);
@@ -1142,6 +1171,16 @@ function ensureBaseModel() {
     }
   })();
   return baseLoading;
+}
+// Makes `model` the active base: warms it up, marks ready, and embeds any queued frames.
+function installBase(model) {
+  baseModel = model;
+  baseLoading = null;
+  const warm = tf.tidy(() => baseModel.predict(tf.zeros([1, INPUT_SIZE, INPUT_SIZE, 3])));
+  featSize = warm.shape[1];
+  warm.dispose();
+  setBaseStatus('ready', 100);
+  embedPending();
 }
 
 // ─── Embedding (features at capture time) ───
@@ -1153,6 +1192,8 @@ async function embedPending() {
   try {
     while (pending.length) {
       const batch = pending.splice(0, EMBED_BATCH);
+      batch.forEach(p => { inFlight[p.classId] = (inFlight[p.classId] || 0) + 1; });
+      const gens = batch.map(p => clearGen[p.classId] || 0);
       const feats = tf.tidy(() => {
         const imgs = batch.map(p => tf.browser.fromPixels(p.img).toFloat().div(255));
         return baseModel.predict(tf.stack(imgs));
@@ -1161,23 +1202,30 @@ async function embedPending() {
       const fs = feats.shape[1];
       feats.dispose();
       featSize = fs;
+      const rows = [];
+      const touched = new Set();
       for (let i = 0; i < batch.length; i++) {
         const p = batch[i];
-        if (!samples[p.classId]) continue; // class removed while pending
+        if (!samples[p.classId] || (clearGen[p.classId] || 0) !== gens[i]) continue; // class removed or cleared while in flight
         const feat = data.slice(i * fs, (i + 1) * fs);
         const s = { id: uid(), feat, thumbUrl: p.thumbBlob ? URL.createObjectURL(p.thumbBlob) : '' };
         samples[p.classId].push(s);
-        idbPut('samples', { id: s.id, classId: p.classId, feat: feat.buffer, thumb: p.thumbBlob }).catch(e => tlog('warn', 'IDB: ' + e.message));
+        rows.push({ id: s.id, classId: p.classId, feat: feat.buffer, thumb: p.thumbBlob });
+        appendThumb(p.classId, s.thumbUrl);
+        touched.add(p.classId);
         done++;
       }
-      renderClassList();
+      batch.forEach(p => { inFlight[p.classId] = Math.max(0, (inFlight[p.classId] || 0) - 1); });
+      if (rows.length) idbPutMany('samples', rows).catch(e => tlog('warn', 'IDB: ' + e.message));
+      touched.forEach(updateCountLabel);
       await tf.nextFrame();
     }
   } catch (e) {
     tlog('error', 'Embedding: ' + e.message);
   } finally {
+    inFlight = {};
     embedding = false;
-    renderClassList();
+    classes.forEach(c => updateCountLabel(c.id));
     renderBars();
     renderDataChip();
     if (done) tlog('info', t('t_embedded', done));
@@ -1232,8 +1280,9 @@ function renderCameraButtons() {
   ib.className = 'btn ' + (inferStream ? 'btn-secondary' : 'btn-primary');
   inferCamWrap.classList.toggle('mirror', inferFacingMode === 'user' && !!inferStream);
 }
-function pendingCount(classId) { return pending.reduce((n, p) => n + (p.classId === classId ? 1 : 0), 0); }
+function pendingCount(classId) { return pending.reduce((n, p) => n + (p.classId === classId ? 1 : 0), 0) + (inFlight[classId] || 0); }
 function renderClassList() {
+  if (holdClassId) { classes.forEach(c => updateCountLabel(c.id)); return; } // rebuilding would detach the captured hold button
   const focused = document.activeElement && document.activeElement.classList.contains('class-name-input') ? document.activeElement.dataset.id : null;
   const scrolls = {};
   classListEl.querySelectorAll('.thumb-strip').forEach(s => { scrolls[s.dataset.id] = s.scrollLeft; });
@@ -1263,13 +1312,22 @@ function renderClassList() {
       </div>
       <div class="thumb-strip" data-id="${c.id}"></div>`;
     const strip = card.querySelector('.thumb-strip');
-    list.slice(-12).forEach(s => { if (s.thumbUrl) { const im = document.createElement('img'); im.src = s.thumbUrl; im.alt = ''; strip.appendChild(im); } });
+    list.slice(-THUMB_STRIP_MAX).forEach(s => { if (s.thumbUrl) { const im = document.createElement('img'); im.src = s.thumbUrl; im.alt = ''; strip.appendChild(im); } });
     classListEl.appendChild(card);
     if (scrolls[c.id] !== undefined) strip.scrollLeft = scrolls[c.id]; else strip.scrollLeft = strip.scrollWidth;
   });
   refreshIcons();
   if (focused) { const el = classListEl.querySelector(`.class-name-input[data-id="${focused}"]`); if (el) el.focus(); }
   $('btn-add-class').disabled = classes.length >= MAX_CLASSES;
+}
+function appendThumb(classId, url) {
+  if (!url) return;
+  const strip = classListEl.querySelector(`.thumb-strip[data-id="${classId}"]`);
+  if (!strip) return;
+  const im = document.createElement('img'); im.src = url; im.alt = '';
+  strip.appendChild(im);
+  while (strip.childElementCount > THUMB_STRIP_MAX) strip.removeChild(strip.firstChild);
+  strip.scrollLeft = strip.scrollWidth;
 }
 function updateCountLabel(classId) {
   const el = classListEl.querySelector(`[data-count-for="${classId}"]`);
@@ -1411,16 +1469,17 @@ async function startInferCamera() {
   const btn = $('btn-toggle-infer');
   btn.disabled = true; btn.textContent = t('cam_starting');
   try {
+    await ensureBaseModel(); // before touching the camera, so a failed load never leaves a live stream behind
     if (inferStream) inferStream.getTracks().forEach(tr => tr.stop());
     inferStream = await getCameraStream(inferFacingMode);
     inferVideo.srcObject = inferStream;
     inferVideo.play().catch(() => {});
     ilog('success', 'Camera on, predicting');
-    await ensureBaseModel();
     inferRunning = true;
-    inferTick();
+    inferTick(++inferGen);
   } catch (err) {
-    inferStream = null;
+    if (inferStream) { inferStream.getTracks().forEach(tr => tr.stop()); inferStream = null; }
+    inferVideo.srcObject = null;
     cameraErrorToast(err, 'infer');
   } finally {
     btn.disabled = false;
@@ -1431,6 +1490,7 @@ async function startInferCamera() {
 }
 function stopInferCamera() {
   inferRunning = false;
+  inferGen++;
   if (inferStream) { inferStream.getTracks().forEach(tr => tr.stop()); inferStream = null; }
   inferVideo.srcObject = null;
   $('pred-raw').textContent = '–';
@@ -1449,6 +1509,7 @@ function startHold(classId) {
   if (!trainStream) { toast(t('t_start_camera'), 'warn'); return; }
   if (!videoReady(trainVideo)) { toast(t('t_cam_loading'), 'warn'); return; }
   if (trainPhase === 'training') return;
+  if (pending.length >= MAX_PENDING) { toast(t('t_pending_full'), 'warn'); ensureBaseModel().catch(() => {}); return; }
   holdClassId = classId; holdCount = 0;
   trainCamWrap.classList.add('recording');
   $('rec-count').textContent = '0';
@@ -1463,6 +1524,7 @@ async function grabFrame() {
   if (!classId || !videoReady(trainVideo)) return;
   const have = (samples[classId] || []).length + pendingCount(classId);
   if (have >= MAX_SAMPLES_PER_CLASS) { toast(t('t_max_samples', MAX_SAMPLES_PER_CLASS), 'warn'); stopHold(); return; }
+  if (pending.length >= MAX_PENDING) { toast(t('t_pending_full'), 'warn'); stopHold(); return; }
   cropSquare(trainVideo, cropCtx, INPUT_SIZE);
   const img = cropCtx.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE);
   const entry = { classId, img, thumbBlob: null };
@@ -1486,6 +1548,7 @@ function stopHold() {
     tlog('info', t('t_captured', holdCount, cls ? cls.name : '?'));
     if (trainPhase === 'done') setTrainPhase('collect');
   }
+  renderClassList();
   renderBars();
   setTimeout(embedPending, 60);
 }
@@ -1508,6 +1571,7 @@ async function classMenu(classId) {
   if (r === 'clear') {
     (samples[classId] || []).forEach(s => { if (s.thumbUrl) URL.revokeObjectURL(s.thumbUrl); });
     samples[classId] = [];
+    clearGen[classId] = (clearGen[classId] || 0) + 1;
     pending = pending.filter(p => p.classId !== classId);
     await idbDeleteByClass(classId).catch(() => {});
     toast(t('t_class_cleared', cls.name), 'ok');
@@ -1515,6 +1579,7 @@ async function classMenu(classId) {
     if (classes.length <= 2) { toast(t('t_min_classes'), 'warn'); return; }
     (samples[classId] || []).forEach(s => { if (s.thumbUrl) URL.revokeObjectURL(s.thumbUrl); });
     delete samples[classId];
+    clearGen[classId] = (clearGen[classId] || 0) + 1;
     pending = pending.filter(p => p.classId !== classId);
     classes = classes.filter(c => c.id !== classId);
     await idbDeleteByClass(classId).catch(() => {});
@@ -1558,7 +1623,9 @@ function toTensors(rows, numClasses) {
   const y = new Int32Array(n);
   rows.forEach((r, i) => { x.set(r.feat, i * featSize); y[i] = r.label; });
   const xs = tf.tensor2d(x, [n, featSize]);
-  const ys = tf.oneHot(tf.tensor1d(y, 'int32'), numClasses);
+  const yT = tf.tensor1d(y, 'int32');
+  const ys = tf.oneHot(yT, numClasses);
+  yT.dispose();
   return { xs, ys, y };
 }
 function drawChart() {
@@ -1800,8 +1867,8 @@ async function refreshModelList() {
       .map(k => k.startsWith(CLF_PREFIX) ? { key: k, name: k.slice(CLF_PREFIX.length), legacy: false } : { key: k, name: k.slice(LEGACY_PREFIX.length), legacy: true });
     sel.innerHTML = names.length
       ? names.map(m => `<option value="${escapeHtml(m.key)}">${escapeHtml(m.name)}${m.legacy ? ' (' + t('legacy') + ')' : ''}</option>`).join('')
-      : `<option value="" disabled selected>${escapeHtml(t('no_saved'))}</option>`;
-  } catch (_) { sel.innerHTML = `<option value="" disabled selected>${escapeHtml(t('no_saved'))}</option>`; }
+      : `<option value="" disabled selected data-i18n="no_saved">${escapeHtml(t('no_saved'))}</option>`;
+  } catch (_) { sel.innerHTML = `<option value="" disabled selected data-i18n="no_saved">${escapeHtml(t('no_saved'))}</option>`; }
   renderBars();
 }
 function selectedModelInfo() {
@@ -1856,13 +1923,15 @@ async function loadFromFile() {
       weightData: base64ToArrayBuffer(parsed.classifier.weightData), format: parsed.classifier.format,
     }) });
     if (parsed.base && !baseModel) {
-      baseModel = await tf.loadGraphModel({ load: async () => ({
+      const bundled = await tf.loadGraphModel({ load: async () => ({
         modelTopology: parsed.base.modelTopology, weightSpecs: parsed.base.weightSpecs,
         weightData: base64ToArrayBuffer(parsed.base.weightData), format: parsed.base.format,
       }) });
-      const warm = tf.tidy(() => baseModel.predict(tf.zeros([1, INPUT_SIZE, INPUT_SIZE, 3]))); featSize = warm.shape[1]; warm.dispose();
-      setBaseStatus('ready', 100);
-      try { await baseModel.save(BASE_IDB_KEY); } catch (_) {}
+      if (!baseModel) {
+        baseGen++; // any download still in flight is now stale and will discard its result
+        installBase(bundled);
+        try { await bundled.save(BASE_IDB_KEY); } catch (_) {}
+      } else { try { bundled.dispose(); } catch (_) {} }
     }
     if (inferModel && inferModel !== trainedModel) { try { inferModel.dispose(); } catch (_) {} }
     inferModel = model; inferMeta = parsed.metadata || model.userDefinedMetadata || {};
@@ -1883,8 +1952,8 @@ function advanceToLive() {
 }
 
 // ─── Inference: self-scheduling loop ───
-async function inferTick() {
-  if (!inferRunning) return;
+async function inferTick(gen) {
+  if (!inferRunning || gen !== inferGen) return;
   const started = performance.now();
   if (inferModel && baseModel && videoReady(inferVideo)) {
     try {
@@ -1897,10 +1966,10 @@ async function inferTick() {
       renderPrediction(probs);
     } catch (e) { ilog('warn', 'Predict: ' + e.message); }
   }
-  if (!inferRunning) return;
+  if (!inferRunning || gen !== inferGen) return;
   const interval = parseInt($('infer-fps').value || '200', 10);
   const wait = Math.max(0, interval - (performance.now() - started));
-  setTimeout(inferTick, wait);
+  setTimeout(() => inferTick(gen), wait);
 }
 function renderPrediction(probs) {
   const labels = (inferMeta && inferMeta.classLabels) || classes.map(c => c.name);
@@ -1939,7 +2008,7 @@ $('btn-clear-dataset').addEventListener('click', clearDataset);
 
 classListEl.addEventListener('input', e => {
   const inp = e.target.closest('.class-name-input'); if (!inp) return;
-  const c = classes.find(x => x.id === inp.dataset.id); if (c) { c.name = inp.value; persistClasses(); }
+  const c = classes.find(x => x.id === inp.dataset.id); if (c) { c.name = inp.value; persistClassesSoon(); }
 });
 classListEl.addEventListener('pointerdown', e => {
   const btn = e.target.closest('.hold-btn'); if (!btn) return;
@@ -1998,8 +2067,9 @@ window.addEventListener('resize', () => { if (lossHistory.length) drawChart(); }
 (async function init() {
   lang = (navigator.language || 'pl').toLowerCase().startsWith('pl') ? 'pl' : 'en';
   try { const stored = localStorage.getItem(LANG_KEY); if (stored === 'pl' || stored === 'en') lang = stored; } catch (_) {}
+  applyLang(); // labels first, so a stalled IndexedDB never leaves the UI blank
   await restoreDataset();
-  applyLang();
+  renderClassList(); renderBars(); renderDataChip();
   refreshIcons();
   ensureBaseModel().catch(() => {});
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {

@@ -1,6 +1,6 @@
 /* KlockiAI Mobile service worker: offline app shell + CDN libraries.
    The MobileNet base model is not cached here; the app stores it in IndexedDB. */
-const CACHE = 'klocki-mobile-v3';
+const CACHE = 'klocki-mobile-v4';
 const SHELL = [
   './',
   './index.html',
@@ -38,7 +38,8 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
   const isShell = url.origin === self.location.origin;
   const isCdn = url.hostname === 'cdn.jsdelivr.net';
-  if (!isShell && !isCdn) return; // model downloads etc. go straight to the network
+  const isFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
+  if (!isShell && !isCdn && !isFont) return; // model downloads etc. go straight to the network
 
   if (isShell && (req.mode === 'navigate' || url.pathname.endsWith('index.html') || url.pathname.endsWith('/'))) {
     // Network first for the page itself, so updates land; cache is the offline fallback.
@@ -48,7 +49,7 @@ self.addEventListener('fetch', event => {
     );
     return;
   }
-  // Cache first for static assets and pinned CDN libraries.
+  // Cache first for static assets, pinned CDN libraries and web fonts (CSS + woff2).
   event.respondWith(
     caches.match(req).then(hit => hit || fetch(req).then(res => {
       if (res && (res.ok || res.type === 'opaque')) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
