@@ -244,7 +244,7 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
     .mode-arrow { grid-area: arrow; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--r-pill); }
     .mode-info { grid-area: info; align-self: end; }
     .mode-info h2 { font-family: var(--font-display); font-size: clamp(22px, 6vw, 28px); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
-    .mode-info p { font-size: 14px; margin-top: 6px; line-height: 1.45; max-width: 34ch; opacity: .82; }
+    .mode-info p { font-size: 14px; font-weight: 500; margin-top: 6px; line-height: 1.45; max-width: 34ch; }
     .mode-card.train { background: var(--green-soft); color: var(--green-ink); }
     .mode-card.train .mode-icon { background: var(--paper); color: var(--green); }
     .mode-card.train .mode-arrow { background: color-mix(in srgb, var(--paper) 22%, transparent); color: var(--green-ink); }
@@ -287,9 +287,9 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
     [data-state="done"] .step-num { background: var(--green); color: var(--green-ink); }
     [data-state="error"] .step-num { background: var(--red); color: var(--red-ink); }
     [data-state="processing"] .step-num { background: var(--yellow); color: var(--yellow-ink); animation: proc-pulse 1.2s ease-in-out infinite; }
-    .btn-spinner { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid currentColor; border-right-color: transparent; animation: btn-spin .8s linear infinite; flex-shrink: 0; }
-    @keyframes btn-spin { to { transform: rotate(360deg); } }
-    .btn.preparing:disabled { opacity: .85; }
+    .btn-spinner { width: 12px; height: 12px; border-radius: 50%; background: currentColor; animation: proc-pulse 1s ease-in-out infinite; flex-shrink: 0; }
+    .btn.preparing { opacity: .85; cursor: progress; }
+    @media (prefers-reduced-motion: reduce) { .btn-spinner, [data-state="processing"] .step-num { animation: none; } }
     @keyframes proc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
     .step-title { flex: 1; font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
     .step-badge { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 4px 9px; border-radius: var(--r-pill); background: var(--paper-3); color: var(--ink-2); }
@@ -731,6 +731,7 @@ const HOLDOUT_FRACTION = 0.2;
 const MAX_PENDING = 200;          // raw 224px frames waiting for the base model (~200 KB each)
 const IDB_OPEN_TIMEOUT_MS = 8000;
 const PERSIST_DEBOUNCE_MS = 400;
+const PAINT_FALLBACK_MS = 120;
 const CLASS_COLOR_TOKENS = ['--c0', '--c1', '--c2', '--c3', '--c4', '--c5'];
 
 const T = {
@@ -798,7 +799,7 @@ const T = {
     t_deleted: name => `Usunięto „${name}”`,
     t_dataset_restored: (n, c) => `Przywrócono ${n} zdjęć w ${c} klasach`,
     t_dataset_cleared: 'Dane wyczyszczone', t_class_removed: name => `Usunięto klasę „${name}”`, t_class_cleared: name => `Usunięto zdjęcia klasy „${name}”`,
-    t_pending_full: 'Poczekaj, aż model bazowy przetworzy zebrane zdjęcia', t_train_first: 'Najpierw wytrenuj model', t_base_error: 'Nie udało się pobrać modelu bazowego: ',
+    t_pending_full: 'Poczekaj, aż model bazowy przetworzy zebrane zdjęcia', t_busy_training: 'Poczekaj na koniec treningu', t_train_first: 'Najpierw wytrenuj model', t_base_error: 'Nie udało się pobrać modelu bazowego: ',
     t_hidden_stop: 'Kamera zatrzymana, gdy aplikacja była w tle',
     t_offline_ready: 'Aplikacja gotowa do pracy offline',
     log_base_cache: 'Model bazowy wczytany z pamięci przeglądarki', log_base_net: 'Pobieranie MobileNetV3-Small…', log_base_saved: 'Model bazowy zapisany w przeglądarce',
@@ -871,7 +872,7 @@ const T = {
     t_deleted: name => `Deleted “${name}”`,
     t_dataset_restored: (n, c) => `Restored ${n} photos in ${c} classes`,
     t_dataset_cleared: 'Dataset cleared', t_class_removed: name => `Removed class “${name}”`, t_class_cleared: name => `Deleted photos of “${name}”`,
-    t_pending_full: 'Wait for the base model to process the captured photos', t_train_first: 'Train a model first', t_base_error: 'Could not download the base model: ',
+    t_pending_full: 'Wait for the base model to process the captured photos', t_busy_training: 'Wait for training to finish', t_train_first: 'Train a model first', t_base_error: 'Could not download the base model: ',
     t_hidden_stop: 'Camera stopped while the app was in the background',
     t_offline_ready: 'App ready for offline use',
     log_base_cache: 'Base model loaded from browser storage', log_base_net: 'Downloading MobileNetV3-Small…', log_base_saved: 'Base model saved in browser',
@@ -1029,6 +1030,15 @@ function confirmSheet({ title, body, actions }) {
 function closeSheet(value) {
   sheetScrim.classList.remove('open');
   if (sheetResolve) { const r = sheetResolve; sheetResolve = null; r(value); }
+}
+
+// ─── Helpers: paint ───
+// Resolves after two animation frames, or after a short timer when the tab is hidden and rAF is paused.
+function paintFrame() {
+  return new Promise(r => {
+    const timer = setTimeout(r, PAINT_FALLBACK_MS);
+    requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(timer); r(); }));
+  });
 }
 
 // ─── Helpers: wake lock ───
@@ -1348,12 +1358,14 @@ function setTrainPhase(p) { trainPhase = p; bodyEl.dataset.trainPhase = p; rende
 function renderBars() {
   // Training bar
   const tb = $('train-bar-btn'), tt = $('train-bar-title'), ts = $('train-bar-sub');
+  if (trainPhase !== 'preparing') { tb.removeAttribute('aria-disabled'); tb.removeAttribute('aria-busy'); }
   trainBar.classList.toggle('visible', currentScreen === 'training');
   inferBar.classList.toggle('visible', currentScreen === 'inference');
   if (trainPhase === 'preparing') {
     tt.textContent = t('train_bar_preparing'); ts.textContent = t('train_bar_preparing_sub');
-    tb.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span><span></span>'; tb.lastChild.textContent = t('train_bar_preparing');
-    tb.className = 'btn btn-primary preparing'; tb.disabled = true; tb.dataset.action = 'none';
+    if (tb.dataset.action !== 'none') { tb.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span><span></span>'; tb.dataset.action = 'none'; }
+    tb.lastChild.textContent = t('train_bar_preparing');
+    tb.className = 'btn btn-primary preparing'; tb.disabled = false; tb.setAttribute('aria-disabled', 'true'); tb.setAttribute('aria-busy', 'true'); // stays focusable, so keyboard focus survives into Stop
   } else if (trainPhase === 'training') {
     tt.textContent = t('train_bar_training'); ts.textContent = tb.dataset.epoch || '';
     tb.textContent = t('stop'); tb.className = 'btn btn-danger'; tb.disabled = false; tb.dataset.action = 'stop';
@@ -1568,7 +1580,9 @@ function stopHold() {
 }
 
 // ─── Classes ───
+function trainingBusy() { return trainPhase === 'preparing' || trainPhase === 'training'; }
 function addClass() {
+  if (trainingBusy()) { toast(t('t_busy_training'), 'warn'); return; }
   if (classes.length >= MAX_CLASSES) { toast(t('t_max_classes'), 'warn'); return; }
   const c = { id: uid(), name: t('class_default', classes.length + 1) };
   classes.push(c); samples[c.id] = [];
@@ -1578,6 +1592,7 @@ function addClass() {
   if (input) { input.focus(); input.select(); }
 }
 async function classMenu(classId) {
+  if (trainingBusy()) { toast(t('t_busy_training'), 'warn'); return; }
   const cls = classes.find(c => c.id === classId); if (!cls) return;
   const actions = [{ label: t('clear_samples'), value: 'clear', kind: 'danger' }];
   if (classes.length > 2) actions.push({ label: t('remove_class'), value: 'remove', kind: 'danger' });
@@ -1602,6 +1617,7 @@ async function classMenu(classId) {
   renderClassList(); renderBars(); renderDataChip();
 }
 async function clearDataset() {
+  if (trainingBusy()) { toast(t('t_busy_training'), 'warn'); return; }
   const r = await confirmSheet({ title: t('clear_dataset_title'), body: t('clear_dataset_body'), actions: [{ label: t('clear_all'), value: 'yes', kind: 'danger' }] });
   if (r !== 'yes') return;
   Object.values(samples).flat().forEach(s => { if (s.thumbUrl) URL.revokeObjectURL(s.thumbUrl); });
@@ -1686,33 +1702,32 @@ async function runTraining() {
   if (trainPhase === 'training' || trainPhase === 'preparing') return;
   if (!readyToTrain()) { toast(t('train_bar_need', 2, MIN_SAMPLES_TO_TRAIN), 'warn'); return; }
   if (!baseModel) { toast(t('train_bar_base_loading'), 'warn'); ensureBaseModel().catch(() => {}); return; }
-  setTrainPhase('preparing'); // immediate feedback: spinner on the button before any heavy work
-  announce(t('train_bar_preparing'));
-  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); // let the pressed state paint
   stopHold();
-  classes.forEach(c => { if ((samples[c.id] || []).length < MIN_RECOMMENDED) toast(t('t_low_samples', c.name), 'warn', 3500); });
-
-  trainingCancelled = false;
-  lossHistory = []; accHistory = []; valHistory = [];
-  const epochs = Math.max(1, Math.min(200, parseInt($('train-epochs').value || '30', 10)));
-  const lr = parseFloat($('train-lr').value || '0.001');
-  const batchSize = parseInt($('train-batch').value || '16', 10);
-  const numClasses = classes.length;
-  const labels = classes.map(c => c.name);
-
-  setStep('data', 'done'); openStep('data', false);
-  setStep('train', 'processing'); openStep('train', true); scrollToCard('train');
-  $('train-result').style.display = 'none';
-  const progWrap = $('train-progress-wrap'), progBar = $('train-progress');
-  progWrap.style.display = ''; progBar.style.width = '0%';
-  const barBtn = $('train-bar-btn');
-  const { train, test } = holdoutSplit();
-  tlog('step', `Training: ${epochs} epochs, lr ${lr}, batch ${batchSize}`);
-  tlog('info', t('log_split', train.length, test.length));
-  await tf.nextFrame();
-
+  setTrainPhase('preparing'); // immediate feedback on the button before any heavy work
+  announce(t('train_bar_preparing'));
   let tr = null, te = null, classifier = null;
   try {
+    await paintFrame(); // let the pressed state paint (falls back to a timer when the tab is hidden)
+    classes.forEach(c => { if ((samples[c.id] || []).length < MIN_RECOMMENDED) toast(t('t_low_samples', c.name), 'warn', 3500); });
+
+    trainingCancelled = false;
+    lossHistory = []; accHistory = []; valHistory = [];
+    const epochs = Math.max(1, Math.min(200, parseInt($('train-epochs').value || '30', 10)));
+    const lr = parseFloat($('train-lr').value || '0.001');
+    const batchSize = parseInt($('train-batch').value || '16', 10);
+    const numClasses = classes.length;
+    const labels = classes.map(c => c.name);
+
+    setStep('data', 'done'); openStep('data', false);
+    setStep('train', 'processing'); openStep('train', true); scrollToCard('train');
+    $('train-result').style.display = 'none';
+    const progWrap = $('train-progress-wrap'), progBar = $('train-progress');
+    progWrap.style.display = ''; progBar.style.width = '0%';
+    const barBtn = $('train-bar-btn');
+    const { train, test } = holdoutSplit();
+    tlog('step', `Training: ${epochs} epochs, lr ${lr}, batch ${batchSize}`);
+    tlog('info', t('log_split', train.length, test.length));
+    await paintFrame();
     tr = toTensors(train, numClasses);
     te = test.length ? toTensors(test, numClasses) : null;
     classifier = tf.sequential({
@@ -1723,13 +1738,13 @@ async function runTraining() {
       ]
     });
     classifier.compile({ optimizer: tf.train.adam(lr), loss: 'categoricalCrossentropy', metrics: ['accuracy'] });
+    setTrainPhase('training'); // model and tensors are built; Stop becomes available
     const t0 = Date.now();
     await classifier.fit(tr.xs, tr.ys, {
       epochs, batchSize, shuffle: true,
       validationData: te ? [te.xs, te.ys] : undefined,
       callbacks: {
         onEpochBegin: async (epoch) => {
-          if (epoch === 0) setTrainPhase('training'); // model and tensors are built; Stop becomes available
           if (trainingCancelled) throw new Error('cancelled');
           barBtn.dataset.epoch = t('train_bar_epoch', epoch + 1, epochs);
           $('train-bar-sub').textContent = barBtn.dataset.epoch;
@@ -1790,7 +1805,7 @@ async function runTraining() {
   } finally {
     if (tr) { tr.xs.dispose(); tr.ys.dispose(); }
     if (te) { te.xs.dispose(); te.ys.dispose(); }
-    delete barBtn.dataset.epoch;
+    delete $('train-bar-btn').dataset.epoch;
     renderBars();
   }
 }
