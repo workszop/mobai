@@ -288,7 +288,7 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
     [data-state="error"] .step-num { background: var(--red); color: var(--red-ink); }
     [data-state="processing"] .step-num { background: var(--yellow); color: var(--yellow-ink); animation: proc-pulse 1.2s ease-in-out infinite; }
     .btn-spinner { width: 12px; height: 12px; border-radius: 50%; background: currentColor; animation: proc-pulse 1s ease-in-out infinite; flex-shrink: 0; }
-    .btn.preparing { opacity: .85; cursor: progress; pointer-events: none; }
+    .btn.preparing { opacity: .85; pointer-events: none; }
     @media (prefers-reduced-motion: reduce) { .btn-spinner, [data-state="processing"] .step-num { animation: none; } }
     @keyframes proc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
     .step-title { flex: 1; font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
@@ -799,7 +799,7 @@ const T = {
     t_deleted: name => `Usunięto „${name}”`,
     t_dataset_restored: (n, c) => `Przywrócono ${n} zdjęć w ${c} klasach`,
     t_dataset_cleared: 'Dane wyczyszczone', t_class_removed: name => `Usunięto klasę „${name}”`, t_class_cleared: name => `Usunięto zdjęcia klasy „${name}”`,
-    t_pending_full: 'Poczekaj, aż model bazowy przetworzy zebrane zdjęcia', t_busy_training: 'Poczekaj na koniec treningu', t_train_first: 'Najpierw wytrenuj model', t_base_error: 'Nie udało się pobrać modelu bazowego: ',
+    t_pending_full: 'Poczekaj, aż model bazowy przetworzy zebrane zdjęcia', t_embed_failed: n => `Nie udało się przetworzyć ${n} zdjęć`, t_busy_training: 'Poczekaj na koniec treningu', t_train_first: 'Najpierw wytrenuj model', t_base_error: 'Nie udało się pobrać modelu bazowego: ',
     t_hidden_stop: 'Kamera zatrzymana, gdy aplikacja była w tle',
     t_offline_ready: 'Aplikacja gotowa do pracy offline',
     log_base_cache: 'Model bazowy wczytany z pamięci przeglądarki', log_base_net: 'Pobieranie MobileNetV3-Small…', log_base_saved: 'Model bazowy zapisany w przeglądarce',
@@ -872,7 +872,7 @@ const T = {
     t_deleted: name => `Deleted “${name}”`,
     t_dataset_restored: (n, c) => `Restored ${n} photos in ${c} classes`,
     t_dataset_cleared: 'Dataset cleared', t_class_removed: name => `Removed class “${name}”`, t_class_cleared: name => `Deleted photos of “${name}”`,
-    t_pending_full: 'Wait for the base model to process the captured photos', t_busy_training: 'Wait for training to finish', t_train_first: 'Train a model first', t_base_error: 'Could not download the base model: ',
+    t_pending_full: 'Wait for the base model to process the captured photos', t_embed_failed: n => `Could not process ${n} photos`, t_busy_training: 'Wait for training to finish', t_train_first: 'Train a model first', t_base_error: 'Could not download the base model: ',
     t_hidden_stop: 'Camera stopped while the app was in the background',
     t_offline_ready: 'App ready for offline use',
     log_base_cache: 'Base model loaded from browser storage', log_base_net: 'Downloading MobileNetV3-Small…', log_base_saved: 'Base model saved in browser',
@@ -889,6 +889,7 @@ let classes = [];          // [{ id, name }]
 let samples = {};          // classId -> [{ id, feat: Float32Array, thumbUrl }]
 let pending = [];          // [{ classId, img: ImageData, thumbBlob: Blob }]
 let embedding = false;
+let embedRun = null;       // promise of the running drainPending(), shared by concurrent callers
 let baseModel = null;
 let baseLoading = null;
 let baseStatus = 'idle';   // idle | loading | ready | error
@@ -1200,14 +1201,22 @@ function installBase(model) {
 }
 
 // ─── Embedding (features at capture time) ───
-async function embedPending() {
-  if (embedding || !baseModel || !pending.length) return;
+// Returns a promise that settles when the queue is drained. A batch whose predict fails is dropped with a
+// warning so the queue can never wedge the app; concurrent callers share the same run.
+function embedPending() {
+  if (embedRun) return embedRun;
+  if (!baseModel || !pending.length) return Promise.resolve();
+  embedRun = drainPending().finally(() => { embedRun = null; });
+  return embedRun;
+}
+async function drainPending() {
   embedding = true;
   renderBars();
-  let done = 0;
-  try {
-    while (pending.length) {
-      const batch = pending.slice(0, EMBED_BATCH); // stays in `pending` until committed, so counts and clears see it
+  let done = 0, dropped = 0;
+  while (pending.length) {
+    const batch = pending.slice(0, EMBED_BATCH); // stays in `pending` until committed, so counts and clears see it
+    try {
+      await Promise.all(batch.map(p => p.thumbReady)); // thumbnails are encoded asynchronously after capture
       const feats = tf.tidy(() => {
         const imgs = batch.map(p => tf.browser.fromPixels(p.img).toFloat().div(255));
         return baseModel.predict(tf.stack(imgs));
@@ -1229,28 +1238,21 @@ async function embedPending() {
         touched.add(p.classId);
         done++;
       }
-      pending = pending.filter(p => !batch.includes(p));
       if (rows.length) idbPutMany('samples', rows).catch(e => tlog('warn', 'IDB: ' + e.message));
       touched.forEach(updateCountLabel);
-      await tf.nextFrame();
+    } catch (e) {
+      dropped += batch.length;
+      tlog('error', 'Embedding: ' + (e && e.message || e));
     }
-  } catch (e) {
-    tlog('error', 'Embedding: ' + e.message);
-  } finally {
-    embedding = false;
-    classes.forEach(c => updateCountLabel(c.id));
-    renderBars();
-    renderDataChip();
-    if (done) tlog('info', t('t_embedded', done));
-    if (pending.length) embedPending();
+    pending = pending.filter(p => !batch.includes(p));
+    await tf.nextFrame();
   }
-}
-
-// Resolves once every queued frame has been embedded (or dropped).
-function embedQueued() {
-  if (!pending.length && !embedding) return Promise.resolve();
-  embedPending();
-  return new Promise(r => { const tick = () => (!pending.length && !embedding) ? r() : setTimeout(tick, 50); tick(); });
+  embedding = false;
+  classes.forEach(c => updateCountLabel(c.id));
+  renderBars();
+  renderDataChip();
+  if (done) tlog('info', t('t_embedded', done));
+  if (dropped) toast(t('t_embed_failed', dropped), 'error', 4000);
 }
 
 // ─── Render ───
@@ -1321,7 +1323,7 @@ function renderClassList() {
     card.innerHTML = `
       <div class="class-top">
         <span class="class-swatch" aria-hidden="true"></span>
-        <input class="class-name-input" value="${escapeHtml(c.name)}" data-id="${c.id}" aria-label="${escapeHtml(t('classes_label'))}" autocomplete="off">
+        <input class="class-name-input" value="${escapeHtml(c.name)}" data-id="${c.id}" aria-label="${escapeHtml(t('classes_label'))}" autocomplete="off"${trainingBusy() ? ' readonly' : ''}>
         <span class="class-count ${low ? 'low' : ''}" data-count-for="${c.id}">${t('samples', list.length)}${pend ? ' ' + t('pending', pend) : ''}</span>
       </div>
       <div class="class-bottom">
@@ -1362,11 +1364,14 @@ function readyToTrain() {
   return classes.length >= 2 && classes.every(c => (samples[c.id] || []).length >= MIN_SAMPLES_TO_TRAIN);
 }
 function trainingBusy() { return trainPhase === 'preparing' || trainPhase === 'training'; }
-function setTrainPhase(p) { trainPhase = p; bodyEl.dataset.trainPhase = p; renderBars(); updateWakeLock(); }
+function setTrainPhase(p) {
+  trainPhase = p; bodyEl.dataset.trainPhase = p;
+  classListEl.querySelectorAll('.class-name-input').forEach(i => { i.readOnly = trainingBusy(); }); // labels are frozen while training
+  renderBars(); updateWakeLock();
+}
 function renderBars() {
   // Training bar
   const tb = $('train-bar-btn'), tt = $('train-bar-title'), ts = $('train-bar-sub');
-  if (trainPhase === 'preparing') { tb.setAttribute('aria-disabled', 'true'); tb.setAttribute('aria-busy', 'true'); } else { tb.removeAttribute('aria-disabled'); tb.removeAttribute('aria-busy'); }
   trainBar.classList.toggle('visible', currentScreen === 'training');
   inferBar.classList.toggle('visible', currentScreen === 'inference');
   if (trainPhase === 'preparing') {
@@ -1390,6 +1395,9 @@ function renderBars() {
     tb.textContent = trainedModel ? t('retrain') : t('train'); tb.className = 'btn btn-primary';
     tb.disabled = !(ready && baseStatus === 'ready' && !embedding && !pending.length); tb.dataset.action = 'train';
   }
+  const prep = trainPhase === 'preparing';
+  tb.toggleAttribute('aria-busy', prep);
+  if (prep) tb.setAttribute('aria-disabled', 'true'); else tb.removeAttribute('aria-disabled');
   // Inference bar
   const ib = $('infer-bar-btn'), it = $('infer-bar-title'), is = $('infer-bar-sub');
   if (!inferModel) {
@@ -1555,13 +1563,14 @@ async function grabFrame() {
   if (pending.length >= MAX_PENDING) { toast(t('t_pending_full'), 'warn'); stopHold(); return; }
   cropSquare(trainVideo, cropCtx, INPUT_SIZE);
   const img = cropCtx.getImageData(0, 0, INPUT_SIZE, INPUT_SIZE);
-  const entry = { classId, img, thumbBlob: null };
+  const entry = { classId, img, thumbBlob: null, thumbReady: null };
   pending.push(entry);
+  if (pending.length === 1) renderBars(); // Train goes disabled while frames are queued
   holdCount++;
   $('rec-count').textContent = holdCount;
   haptic(8);
   updateCountLabel(classId);
-  entry.thumbBlob = await makeThumb(cropCanvas);
+  entry.thumbReady = makeThumb(cropCanvas).then(b => { entry.thumbBlob = b; }).catch(() => {});
 }
 function stopHold() {
   if (!holdClassId) return;
@@ -1713,10 +1722,10 @@ async function runTraining() {
   stopHold();
   let tr = null, te = null, classifier = null;
   try {
-    await paintFrame(); // let the pressed state paint (falls back to a timer when the tab is hidden)
-    await embedQueued(); // frames captured right before the press must be in the dataset the split reads
-    classes.forEach(c => { if ((samples[c.id] || []).length < MIN_RECOMMENDED) toast(t('t_low_samples', c.name), 'warn', 3500); });
     announce(t('train_bar_preparing'));
+    await paintFrame(); // let the pressed state paint (falls back to a timer when the tab is hidden)
+    await embedPending(); // frames captured right before the press must be in the dataset the split reads
+    classes.forEach(c => { if ((samples[c.id] || []).length < MIN_RECOMMENDED) toast(t('t_low_samples', c.name), 'warn', 3500); });
 
     trainingCancelled = false;
     lossHistory = []; accHistory = []; valHistory = [];
@@ -1803,18 +1812,18 @@ async function runTraining() {
     setStep('train', 'done');
     tlog('success', t('t_training_done', (valAcc * 100).toFixed(1)));
     toast(t('t_training_done', (valAcc * 100).toFixed(0)), 'ok');
-    delete $('train-bar-btn').dataset.epoch;
     setTrainPhase('done');
     await autoSave();
   } catch (err) {
-    if (err.message === 'cancelled') { tlog('warn', t('t_training_stopped')); toast(t('t_training_stopped'), 'warn'); setStep('train', ''); }
-    else { tlog('error', t('t_training_error') + err.message); toast(t('t_training_error') + err.message, 'error', 4000); setStep('train', 'error'); }
+    const msg = (err && err.message) || String(err);
+    if (msg === 'cancelled') { tlog('warn', t('t_training_stopped')); toast(t('t_training_stopped'), 'warn'); setStep('train', ''); }
+    else { tlog('error', t('t_training_error') + msg); toast(t('t_training_error') + msg, 'error', 4000); setStep('train', 'error'); }
     if (classifier) { try { classifier.dispose(); } catch (_) {} }
-    delete $('train-bar-btn').dataset.epoch;
-    setTrainPhase('collect');
   } finally {
     if (tr) { tr.xs.dispose(); tr.ys.dispose(); }
     if (te) { te.xs.dispose(); te.ys.dispose(); }
+    delete $('train-bar-btn').dataset.epoch;
+    if (trainingBusy()) setTrainPhase('collect'); // every exit path lands in a phase the UI can act on
   }
 }
 function stopTraining() { trainingCancelled = true; }
@@ -2046,9 +2055,7 @@ $('btn-clear-dataset').addEventListener('click', clearDataset);
 
 classListEl.addEventListener('input', e => {
   const inp = e.target.closest('.class-name-input'); if (!inp) return;
-  const c = classes.find(x => x.id === inp.dataset.id); if (!c) return;
-  if (trainingBusy()) { inp.value = c.name; toast(t('t_busy_training'), 'warn'); return; } // labels were frozen at training start
-  c.name = inp.value; persistClassesSoon();
+  const c = classes.find(x => x.id === inp.dataset.id); if (c) { c.name = inp.value; persistClassesSoon(); }
 });
 classListEl.addEventListener('change', e => { if (e.target.closest('.class-name-input')) flushPersistClasses(); });
 classListEl.addEventListener('pointerdown', e => {
