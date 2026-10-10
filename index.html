@@ -38,16 +38,16 @@
 
   /* Paper - page background is white; the sand steps are wells/alternating sections */
   --paper:    #FFFFFF;   /* page background (white)    */
-  --paper-2:  #FBF7E6;   /* alternating section        */
-  --paper-3:  #F5EDCB;   /* deepest sand / wells       */
+  --paper-2:  #F5F3F0;   /* alternating section        */
+  --paper-3:  #EAE6E0;   /* deepest sand / wells       */
   --surface:  #FFFFFF;   /* cards & sheets             */
 
   /* Ink - warm near-black text & lines */
   --ink:      #1C1917;   /* primary text               */
-  --ink-2:    #57534E;   /* secondary text             */
-  --ink-3:    #716961;   /* muted / placeholder        */
-  --line:     #EDE7D2;   /* hairline borders           */
-  --line-2:   #DDD4B6;   /* stronger borders           */
+  --ink-2:    #44403C;   /* secondary text             */
+  --ink-3:    #625B53;   /* muted / placeholder        */
+  --line:     #E0DBD3;   /* hairline borders           */
+  --line-2:   #C9C2B7; --line-strong: #857C69; /* control borders >= 3:1 */ --track: color-mix(in srgb, var(--ink) 24%, transparent);   /* stronger borders           */
 
   /* ---- Brand: Yellow main · Blue + Green secondary · Red danger ----
      Plain saturated colours. A "-soft" tint IS the saturated colour
@@ -119,8 +119,8 @@
   --r-xs: 6px; --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
 
   /* ---- Elevation - warm, low, soft ---- */
-  --shadow-sm: 0 1px 2px rgba(33,30,26,.06), 0 1px 1px rgba(33,30,26,.04);
-  --shadow-md: 0 4px 16px rgba(33,30,26,.08), 0 1px 3px rgba(33,30,26,.05);
+  --shadow-sm: 0 1px 2px rgba(33,30,26,.10), 0 2px 6px rgba(33,30,26,.06);
+  --shadow-md: 0 6px 18px rgba(33,30,26,.12), 0 1px 3px rgba(33,30,26,.08);
   --shadow-lg: 0 16px 40px rgba(33,30,26,.12), 0 3px 8px rgba(33,30,26,.06);
   --shadow-primary:  0 8px 22px color-mix(in srgb, var(--yellow) 30%, transparent);
   --shadow-marigold: var(--shadow-primary);   /* legacy alias */
@@ -349,7 +349,7 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
     .param-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); min-height: 48px; }
     .param-row:last-child { border-bottom: none; }
     .param-label { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); flex: 1; }
-    .param-row select, .param-row input[type="number"], .name-input { background: var(--surface); border: 1px solid var(--line-2); color: var(--ink); border-radius: var(--r-sm); padding: 0 12px; height: 42px; font-family: var(--font-mono); font-size: 14px; outline: none; -webkit-appearance: none; appearance: none; }
+    .param-row select, .param-row input[type="number"], .name-input { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); border-radius: var(--r-sm); padding: 0 12px; height: 42px; font-family: var(--font-mono); font-size: 14px; outline: none; -webkit-appearance: none; appearance: none; }
     .param-row select { min-width: 110px; }
     .param-row input[type="number"] { width: 90px; }
     .name-input { width: 100%; font-family: var(--font-sans); font-size: 15px; }
@@ -386,7 +386,7 @@ body.edu { background: var(--paper); color: var(--ink); font-family: var(--font-
 
     /* ─── Saved models ─── */
     .saved-model-row { display: flex; gap: 8px; align-items: center; }
-    .saved-model-row select { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--line-2); color: var(--ink); border-radius: var(--r-sm); padding: 0 12px; height: 44px; font-size: 15px; outline: none; -webkit-appearance: none; appearance: none; }
+    .saved-model-row select { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); border-radius: var(--r-sm); padding: 0 12px; height: 44px; font-size: 15px; outline: none; -webkit-appearance: none; appearance: none; }
     .sq-btn { background: var(--paper-2); border: none; color: var(--ink-2); width: 44px; height: 44px; border-radius: var(--r-pill); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
     .sq-btn.danger { background: var(--red-soft); color: var(--red-ink); }
 
