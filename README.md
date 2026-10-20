@@ -13,7 +13,7 @@ Touch-first version of [klocki](https://github.com/workszop/klocki): train an im
 
 - `index.html` – the whole app (Polish primary, English secondary, `T = { pl, en }`).
 - `sw.js` – service worker caching the app shell and pinned CDN libraries for offline use. The base model is cached in IndexedDB by the app itself.
-- `site.webmanifest` + icons – PWA install packaging (white Lucide camera on black).
+- `site.webmanifest` + icons – PWA install packaging (original KlockiAI lego brick).
 
 ## Development
 
