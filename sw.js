@@ -1,6 +1,6 @@
 /* KlockiAI Mobile service worker: offline app shell + CDN libraries.
    The MobileNet base model is not cached here; the app stores it in IndexedDB. */
-const CACHE = 'klocki-mobile-v5';
+const CACHE = 'klocki-mobile-v6';
 const SHELL = [
   './',
   './index.html',
